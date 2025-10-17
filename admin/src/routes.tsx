@@ -31,6 +31,7 @@ const VerifikasiUsulanPerbaikan = lazy(() => import("@/pages/verifikasi-usulan/p
 const VerifikasiUsulanPerbaikanDetail = lazy(() => import("@/pages/verifikasi-usulan/perbaikan/detail/page"));
 
 const PaguAnggaran = lazy(() => import("@/pages/pagu-anggaran/page"));
+const PaguAnggaranDetail = lazy(() => import("@/pages/pagu-anggaran/detail/page"));
 
 const Realisasi = lazy(() => import("@/pages/realisasi/page"));
 
@@ -81,10 +82,11 @@ const route_path = [
    { key: v4(), path: "/verifikasi-usulan/perbaikan", element: <VerifikasiUsulanPerbaikan /> },
    { key: v4(), path: "/verifikasi-usulan/perbaikan/:id_usulan_kegiatan", element: <VerifikasiUsulanPerbaikanDetail /> },
    { key: v4(), path: "/pagu-anggaran", element: <PaguAnggaran /> },
+   { key: v4(), path: "/pagu-anggaran/:id", element: <PaguAnggaranDetail /> },
    { key: v4(), path: "/realisasi", element: <Realisasi /> },
    { key: v4(), path: "/pengaturan", element: <Pengaturan /> },
    { key: v4(), path: "/pengaturan/actions", element: <PengaturanActions /> },
-   { key: v4(), path: "/pengaturan/actions/:id_pengaturan", element: <PengaturanActions /> },
+   { key: v4(), path: "/pengaturan/actions/:id", element: <PengaturanActions /> },
    { key: v4(), path: "/unit-kerja/biro", element: <UnitKerjaBiro /> },
    { key: v4(), path: "/unit-kerja/biro/actions", element: <UnitKerjaBiroActions /> },
    { key: v4(), path: "/unit-kerja/biro/actions/:id", element: <UnitKerjaBiroActions /> },

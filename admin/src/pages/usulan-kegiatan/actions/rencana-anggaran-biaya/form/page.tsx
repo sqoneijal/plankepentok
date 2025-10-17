@@ -18,7 +18,6 @@ export default function Page({
    id_rab_detail?: string;
    handleSheetForm: (status: boolean) => void;
 }>) {
-   console.log(id_rab_detail);
    const isEdit = !!id_rab_detail;
 
    const [openSheet, setOpenSheet] = useState(false);
@@ -47,7 +46,6 @@ export default function Page({
    };
 
    useEffect(() => {
-      console.log(id_rab_detail);
       if (id_rab_detail) handleSheetForm(!!id_rab_detail);
    }, [id_rab_detail, handleSheetForm]);
 

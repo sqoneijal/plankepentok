@@ -25,6 +25,7 @@ app.use("/api/unit-kerja/sub-unit", require("./routes/unit-kerja/sub-unit"));
 app.use("/api/pagu-anggaran", require("./routes/pagu-anggaran"));
 app.use("/api/usulan-kegiatan", require("./routes/usulan-kegiatan"));
 app.use("/api/master-iku", require("./routes/master-iku"));
+app.use("/api/pengaturan", require("./routes/pengaturan"));
 
 // Health check
 app.get("/health", (req, res) => {

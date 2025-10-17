@@ -1,81 +1,98 @@
 const express = require("express");
 const { PrismaClient } = require("@prisma/client");
+const { z } = require("zod");
+const errorHandler = require("../handle-error.js");
+
+const validation = z.object({
+   tahun_anggaran: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Tahun anggaran wajib diisi")),
+   total_pagu: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Total pagu wajib diisi")),
+   is_aktif: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Status wajib diisi")),
+});
+
+const cleanRupiah = (val, fallback = 0) => {
+   if (val == null) return fallback;
+   const cleaned = val.toString().replaceAll(".", "");
+   const num = Number(cleaned);
+   return Number.isNaN(num) ? fallback : num;
+};
 
 const router = express.Router();
 const prisma = new PrismaClient();
 
-router.get("/universitas", async (req, res) => {
+router.get("/", async (req, res) => {
    try {
-      const tahun_anggaran = parseInt(req.query.tahun_anggaran) || 0;
-      const results = await prisma.tb_pengaturan.findFirst({
-         where: { tahun_anggaran },
+      const limit = Number.parseInt(req.query.limit) || 25;
+      const offset = Number.parseInt(req.query.offset) || 0;
+
+      const total = await prisma.tb_pengaturan.count();
+      const results = await prisma.tb_pengaturan.findMany({
+         orderBy: { tahun_anggaran: "desc" },
+         take: limit,
+         skip: offset,
       });
-
-      const pagu_universitas = parseInt(results.total_pagu) || 0;
-
-      const resultsBiro = await prisma.tb_biro_master.findMany({
-         include: {
-            pagu_anggaran: {
-               where: { tahun_anggaran },
-            },
-         },
-      });
-
-      let pagu_biro = 0;
-      resultsBiro.map((row) => (pagu_biro += parseInt(row.total_pagu)));
-
-      const sisa_pagu_sementara = pagu_universitas - pagu_biro;
-
-      res.json({ results, sisa_pagu_sementara });
+      res.json({ results, total });
    } catch (error) {
       res.status(500).json({ error: error.message });
    }
 });
 
-router.get("/biro", async (req, res) => {
+router.get("/:id", async (req, res) => {
    try {
-      const tahun_anggaran = parseInt(req.query.tahun_anggaran) || 0;
-      const results = await prisma.tb_biro_master.findMany({
-         include: {
-            pagu_anggaran: {
-               where: { tahun_anggaran },
-            },
-         },
+      const { id } = req.params;
+
+      const results = await prisma.tb_pengaturan.findUnique({
+         where: { id: Number.parseInt(id) },
+      });
+      res.json({ results });
+   } catch (error) {
+      res.status(500).json({ error: error.message });
+   }
+});
+
+router.get("/:tahun_anggaran/biro", async (req, res) => {
+   try {
+      const { tahun_anggaran } = req.params;
+      const tahun = Number.parseInt(tahun_anggaran);
+
+      // Fetch all biros
+      const biros = await prisma.tb_biro_master.findMany();
+
+      // Fetch existing pagu for this tahun
+      const existingPagu = await prisma.tb_pagu_anggaran_biro.findMany({
+         where: { tahun_anggaran: tahun },
+         select: { id_biro: true },
       });
 
-      // Transform pagu_anggaran from array to object (take first or null)
-      const transformedResults = results.map((r) => ({
-         ...r,
-         pagu_anggaran: r.pagu_anggaran.length > 0 ? r.pagu_anggaran[0] : null,
-      }));
+      const existingIds = new Set(existingPagu.map((p) => p.id_biro));
 
-      // Check for biros with empty pagu_anggaran and insert new records
-      const birosToInsert = transformedResults.filter((r) => r.pagu_anggaran === null).map((r) => r.id);
-      if (birosToInsert.length > 0) {
-         await prisma.tb_pagu_anggaran_biro.createMany({
-            data: birosToInsert.map((id) => ({
-               id_biro: id,
-               tahun_anggaran,
-            })),
-         });
+      // Find biros without pagu
+      const missingBiros = biros.filter((biro) => !existingIds.has(biro.id));
 
-         // Refetch the results to include the newly inserted records
-         const updatedResults = await prisma.tb_biro_master.findMany({
-            include: {
-               pagu_anggaran: {
-                  where: { tahun_anggaran },
-               },
-            },
-         });
-         // Transform again
-         const transformedUpdatedResults = updatedResults.map((r) => ({
-            ...r,
-            pagu_anggaran: r.pagu_anggaran.length > 0 ? r.pagu_anggaran[0] : {},
+      // Insert missing pagu
+      if (missingBiros.length > 0) {
+         const inserts = missingBiros.map((biro) => ({
+            tahun_anggaran: tahun,
+            total_pagu: 0,
+            realisasi: 0,
+            id_biro: biro.id,
+            uploaded: new Date(),
+            user_modified: "system",
          }));
-         res.json({ results: transformedUpdatedResults });
-      } else {
-         res.json({ results: transformedResults });
+
+         await prisma.tb_pagu_anggaran_biro.createMany({
+            data: inserts,
+            skipDuplicates: true,
+         });
       }
+
+      // Fetch all results
+      const results = await prisma.tb_pagu_anggaran_biro.findMany({
+         where: { tahun_anggaran: tahun },
+         include: { biro: { include: { sub_unit: true } } },
+         orderBy: { id: "asc" },
+      });
+
+      res.json({ results });
    } catch (error) {
       res.status(500).json({ error: error.message });
    }
@@ -87,9 +104,9 @@ router.put("/biro/:id", async (req, res) => {
       const { total_pagu, user_modified } = req.body;
 
       await prisma.tb_pagu_anggaran_biro.update({
-         where: { id: parseInt(id) },
+         where: { id: Number.parseInt(id) },
          data: {
-            total_pagu: parseInt(total_pagu),
+            total_pagu: cleanRupiah(total_pagu),
             modified: new Date(),
             user_modified,
          },
@@ -100,118 +117,50 @@ router.put("/biro/:id", async (req, res) => {
    }
 });
 
-router.put("/lembaga/:id", async (req, res) => {
+router.get("/:tahun_anggaran/fakultas", async (req, res) => {
    try {
-      const { id } = req.params;
-      const { total_pagu, user_modified } = req.body;
+      const { tahun_anggaran } = req.params;
+      const tahun = Number.parseInt(tahun_anggaran);
 
-      await prisma.tb_pagu_anggaran_lembaga.update({
-         where: { id: parseInt(id) },
-         data: {
-            total_pagu: parseInt(total_pagu),
-            modified: new Date(),
-            user_modified,
-         },
-      });
-      res.json({ status: true, message: "Pagu lembaga berhasil diperbaharui" });
-   } catch (error) {
-      res.status(500).json({ error: error.message });
-   }
-});
+      // Fetch all fakultas
+      const fakultas = await prisma.tb_fakultas_master.findMany();
 
-router.get("/lembaga", async (req, res) => {
-   try {
-      const tahun_anggaran = parseInt(req.query.tahun_anggaran) || 0;
-      const results = await prisma.tb_lembaga_master.findMany({
-         include: {
-            pagu_anggaran: {
-               where: { tahun_anggaran },
-            },
-         },
+      // Fetch existing pagu for this tahun
+      const existingPagu = await prisma.tb_pagu_anggaran_fakultas.findMany({
+         where: { tahun_anggaran: tahun },
+         select: { id_fakultas: true },
       });
 
-      // Transform pagu_anggaran from array to object (take first or null)
-      const transformedResults = results.map((r) => ({
-         ...r,
-         pagu_anggaran: r.pagu_anggaran.length > 0 ? r.pagu_anggaran[0] : null,
-      }));
+      const existingIds = new Set(existingPagu.map((p) => p.id_fakultas));
 
-      // Check for lembaga with empty pagu_anggaran and insert new records
-      const lembagaToInsert = transformedResults.filter((r) => r.pagu_anggaran === null).map((r) => r.id);
-      if (lembagaToInsert.length > 0) {
-         await prisma.tb_pagu_anggaran_lembaga.createMany({
-            data: lembagaToInsert.map((id) => ({
-               id_lembaga: id,
-               tahun_anggaran,
-            })),
-         });
+      // Find fakultas without pagu
+      const missingFakultas = fakultas.filter((fakulta) => !existingIds.has(fakulta.id));
 
-         // Refetch the results to include the newly inserted records
-         const updatedResults = await prisma.tb_lembaga_master.findMany({
-            include: {
-               pagu_anggaran: {
-                  where: { tahun_anggaran },
-               },
-            },
-         });
-         // Transform again
-         const transformedUpdatedResults = updatedResults.map((r) => ({
-            ...r,
-            pagu_anggaran: r.pagu_anggaran.length > 0 ? r.pagu_anggaran[0] : {},
+      // Insert missing pagu
+      if (missingFakultas.length > 0) {
+         const inserts = missingFakultas.map((fakulta) => ({
+            tahun_anggaran: tahun,
+            total_pagu: 0,
+            realisasi: 0,
+            id_fakultas: fakulta.id,
+            uploaded: new Date(),
+            user_modified: "system",
          }));
-         res.json({ results: transformedUpdatedResults });
-      } else {
-         res.json({ results: transformedResults });
-      }
-   } catch (error) {
-      res.status(500).json({ error: error.message });
-   }
-});
 
-router.get("/fakultas", async (req, res) => {
-   try {
-      const tahun_anggaran = Number.parseInt(req.query.tahun_anggaran) || 0;
-      const results = await prisma.tb_fakultas_master.findMany({
-         include: {
-            pagu_anggaran: {
-               where: { tahun_anggaran },
-            },
-         },
-      });
-
-      // Transform pagu_anggaran from array to object (take first or null)
-      const transformedResults = results.map((r) => ({
-         ...r,
-         pagu_anggaran: r.pagu_anggaran.length > 0 ? r.pagu_anggaran[0] : null,
-      }));
-
-      // Check for fakultas with empty pagu_anggaran and insert new records
-      const fakultasToInsert = transformedResults.filter((r) => r.pagu_anggaran === null).map((r) => r.id);
-      if (fakultasToInsert.length > 0) {
          await prisma.tb_pagu_anggaran_fakultas.createMany({
-            data: fakultasToInsert.map((id) => ({
-               id_fakultas: id,
-               tahun_anggaran,
-            })),
+            data: inserts,
+            skipDuplicates: true,
          });
-
-         // Refetch the results to include the newly inserted records
-         const updatedResults = await prisma.tb_fakultas_master.findMany({
-            include: {
-               pagu_anggaran: {
-                  where: { tahun_anggaran },
-               },
-            },
-         });
-         // Transform again
-         const transformedUpdatedResults = updatedResults.map((r) => ({
-            ...r,
-            pagu_anggaran: r.pagu_anggaran.length > 0 ? r.pagu_anggaran[0] : {},
-         }));
-         res.json({ results: transformedUpdatedResults });
-      } else {
-         res.json({ results: transformedResults });
       }
+
+      // Fetch all results
+      const results = await prisma.tb_pagu_anggaran_fakultas.findMany({
+         where: { tahun_anggaran: tahun },
+         include: { fakultas: { include: { sub_unit: true } } },
+         orderBy: { id: "asc" },
+      });
+
+      res.json({ results });
    } catch (error) {
       res.status(500).json({ error: error.message });
    }
@@ -223,9 +172,9 @@ router.put("/fakultas/:id", async (req, res) => {
       const { total_pagu, user_modified } = req.body;
 
       await prisma.tb_pagu_anggaran_fakultas.update({
-         where: { id: parseInt(id) },
+         where: { id: Number.parseInt(id) },
          data: {
-            total_pagu: parseInt(total_pagu),
+            total_pagu: cleanRupiah(total_pagu),
             modified: new Date(),
             user_modified,
          },
@@ -236,69 +185,211 @@ router.put("/fakultas/:id", async (req, res) => {
    }
 });
 
-router.put("/prodi/:id", async (req, res) => {
+router.get("/:tahun_anggaran/upt", async (req, res) => {
    try {
-      const { id } = req.params;
-      const { total_pagu, user_modified } = req.body;
+      const { tahun_anggaran } = req.params;
+      const tahun = Number.parseInt(tahun_anggaran);
 
-      await prisma.tb_pagu_anggaran_prodi.update({
-         where: { id: parseInt(id) },
-         data: {
-            total_pagu: parseInt(total_pagu),
-            modified: new Date(),
-            user_modified,
-         },
+      // Fetch all upts
+      const upts = await prisma.tb_upt_master.findMany();
+
+      // Fetch existing pagu for this tahun
+      const existingPagu = await prisma.tb_pagu_anggaran_upt.findMany({
+         where: { tahun_anggaran: tahun },
+         select: { id_upt: true },
       });
-      res.json({ status: true, message: "Pagu prodi berhasil diperbaharui" });
+
+      const existingIds = new Set(existingPagu.map((p) => p.id_upt));
+
+      // Find upts without pagu
+      const missingUpts = upts.filter((upt) => !existingIds.has(upt.id));
+
+      // Insert missing pagu
+      if (missingUpts.length > 0) {
+         const inserts = missingUpts.map((upt) => ({
+            tahun_anggaran: tahun,
+            total_pagu: 0,
+            realisasi: 0,
+            id_upt: upt.id,
+            uploaded: new Date(),
+            user_modified: "system",
+         }));
+
+         await prisma.tb_pagu_anggaran_upt.createMany({
+            data: inserts,
+            skipDuplicates: true,
+         });
+      }
+
+      // Fetch all results
+      const results = await prisma.tb_pagu_anggaran_upt.findMany({
+         where: { tahun_anggaran: tahun },
+         include: { upt: { include: { sub_unit: true } } },
+         orderBy: { id: "asc" },
+      });
+
+      res.json({ results });
    } catch (error) {
       res.status(500).json({ error: error.message });
    }
 });
 
-router.get("/prodi", async (req, res) => {
+router.put("/upt/:id", async (req, res) => {
    try {
-      const tahun_anggaran = parseInt(req.query.tahun_anggaran) || 0;
-      const results = await prisma.tb_prodi_master.findMany({
-         include: {
-            pagu_anggaran: {
-               where: { tahun_anggaran },
-            },
+      const { id } = req.params;
+      const { total_pagu, user_modified } = req.body;
+
+      await prisma.tb_pagu_anggaran_upt.update({
+         where: { id: Number.parseInt(id) },
+         data: {
+            total_pagu: cleanRupiah(total_pagu),
+            modified: new Date(),
+            user_modified,
          },
       });
+      res.json({ status: true, message: "Pagu UPT berhasil diperbaharui" });
+   } catch (error) {
+      res.status(500).json({ error: error.message });
+   }
+});
 
-      // Transform pagu_anggaran from array to object (take first or null)
-      const transformedResults = results.map((r) => ({
-         ...r,
-         pagu_anggaran: r.pagu_anggaran.length > 0 ? r.pagu_anggaran[0] : null,
-      }));
+router.get("/:tahun_anggaran/lembaga", async (req, res) => {
+   try {
+      const { tahun_anggaran } = req.params;
+      const tahun = Number.parseInt(tahun_anggaran);
 
-      // Check for prodi with empty pagu_anggaran and insert new records
-      const prodiToInsert = transformedResults.filter((r) => r.pagu_anggaran === null).map((r) => r.id);
-      if (prodiToInsert.length > 0) {
-         await prisma.tb_pagu_anggaran_prodi.createMany({
-            data: prodiToInsert.map((id) => ({
-               id_prodi: id,
-               tahun_anggaran,
-            })),
+      // Fetch all lembagas
+      const lembagas = await prisma.tb_lembaga_master.findMany();
+
+      // Fetch existing pagu for this tahun
+      const existingPagu = await prisma.tb_pagu_anggaran_lembaga.findMany({
+         where: { tahun_anggaran: tahun },
+         select: { id_lembaga: true },
+      });
+
+      const existingIds = new Set(existingPagu.map((p) => p.id_lembaga));
+
+      // Find lembagas without pagu
+      const missingLembagas = lembagas.filter((lembaga) => !existingIds.has(lembaga.id));
+
+      // Insert missing pagu
+      if (missingLembagas.length > 0) {
+         const inserts = missingLembagas.map((lembaga) => ({
+            tahun_anggaran: tahun,
+            total_pagu: 0,
+            realisasi: 0,
+            id_lembaga: lembaga.id,
+            uploaded: new Date(),
+            user_modified: "system",
+         }));
+
+         await prisma.tb_pagu_anggaran_lembaga.createMany({
+            data: inserts,
+            skipDuplicates: true,
          });
+      }
 
-         // Refetch the results to include the newly inserted records
-         const updatedResults = await prisma.tb_prodi_master.findMany({
-            include: {
-               pagu_anggaran: {
-                  where: { tahun_anggaran },
+      // Fetch all results
+      const results = await prisma.tb_pagu_anggaran_lembaga.findMany({
+         where: { tahun_anggaran: tahun },
+         include: {
+            lembaga: {
+               include: {
+                  sub_unit: true,
                },
             },
-         });
-         // Transform again
-         const transformedUpdatedResults = updatedResults.map((r) => ({
-            ...r,
-            pagu_anggaran: r.pagu_anggaran.length > 0 ? r.pagu_anggaran[0] : {},
+         },
+         orderBy: { id: "asc" },
+      });
+
+      res.json({ results });
+   } catch (error) {
+      res.status(500).json({ error: error.message });
+   }
+});
+
+router.put("/lembaga/:id", async (req, res) => {
+   try {
+      const { id } = req.params;
+      const { total_pagu, user_modified } = req.body;
+
+      await prisma.tb_pagu_anggaran_lembaga.update({
+         where: { id: Number.parseInt(id) },
+         data: {
+            total_pagu: cleanRupiah(total_pagu),
+            modified: new Date(),
+            user_modified,
+         },
+      });
+      res.json({ status: true, message: "Pagu lembaga berhasil diperbaharui" });
+   } catch (error) {
+      res.status(500).json({ error: error.message });
+   }
+});
+
+router.get("/:tahun_anggaran/sub-unit", async (req, res) => {
+   try {
+      const { tahun_anggaran } = req.params;
+      const tahun = Number.parseInt(tahun_anggaran);
+
+      // Fetch all
+      const subUnits = await prisma.tb_sub_unit.findMany();
+
+      // Fetch existing pagu for this tahun
+      const existingPagu = await prisma.tb_pagu_sub_unit.findMany({
+         where: { tahun_anggaran: tahun },
+         select: { id_sub_unit: true },
+      });
+
+      const existingIds = new Set(existingPagu.map((p) => p.id_sub_unit));
+
+      // Find subUnits without pagu
+      const missingSubUnits = subUnits.filter((row) => !existingIds.has(row.id));
+
+      // Insert missing pagu
+      if (missingSubUnits.length > 0) {
+         const inserts = missingSubUnits.map((row) => ({
+            tahun_anggaran: tahun,
+            total_pagu: 0,
+            realisasi: 0,
+            id_sub_unit: row.id,
+            uploaded: new Date(),
+            user_modified: "system",
          }));
-         res.json({ results: transformedUpdatedResults });
-      } else {
-         res.json({ results: transformedResults });
+
+         await prisma.tb_pagu_sub_unit.createMany({
+            data: inserts,
+            skipDuplicates: true,
+         });
       }
+
+      // Fetch all results
+      const results = await prisma.tb_pagu_sub_unit.findMany({
+         where: { tahun_anggaran: tahun },
+         include: { sub_unit: true },
+         orderBy: { id: "asc" },
+      });
+
+      res.json({ results });
+   } catch (error) {
+      res.status(500).json({ error: error.message });
+   }
+});
+
+router.put("/sub-unit/:id", async (req, res) => {
+   try {
+      const { id } = req.params;
+      const { total_pagu, user_modified } = req.body;
+
+      await prisma.tb_pagu_sub_unit.update({
+         where: { id: Number.parseInt(id) },
+         data: {
+            total_pagu: cleanRupiah(total_pagu),
+            modified: new Date(),
+            user_modified,
+         },
+      });
+      res.json({ status: true, message: "Pagu sub unit berhasil diperbaharui" });
    } catch (error) {
       res.status(500).json({ error: error.message });
    }

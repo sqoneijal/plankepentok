@@ -1,83 +1,96 @@
-import { Button } from "@/components/ui/button";
-import { cleanRupiah, getValue } from "@/helpers/init";
-import { useHeaderButton, useTablePagination } from "@/hooks/store";
-import { queryClient } from "@/lib/queryClient";
-import { useApiQuery, usePostMutation } from "@/lib/useApi";
-import type { Lists } from "@/types/init";
+import { useHeaderButton } from "@/hooks/store";
+import { useApiQuery } from "@/hooks/useApiQuery";
+import { usePostMutation } from "@/hooks/usePostMutation";
+import { usePutMutation } from "@/hooks/usePutMutation";
+import { LinkButton } from "@/lib/helpers";
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router";
+import { useNavigate } from "react-router";
 import { toast } from "sonner";
 
-export function useActions() {
-   const navigate = useNavigate();
+export type FormData = Record<string, string>;
 
-   const { pagination } = useTablePagination();
+type ResponseType = {
+   status?: boolean;
+   message?: string;
+   errors?: FormData;
+};
+
+const handleSubmit = (
+   mutate: (data: FormData, options: { onSuccess: (response: ResponseType) => void; onError: (error: Error) => void }) => void,
+   formData: FormData,
+   setErrors: (errors: FormData) => void,
+   navigate: (path: string) => void
+) => {
+   mutate(formData, {
+      onSuccess: (response: ResponseType) => {
+         setErrors(response?.errors || {});
+         if (response?.status) {
+            toast.success(response?.message);
+            navigate("/pengaturan");
+            return;
+         }
+         toast.error(response?.message);
+      },
+      onError: (error: Error) => {
+         toast.error(`Gagal: ${error?.message}`);
+      },
+   });
+};
+
+export function useInitPage() {
    const { setButton } = useHeaderButton();
 
-   const limit = pagination.pageSize;
-   const offset = pagination.pageIndex * pagination.pageIndex;
-
-   const [formData, setFormData] = useState<Lists>({});
-   const [errors, setErrors] = useState<Lists>({});
+   const [formData, setFormData] = useState<FormData>({});
+   const [errors, setErrors] = useState<FormData>({});
 
    useEffect(() => {
-      setButton(
-         <Button variant="outline" size="sm" onClick={() => navigate("/pengaturan")}>
-            Batal
-         </Button>
-      );
+      setButton(<LinkButton label="Batal" url="/pengaturan" />);
       return () => {
          setButton(<div />);
       };
-   }, [setButton, navigate]);
+   }, [setButton]);
 
-   const submit = usePostMutation<{ errors: Lists }>("/pengaturan/actions");
-
-   const handleSubmit = (e: React.FormEvent) => {
-      e.preventDefault();
-
-      submit.mutate(
-         {
-            ...formData,
-            total_pagu: cleanRupiah(getValue(formData, "total_pagu")),
-         },
-         {
-            onSuccess: (data) => {
-               setErrors(data?.errors ?? {});
-               if (data?.status) {
-                  queryClient.refetchQueries({
-                     queryKey: ["pengaturan", limit, offset],
-                  });
-                  toast.success(data?.message);
-                  navigate("/pengaturan");
-                  return;
-               }
-
-               toast.error(data?.message);
-            },
-            onError: (error: Error) => {
-               toast.error(error.message);
-            },
-         }
-      );
-   };
-
-   return { handleSubmit, submit, formData, setFormData, errors };
+   return { formData, setFormData, errors, setErrors };
 }
 
-export function useEditData() {
-   const { id_pengaturan } = useParams();
-
-   const { data, isLoading, error } = useApiQuery<Lists>({
-      queryKey: ["pengaturan", "actions", id_pengaturan],
-      url: `/pengaturan/actions/${id_pengaturan}`,
-      options: { enabled: !!id_pengaturan },
+export function useGetDetailData(id?: string) {
+   const { data, isLoading, error } = useApiQuery({
+      url: `/pengaturan/${id}`,
+      options: { enabled: !!id },
    });
 
    if (error) {
       toast.error(error?.message);
-      queryClient.removeQueries({ queryKey: ["pengaturan", "actions", id_pengaturan] });
    }
 
-   return { data, isLoading, error };
+   const content = data?.results ?? {};
+
+   return { content, isLoading };
+}
+
+export function useCreateData(formData: FormData, setErrors: (errors: FormData) => void) {
+   const { mutate, isPending } = usePostMutation<FormData, unknown>("/pengaturan", (data) => ({ ...data }), [[`/pengaturan`]]);
+
+   const navigate = useNavigate();
+
+   const onSubmit = () => {
+      handleSubmit(mutate, formData, setErrors, navigate);
+   };
+
+   return { onSubmit, isPending };
+}
+
+export function useUpdateData(id: string | undefined, formData: FormData, setErrors: (errors: FormData) => void) {
+   const navigate = useNavigate();
+
+   const { mutate, isPending } = usePutMutation<FormData, unknown>(`/pengaturan/${id}`, (data) => ({ id, ...data }), [
+      [`/pengaturan/${id}`],
+      [`/pengaturan`],
+   ]);
+
+   const onSubmit = () => {
+      handleSubmit(mutate, formData, setErrors, navigate);
+   };
+
+   return { onSubmit, isPending };
 }

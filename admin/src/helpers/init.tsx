@@ -5,7 +5,7 @@ import { Loader2Icon } from "lucide-react";
 export const getValue = (original: Lists, field: string) => {
    const val = original?.[field];
    if (val == null) return "";
-   if (typeof val === "boolean") return val ? "t" : "f";
+   if (typeof val === "boolean") return val ? "true" : "false";
    if (typeof val === "string") return val;
    return "";
 };

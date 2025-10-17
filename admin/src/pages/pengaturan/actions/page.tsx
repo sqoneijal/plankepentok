@@ -1,30 +1,38 @@
-import { FormSelect, FormText } from "@/components/forms";
-import { Button } from "@/components/ui/button";
-import { btn_loading, formatRupiah, getValue, getYearOptions } from "@/helpers/init";
+import { LoadingSkeleton } from "@/components/loading-skeleton";
+import { covertToSTring, getValue, getYearOptions } from "@/helpers/init";
+import { FormInput, FormSelect, SubmitButton } from "@/lib/helpers";
 import { useEffect } from "react";
-import { useActions, useEditData } from "./init";
+import { useParams } from "react-router";
+import { useCreateData, useGetDetailData, useInitPage, useUpdateData, type FormData } from "./init";
 
 export default function Page() {
-   const { data, isLoading } = useEditData();
-   const { handleSubmit, submit, formData, setFormData, errors } = useActions();
+   const { id } = useParams();
+   const isEdit = !!id;
+
+   const { formData, setFormData, errors, setErrors } = useInitPage();
+   const { content, isLoading } = useGetDetailData(id);
+
+   const createData = useCreateData(formData, setErrors);
+   const updateData = useUpdateData(id, formData, setErrors);
+
+   const { onSubmit, isPending } = isEdit ? updateData : createData;
+
+   const handleSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
+      onSubmit();
+   };
 
    useEffect(() => {
-      if (data?.data) {
-         setFormData({ ...data?.data, total_pagu: formatRupiah(data?.data?.total_pagu || "") });
+      if (!isLoading && Object.keys(content).length > 0) {
+         const converted = covertToSTring(content);
+         setFormData({ ...(converted as FormData) });
       }
       return () => {};
       // eslint-disable-next-line react-hooks/exhaustive-deps
-   }, [data]);
+   }, [isLoading, content]);
 
    if (isLoading) {
-      return (
-         <div className="min-h-screen flex items-center justify-center from-slate-50 to-slate-100">
-            <div className="text-center">
-               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4" />
-               <p className="text-gray-600 font-medium">Memuat data...</p>
-            </div>
-         </div>
-      );
+      return <LoadingSkeleton />;
    }
 
    return (
@@ -35,40 +43,38 @@ export default function Page() {
                   <div className="col-12 col-md-2">
                      <FormSelect
                         label="Tahun Anggaran"
-                        name="tahun_anggaran"
-                        options={getYearOptions()}
-                        onValueChange={(value) => setFormData((prev) => ({ ...prev, tahun_anggaran: value }))}
                         value={getValue(formData, "tahun_anggaran")}
+                        onChange={(value) => setFormData({ ...formData, tahun_anggaran: value })}
+                        name="tahun_anggaran"
                         errors={errors}
-                        disabled={!!getValue(formData, "id")}
+                        options={getYearOptions()}
                      />
                   </div>
                   <div className="col-12 col-md-3">
-                     <FormText
-                        label="Total Pagu Anggaran"
-                        name="total_pagu"
-                        onChange={(value) => setFormData((prev) => ({ ...prev, total_pagu: formatRupiah(value) }))}
+                     <FormInput
+                        label="Total Pagu"
                         value={getValue(formData, "total_pagu")}
+                        onChange={(value) => setFormData({ ...formData, total_pagu: value })}
+                        name="total_pagu"
                         errors={errors}
+                        apakahFormatRupiah={true}
                      />
                   </div>
                   <div className="col-12 col-md-2">
                      <FormSelect
                         label="Status"
-                        name="is_aktif"
-                        options={[
-                           { value: "t", label: "Aktif" },
-                           { value: "f", label: "Tidak Aktif" },
-                        ]}
-                        onValueChange={(value) => setFormData((prev) => ({ ...prev, is_aktif: value }))}
                         value={getValue(formData, "is_aktif")}
+                        onChange={(value) => setFormData({ ...formData, is_aktif: value })}
+                        name="is_aktif"
                         errors={errors}
+                        options={[
+                           { value: "true", label: "Aktif" },
+                           { value: "false", label: "Tidak Aktif" },
+                        ]}
                      />
                   </div>
                </div>
-               <Button type="submit" size="sm" disabled={submit.isPending}>
-                  {submit.isPending ? btn_loading() : "Simpan"}
-               </Button>
+               <SubmitButton label={isEdit ? "Perbarui" : "Simpan"} isLoading={isPending} />
             </form>
          </div>
       </div>

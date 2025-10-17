@@ -57,8 +57,8 @@ export const getColumns = (): Array<ColumnDef<RowData, unknown>> => [
       header: "",
       cell: ({ row: { original } }) => (
          <>
-            <LinkButton label={<SquarePen />} url={`/referensi/unit-satuan/actions/${original.id}`} type="edit" />
-            <ConfirmDialog url={`/referensi/unit-satuan`} id={original.id as string | number} refetchKey={[["/referensi/unit-satuan"]]} />
+            <LinkButton label={<SquarePen />} url={`/usulan-kegiatan/actions/${original.id}`} type="edit" />
+            <ConfirmDialog url={`/usulan-kegiatan`} id={original.id as string | number} refetchKey={[["/usulan-kegiatan"]]} />
          </>
       ),
    }),

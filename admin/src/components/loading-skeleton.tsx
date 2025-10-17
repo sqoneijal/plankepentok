@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TableCell, TableRow } from "@/components/ui/table";
 
 function LoadingSkeletonEditContent() {
    return (
@@ -165,12 +166,50 @@ function FormSubUnitSkeleton() {
    );
 }
 
+function InfoPaguUniversitasSkeleton() {
+   return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+         {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i}>
+               <Skeleton className="h-4 w-3/4 mb-2" />
+               <Skeleton className="h-6 w-full" />
+            </div>
+         ))}
+      </div>
+   );
+}
+
+function PaguTableSkeleton() {
+   return (
+      <>
+         {Array.from({ length: 5 }).map((_, i) => (
+            <TableRow key={i}>
+               <TableCell colSpan={2} className="font-medium p-1 pl-2 px-3 py-1 text-sm text-gray-900 h-8 whitespace-normal break-words">
+                  <Skeleton className="h-4 w-full" />
+               </TableCell>
+               <TableCell className="font-medium p-1 pl-2 px-3 py-1 text-sm text-gray-900 h-8 whitespace-normal break-words">
+                  <Skeleton className="h-4 w-full" />
+               </TableCell>
+               <TableCell className="font-medium p-1 pl-2 px-3 py-1 text-sm text-gray-900 h-8 whitespace-normal break-words">
+                  <Skeleton className="h-4 w-full" />
+               </TableCell>
+               <TableCell className="font-medium p-1 pl-2 px-3 py-1 text-sm text-gray-900 h-8 whitespace-normal break-words">
+                  <Skeleton className="h-4 w-full" />
+               </TableCell>
+            </TableRow>
+         ))}
+      </>
+   );
+}
+
 export {
    AppHeaderSkeleton,
    AppSidebarSkeleton,
    FormInformasiUsulanSkeleton,
    FormRencanaAnggaranSkeleton,
    FormSubUnitSkeleton,
+   InfoPaguUniversitasSkeleton,
    LoadingSkeleton,
    LoadingSkeletonEditContent,
+   PaguTableSkeleton,
 };

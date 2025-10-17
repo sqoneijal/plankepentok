@@ -7,8 +7,8 @@ const prisma = new PrismaClient();
 // GET /api/unir-kerja/biro - Get all biro
 router.get("/", async (req, res) => {
    try {
-      const limit = parseInt(req.query.limit) || 25;
-      const offset = parseInt(req.query.offset) || 0;
+      const limit = Number.parseInt(req.query.limit) || 25;
+      const offset = Number.parseInt(req.query.offset) || 0;
       const search = req.query.search || "";
 
       const where = search
@@ -35,7 +35,7 @@ router.get("/:id", async (req, res) => {
    try {
       const { id } = req.params;
       const results = await prisma.tb_biro_master.findUnique({
-         where: { id: parseInt(id) },
+         where: { id: Number.parseInt(id) },
       });
       if (!results) {
          return res.json({ status: false, error: "Biro tidak ditemukan" });
@@ -91,7 +91,7 @@ router.put("/:id", async (req, res) => {
       }
 
       await prisma.tb_biro_master.update({
-         where: { id: parseInt(id) },
+         where: { id: Number.parseInt(id) },
          data: {
             nama,
             modified: new Date(),
@@ -113,7 +113,7 @@ router.delete("/:id", async (req, res) => {
    try {
       const { id } = req.params;
       await prisma.tb_biro_master.delete({
-         where: { id: parseInt(id) },
+         where: { id: Number.parseInt(id) },
       });
       res.json({ status: true });
    } catch (error) {

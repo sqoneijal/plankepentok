@@ -1,37 +1,34 @@
-import { Button } from "@/components/ui/button";
 import { useHeaderButton, useTablePagination } from "@/hooks/store";
-import { useApiQuery } from "@/lib/useApi";
-import type { Lists } from "@/types/init";
+import { useApiQuery } from "@/hooks/useApiQuery";
+import { LinkButton } from "@/lib/helpers";
 import { useEffect } from "react";
-import { useNavigate } from "react-router";
+import { toast } from "sonner";
 
-export function usePaguAnggaranFakultas() {
-   const { pagination } = useTablePagination();
+export function useInitPage() {
    const { setButton } = useHeaderButton();
-
-   const navigate = useNavigate();
-   const limit = pagination.pageSize;
-   const offset = pagination.pageSize * pagination.pageIndex;
+   const { pagination } = useTablePagination();
 
    useEffect(() => {
-      setButton(
-         <Button variant="outline" size="sm" onClick={() => navigate("/pengaturan/actions")}>
-            Tambah Pengaturan
-         </Button>
-      );
+      setButton(<LinkButton label="Tambah Pengaturan" url="/pengaturan/actions" />);
       return () => {
          setButton(<div />);
       };
-   }, [setButton, navigate]);
+   }, [setButton]);
 
-   const { data, isLoading, error } = useApiQuery<{
-      results: Array<Lists>;
-      total: number;
-   }>({
-      queryKey: ["pengaturan", limit, offset],
+   const limit = pagination?.pageSize;
+   const offset = pagination?.pageIndex * pagination.pageSize;
+
+   const { data, isLoading, error } = useApiQuery({
       url: "/pengaturan",
       params: { limit, offset },
    });
 
-   return { data, isLoading, error, navigate, limit, offset };
+   if (error) {
+      toast.error(error?.message);
+   }
+
+   const results = Array.isArray(data?.results) ? data?.results : [];
+   const total = data?.total || 0;
+
+   return { results, total, isLoading };
 }

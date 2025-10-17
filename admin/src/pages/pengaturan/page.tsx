@@ -1,23 +1,9 @@
 import Table from "@/components/table";
-import { queryClient } from "@/lib/queryClient";
-import { toast } from "sonner";
 import { getColumns } from "./column";
-import { usePaguAnggaranFakultas } from "./init";
+import { useInitPage } from "./init";
 
 export default function Page() {
-   const { data, isLoading, error, navigate, limit, offset } = usePaguAnggaranFakultas();
+   const { results, total, isLoading } = useInitPage();
 
-   if (error) {
-      toast.error(error?.message);
-      queryClient.removeQueries({ queryKey: ["pengaturan", limit, offset] });
-   }
-
-   return (
-      <Table
-         columns={getColumns({ navigate, limit, offset })}
-         data={Array.isArray(data?.results) ? data?.results : []}
-         total={data?.total ?? 0}
-         isLoading={isLoading}
-      />
-   );
+   return <Table columns={getColumns()} data={results} total={total} isLoading={isLoading} />;
 }
