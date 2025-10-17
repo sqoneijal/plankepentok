@@ -1,0 +1,16 @@
+Nama Unit Kerja.xls
+backend/node_modules
+backend/prisma
+backend/.env
+api/.env
+api/vendor
+api/system
+api/writable
+.vscode
+api/app/Config/Database.php
+admin/node_modules
+admin/dist
+admin/.env.development
+admin/.env.production
+admin/prod.js
+admin/public/tinymce

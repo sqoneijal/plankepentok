@@ -1,0 +1,19 @@
+{
+   "devDependencies": {
+      "nodemon": "^3.1.10",
+      "prisma": "^6.17.1"
+   },
+   "scripts": {
+      "dev": "nodemon src/server.js",
+      "pull": "npx prisma db pull && npx prisma generate",
+      "generate": "npx prisma generate"
+   },
+   "dependencies": {
+      "@prisma/client": "^6.17.1",
+      "@prisma/extension-accelerate": "^2.0.2",
+      "cors": "^2.8.5",
+      "dotenv": "^16.3.1",
+      "express": "^4.18.2",
+      "zod": "^4.0.0"
+   }
+}

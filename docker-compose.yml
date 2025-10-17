@@ -1,0 +1,43 @@
+services:
+   perencanaan-api:
+      container_name: perencanaan-api
+      image: perencanaan-api
+      build:
+         context: ./api
+         dockerfile: ./Dockerfile
+      ports:
+         - 1017:80
+      volumes:
+         - ./api:/var/www/html
+      restart: always
+
+   perencanaan-admin:
+      container_name: perencanaan-admin
+      image: perencanaan-admin
+      build:
+         context: ./admin
+         dockerfile: ./Dockerfile
+      volumes:
+         - ./admin/dist:/usr/share/nginx/html
+      ports:
+         - "1018:80"
+      environment:
+         - NODE_ENV=production
+      restart: always
+      depends_on:
+         - perencanaan-api
+
+   prisma-perencanaan:
+      container_name: prisma-perencanaan
+      image: prisma-perencanaan
+      build:
+         context: ./prisma
+         dockerfile: ./Dockerfile
+      volumes:
+         - ./prisma:/app
+         - /app/node_modules
+      restart: always
+      ports:
+         - "1019:3000"
+      env_file:
+         - ./prisma/.env

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+   <head>
+      <meta charset="UTF-8" />
+      <link rel="icon" href="/logo-uin-150x150.png" sizes="32x32" />
+      <link rel="icon" href="/logo-uin-150x150.png" sizes="192x192" />
+      <link rel="apple-touch-icon" href="/logo-uin-150x150.png" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+      <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300..700&family=Geist:wght@100..900&display=swap" rel="stylesheet" />
+      <title>Perencanaan</title>
+      <style>
+         @keyframes shake {
+            0%,
+            100% {
+               transform: translateX(0);
+            }
+            25% {
+               transform: translateX(-3px);
+            }
+            75% {
+               transform: translateX(3px);
+            }
+         }
+         .animate-shake {
+            animation: shake 0.4s ease-in-out;
+         }
+      </style>
+   </head>
+   <body
+      class="text-foreground group/body overscroll-none font-sans antialiased [--footer-height:calc(var(--spacing)*14)] [--header-height:calc(var(--spacing)*14)] xl:[--footer-height:calc(var(--spacing)*24)] theme-scaled">
+      <div id="root"></div>
+      <script type="module" src="/src/main.tsx"></script>
+   </body>
+</html>

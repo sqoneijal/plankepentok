@@ -1,0 +1,268 @@
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
+import { Textarea } from "@/components/ui/textarea";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { ChevronDownIcon } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router";
+import { v4 } from "uuid";
+import { cn } from "./utils";
+
+export function LinkButton({ label, url, type }: Readonly<{ label: React.ReactNode; url?: string; type?: string }>) {
+   return (
+      <Button variant="outline" asChild className={cn(type === "edit" && "size-6 ", type === "delete" && "size-6")}>
+         <Link to={url || ""} className="dark:text-foreground">
+            {label}
+         </Link>
+      </Button>
+   );
+}
+
+export function EditButton({ label, onClick }: Readonly<{ label: React.ReactNode; onClick?: () => void }>) {
+   return (
+      <Button variant="outline" asChild className={cn("size-6")} onClick={onClick}>
+         <span className="dark:text-foreground">{label}</span>
+      </Button>
+   );
+}
+
+export function SubmitButton({ label, isLoading = false }: Readonly<{ label: string; isLoading?: boolean }>) {
+   return (
+      <Button type="submit" disabled={isLoading}>
+         {isLoading && <Spinner />} {label}
+      </Button>
+   );
+}
+
+export function FormInput({
+   label,
+   type = "text",
+   divClassName,
+   className,
+   errors,
+   onChange,
+   value,
+   name,
+   withLabel = true,
+   disabled = false,
+   apakahFormatRupiah = false,
+}: Readonly<{
+   disabled?: boolean;
+   type?: string;
+   label?: string;
+   divClassName?: string;
+   errors?: Record<string, string | null>;
+   onChange?: (value: string) => void;
+   value?: string;
+   name?: string;
+   className?: string;
+   withLabel?: boolean;
+   apakahFormatRupiah?: boolean;
+}>) {
+   const id = v4();
+   const errorMessage = name ? errors?.[name] : undefined;
+   const inputRef = useRef<HTMLInputElement | null>(null);
+
+   const formatRupiah = (value: string, input: HTMLInputElement | null) => {
+      if (!input) return value;
+
+      const selectionStart = input.selectionStart || 0;
+      const rawValue = value.replaceAll(/\D/g, "");
+
+      // Format angka ke ribuan dengan titik
+      const formattedValue = rawValue.replaceAll(/\B(?=(\d{3})+(?!\d))/g, ".");
+
+      // Hitung perbedaan panjang string sebelum dan sesudah format
+      const diff = formattedValue.length - rawValue.length;
+
+      // Set posisi kursor kembali ke posisi semula
+      requestAnimationFrame(() => {
+         const newPos = Math.max(selectionStart + diff, 0);
+         input.setSelectionRange(newPos, newPos);
+      });
+
+      return formattedValue;
+   };
+
+   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      let val = e.target.value;
+
+      if (apakahFormatRupiah) {
+         val = formatRupiah(val, inputRef.current);
+      }
+
+      onChange?.(val);
+   };
+
+   return (
+      <div className={cn(divClassName)}>
+         {withLabel && (
+            <Label htmlFor={id} className="mb-2">
+               {label}
+            </Label>
+         )}
+         <Input
+            ref={inputRef}
+            disabled={disabled}
+            type={type}
+            id={id}
+            placeholder={label}
+            value={apakahFormatRupiah ? formatRupiah(value || "", inputRef.current) : value || ""}
+            className={cn(errorMessage && "border-red-500", className)}
+            onChange={handleChange}
+         />
+         {errorMessage && <p className="text-red-500 text-sm mt-1">{errorMessage}</p>}
+      </div>
+   );
+}
+
+export function FormSelect({
+   divClassName,
+   label,
+   name,
+   onChange,
+   value,
+   errors,
+   options,
+   withLabel = true,
+}: Readonly<{
+   onChange?: (value: string) => void;
+   divClassName?: string;
+   label?: string;
+   name?: string;
+   value?: string;
+   errors?: Record<string, string | null>;
+   options: Array<Record<string, string>>;
+   withLabel?: boolean;
+}>) {
+   const id = v4();
+   const errorMessage = name ? errors?.[name] : undefined;
+
+   return (
+      <div className={cn(divClassName)}>
+         {withLabel && (
+            <Label htmlFor={id} className="mb-2">
+               {label}
+            </Label>
+         )}
+         <Select key={value || ""} onValueChange={(value) => onChange?.(value)} value={value || ""}>
+            <SelectTrigger className={cn("w-full", errorMessage && "border-red-500")}>
+               <SelectValue placeholder={label} />
+            </SelectTrigger>
+            <SelectContent>
+               {options?.map((row: Record<string, string>) => (
+                  <SelectItem value={row.value} key={`${row.value}-${row.label.toLowerCase()}`}>
+                     {row.tooltipContent ? (
+                        <Tooltip>
+                           <TooltipTrigger>{row.label}</TooltipTrigger>
+                           <TooltipContent>{row.tooltipContent}</TooltipContent>
+                        </Tooltip>
+                     ) : (
+                        row.label
+                     )}
+                  </SelectItem>
+               ))}
+            </SelectContent>
+         </Select>
+         {errorMessage && <p className="text-red-500 text-sm mt-1">{errorMessage}</p>}
+      </div>
+   );
+}
+
+export function FormTextarea({
+   label,
+   divClassName,
+   errors,
+   onChange,
+   value,
+   name,
+}: Readonly<{
+   label?: string;
+   divClassName?: string;
+   errors?: Record<string, string | null>;
+   onChange?: (value: string) => void;
+   value?: string;
+   name?: string;
+}>) {
+   const id = v4();
+   const errorMessage = name ? errors?.[name] : undefined;
+
+   return (
+      <div className={cn(divClassName)}>
+         <Label htmlFor={id} className="mb-2">
+            {label}
+         </Label>
+         <Textarea
+            id={id}
+            placeholder={label}
+            value={value || ""}
+            className={cn(errorMessage && "border-red-500")}
+            onChange={({ target: { value } }) => onChange?.(value)}
+         />
+         {errorMessage && <p className="text-red-500 text-sm mt-1">{errorMessage}</p>}
+      </div>
+   );
+}
+
+export function FormDatePicker({
+   label,
+   name,
+   errors,
+   onChange,
+   value,
+   divClassName,
+}: Readonly<{
+   errors: Record<string, string | null>;
+   name: string;
+   label?: string;
+   onChange?: (value: Date | string | undefined) => void;
+   value?: string;
+   divClassName?: string;
+}>) {
+   const id = v4();
+
+   const [open, setOpen] = useState(false);
+   const [date, setDate] = useState<Date | undefined>(value ? new Date(value) : undefined);
+
+   useEffect(() => {
+      setDate(value ? new Date(value) : undefined);
+   }, [value]);
+
+   return (
+      <div className={cn(divClassName)}>
+         <Label htmlFor={id} className="mb-2">
+            {label}
+         </Label>
+         <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+               <Button
+                  variant="outline"
+                  id={id}
+                  size="sm"
+                  className={cn("w-full justify-between font-normal h-9", errors?.[name] ? "border border-red-500" : "")}>
+                  {date ? date.toLocaleDateString() : <span className="opacity-80 font-light">Pilih tanggal</span>}
+                  <ChevronDownIcon />
+               </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+               <Calendar
+                  mode="single"
+                  selected={date}
+                  captionLayout="dropdown"
+                  onSelect={(date) => {
+                     setDate(date);
+                     setOpen(false);
+                     onChange?.(date);
+                  }}
+               />
+            </PopoverContent>
+         </Popover>
+         {errors?.[name] && <p className="text-red-500 text-sm mt-1">{errors?.[name]}</p>}
+      </div>
+   );
+}
