@@ -1,9 +1,10 @@
 import { InfoPaguUniversitasSkeleton, PaguTableSkeleton } from "@/components/loading-skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useGetQueryDetail } from "@/lib/utils";
 import { lazy, Suspense } from "react";
 import { useParams } from "react-router";
-import { tableHeadClass, useInitPage, usePaguBiro, usePaguFakultas, usePaguLembaga, usePaguSubUnit, usePaguUPT } from "./init";
+import { tableHeadClass, usePaguBiro, usePaguFakultas, usePaguLembaga, usePaguSubUnit, usePaguUPT } from "./init";
 
 const InfoPaguUniversitas = lazy(() => import("./info-pagu-universitas"));
 const RowPaguBiro = lazy(() => import("./row-pagu-biro"));
@@ -11,9 +12,11 @@ const RowPaguLembaga = lazy(() => import("./row-pagu-lembaga"));
 const RowPaguUPT = lazy(() => import("./row-pagu-upt"));
 const RowPaguFakultas = lazy(() => import("./row-pagu-fakultas"));
 
+const endpoint = "/pagu-anggaran";
+
 export default function Page() {
    const { id } = useParams();
-   const { content, isLoading } = useInitPage(id);
+   const { results: content, isLoading } = useGetQueryDetail(endpoint, id);
    const { paguBiro, isLoadingPaguBiro } = usePaguBiro(content?.tahun_anggaran);
    const { paguLembaga, isLoadingpaguLembaga } = usePaguLembaga(content?.tahun_anggaran);
    const { paguUPT, isLoadingpaguUPT } = usePaguUPT(content?.tahun_anggaran);

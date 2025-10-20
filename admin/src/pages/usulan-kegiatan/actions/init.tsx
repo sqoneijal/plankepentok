@@ -72,7 +72,7 @@ export function useUpdateInformasiUsulan(id: string | undefined, formData: FormD
 
 export function useGetRelasiIKU(id_usulan_kegiatan?: string) {
    const { data, isLoading, error } = useApiQuery({
-      url: `/usulan-kegiatan/relasi-iku/${id_usulan_kegiatan}`,
+      url: `/usulan-kegiatan/${id_usulan_kegiatan}/relasi-iku`,
       options: { enabled: !!id_usulan_kegiatan },
    });
 

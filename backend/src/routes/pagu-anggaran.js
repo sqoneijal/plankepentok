@@ -1,13 +1,6 @@
 const express = require("express");
 const { PrismaClient } = require("@prisma/client");
-const { z } = require("zod");
-const errorHandler = require("../handle-error.js");
-
-const validation = z.object({
-   tahun_anggaran: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Tahun anggaran wajib diisi")),
-   total_pagu: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Total pagu wajib diisi")),
-   is_aktif: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Status wajib diisi")),
-});
+const { logAudit } = require("../helpers.js");
 
 const cleanRupiah = (val, fallback = 0) => {
    if (val == null) return fallback;
@@ -103,7 +96,15 @@ router.put("/biro/:id", async (req, res) => {
       const { id } = req.params;
       const { total_pagu, user_modified } = req.body;
 
-      await prisma.tb_pagu_anggaran_biro.update({
+      const oldData = await prisma.tb_pagu_anggaran_biro.findUnique({
+         where: { id: Number.parseInt(id) },
+      });
+
+      if (!oldData) {
+         return res.json({ status: false, message: "Pagu biro tidak ditemukan" });
+      }
+
+      const newData = await prisma.tb_pagu_anggaran_biro.update({
          where: { id: Number.parseInt(id) },
          data: {
             total_pagu: cleanRupiah(total_pagu),
@@ -111,6 +112,9 @@ router.put("/biro/:id", async (req, res) => {
             user_modified,
          },
       });
+
+      logAudit(user_modified, "UPDATE", "tb_pagu_anggaran_biro", req.ip, { ...oldData }, { ...newData });
+
       res.json({ status: true, message: "Pagu biro berhasil diperbaharui" });
    } catch (error) {
       res.status(500).json({ error: error.message });
@@ -171,7 +175,15 @@ router.put("/fakultas/:id", async (req, res) => {
       const { id } = req.params;
       const { total_pagu, user_modified } = req.body;
 
-      await prisma.tb_pagu_anggaran_fakultas.update({
+      const oldData = await prisma.tb_pagu_anggaran_fakultas.findUnique({
+         where: { id: Number.parseInt(id) },
+      });
+
+      if (!oldData) {
+         return res.json({ status: false, message: "Pagu fakultas tidak ditemukan" });
+      }
+
+      const newData = await prisma.tb_pagu_anggaran_fakultas.update({
          where: { id: Number.parseInt(id) },
          data: {
             total_pagu: cleanRupiah(total_pagu),
@@ -179,6 +191,9 @@ router.put("/fakultas/:id", async (req, res) => {
             user_modified,
          },
       });
+
+      logAudit(user_modified, "UPDATE", "tb_pagu_anggaran_fakultas", req.ip, { ...oldData }, { ...newData });
+
       res.json({ status: true, message: "Pagu fakultas berhasil diperbaharui" });
    } catch (error) {
       res.status(500).json({ error: error.message });
@@ -239,7 +254,15 @@ router.put("/upt/:id", async (req, res) => {
       const { id } = req.params;
       const { total_pagu, user_modified } = req.body;
 
-      await prisma.tb_pagu_anggaran_upt.update({
+      const oldData = await prisma.tb_pagu_anggaran_upt.findUnique({
+         where: { id: Number.parseInt(id) },
+      });
+
+      if (!oldData) {
+         return res.json({ status: false, message: "Pagu UPT tidak ditemukan" });
+      }
+
+      const newData = await prisma.tb_pagu_anggaran_upt.update({
          where: { id: Number.parseInt(id) },
          data: {
             total_pagu: cleanRupiah(total_pagu),
@@ -247,6 +270,9 @@ router.put("/upt/:id", async (req, res) => {
             user_modified,
          },
       });
+
+      logAudit(user_modified, "UPDATE", "tb_pagu_anggaran_upt", req.ip, { ...oldData }, { ...newData });
+
       res.json({ status: true, message: "Pagu UPT berhasil diperbaharui" });
    } catch (error) {
       res.status(500).json({ error: error.message });
@@ -313,7 +339,15 @@ router.put("/lembaga/:id", async (req, res) => {
       const { id } = req.params;
       const { total_pagu, user_modified } = req.body;
 
-      await prisma.tb_pagu_anggaran_lembaga.update({
+      const oldData = await prisma.tb_pagu_anggaran_lembaga.findUnique({
+         where: { id: Number.parseInt(id) },
+      });
+
+      if (!oldData) {
+         return res.json({ status: false, message: "Pagu lembaga tidak ditemukan" });
+      }
+
+      const newData = await prisma.tb_pagu_anggaran_lembaga.update({
          where: { id: Number.parseInt(id) },
          data: {
             total_pagu: cleanRupiah(total_pagu),
@@ -321,6 +355,9 @@ router.put("/lembaga/:id", async (req, res) => {
             user_modified,
          },
       });
+
+      logAudit(user_modified, "UPDATE", "tb_pagu_anggaran_lembaga", req.ip, { ...oldData }, { ...newData });
+
       res.json({ status: true, message: "Pagu lembaga berhasil diperbaharui" });
    } catch (error) {
       res.status(500).json({ error: error.message });
@@ -381,7 +418,15 @@ router.put("/sub-unit/:id", async (req, res) => {
       const { id } = req.params;
       const { total_pagu, user_modified } = req.body;
 
-      await prisma.tb_pagu_sub_unit.update({
+      const oldData = await prisma.tb_pagu_sub_unit.findUnique({
+         where: { id: Number.parseInt(id) },
+      });
+
+      if (!oldData) {
+         return res.json({ status: false, message: "Pagu sub unit tidak ditemukan" });
+      }
+
+      const newData = await prisma.tb_pagu_sub_unit.update({
          where: { id: Number.parseInt(id) },
          data: {
             total_pagu: cleanRupiah(total_pagu),
@@ -389,6 +434,9 @@ router.put("/sub-unit/:id", async (req, res) => {
             user_modified,
          },
       });
+
+      logAudit(user_modified, "UPDATE", "tb_pagu_sub_unit", req.ip, { ...oldData }, { ...newData });
+
       res.json({ status: true, message: "Pagu sub unit berhasil diperbaharui" });
    } catch (error) {
       res.status(500).json({ error: error.message });

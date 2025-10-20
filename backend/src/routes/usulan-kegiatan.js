@@ -1,6 +1,7 @@
 const express = require("express");
 const { PrismaClient } = require("@prisma/client");
 const { z } = require("zod");
+const { logAudit } = require("../helpers.js");
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -36,16 +37,15 @@ router.get("/referensi-sbm", async (req, res) => {
       const offset = Number.parseInt(req.query.offset) || 0;
       const search = req.query.search || "";
 
-      const where = search
-         ? {
-              OR: [
-                 { standar_biaya: { nama: { contains: search, mode: "insensitive" } } },
-                 { standar_biaya: { deskripsi: { contains: search, mode: "insensitive" } } },
-                 { unit_satuan: { nama: { contains: search, mode: "insensitive" } } },
-                 { unit_satuan: { deskripsi: { contains: search, mode: "insensitive" } } },
-              ],
-           }
-         : {};
+      const query = {
+         OR: [
+            { standar_biaya: { nama: { contains: search, mode: "insensitive" } } },
+            { standar_biaya: { deskripsi: { contains: search, mode: "insensitive" } } },
+            { unit_satuan: { nama: { contains: search, mode: "insensitive" } } },
+            { unit_satuan: { deskripsi: { contains: search, mode: "insensitive" } } },
+         ],
+      };
+      const where = search ? query : {};
 
       const total = await prisma.tb_detail_harga_sbm.count({ where: { status_validasi: "valid", ...where } });
       const results = await prisma.tb_detail_harga_sbm.findMany({
@@ -89,6 +89,9 @@ router.post("/", async (req, res) => {
             user_modified,
          },
       });
+
+      logAudit(user_modified, "CREATE", "tb_usulan_kegiatan", req.ip, null, { ...created });
+
       res.status(201).json({ status: true, id_usulan_kegiatan: created.id });
    } catch (error) {
       res.status(500).json({ error: error.message });
@@ -130,7 +133,15 @@ router.put("/:id", async (req, res) => {
          });
       }
 
-      await prisma.tb_usulan_kegiatan.update({
+      const oldData = await prisma.tb_usulan_kegiatan.findUnique({
+         where: { id: Number.parseInt(id) },
+      });
+
+      if (!oldData) {
+         return res.json({ status: false, message: "Usulan kegiatan tidak ditemukan" });
+      }
+
+      const newData = await prisma.tb_usulan_kegiatan.update({
          where: { id: Number.parseInt(id) },
          data: {
             nama,
@@ -146,6 +157,9 @@ router.put("/:id", async (req, res) => {
             rencana_total_anggaran: cleanRupiah(rencana_total_anggaran),
          },
       });
+
+      logAudit(user_modified, "UPDATE", "tb_usulan_kegiatan", req.ip, { ...oldData }, { ...newData });
+
       res.json({ status: true, message: "Usulan kegiatan berhasil diperbaharui." });
    } catch (error) {
       res.status(500).json({ error: error.message });
@@ -155,17 +169,29 @@ router.put("/:id", async (req, res) => {
 router.delete("/:id", async (req, res) => {
    try {
       const { id } = req.params;
+      const { user_modified } = req.body;
+
+      const oldData = await prisma.tb_usulan_kegiatan.findUnique({
+         where: { id: Number.parseInt(id) },
+      });
+
+      if (!oldData) {
+         return res.json({ status: false, message: "Usulan kegiatan tidak ditemukan" });
+      }
 
       await prisma.tb_usulan_kegiatan.delete({
          where: { id: Number.parseInt(id) },
       });
+
+      logAudit(user_modified, "DELETE", "tb_usulan_kegiatan", req.ip, null, null);
+
       res.json({ status: true, message: "Usulan kegiatan deleted successfully" });
    } catch (error) {
       res.status(500).json({ error: error.message });
    }
 });
 
-router.get("/relasi-iku/:id", async (req, res) => {
+router.get("/:id/relasi-iku", async (req, res) => {
    try {
       const { id } = req.params;
       const total = await prisma.tb_relasi_usulan_iku.count({
@@ -182,14 +208,15 @@ router.get("/relasi-iku/:id", async (req, res) => {
    }
 });
 
-router.post("/relasi-iku", async (req, res) => {
+router.post("/:id_usulan_kegiatan/relasi-iku", async (req, res) => {
    try {
-      const { id_usulan, id, user_modified } = req.body;
+      const { id_usulan_kegiatan } = req.params;
+      const { id, user_modified } = req.body;
 
       // Check if the relation already exists
       const existing = await prisma.tb_relasi_usulan_iku.findFirst({
          where: {
-            id_usulan: Number.parseInt(id_usulan),
+            id_usulan: Number.parseInt(id_usulan_kegiatan),
             id_iku: Number.parseInt(id),
          },
       });
@@ -198,14 +225,17 @@ router.post("/relasi-iku", async (req, res) => {
          return res.json({ status: false, message: "Relasi IKU sudah ada." });
       }
 
-      await prisma.tb_relasi_usulan_iku.create({
+      const newData = await prisma.tb_relasi_usulan_iku.create({
          data: {
-            id_usulan: Number.parseInt(id_usulan),
+            id_usulan: Number.parseInt(id_usulan_kegiatan),
             id_iku: Number.parseInt(id),
             uploaded: new Date(),
             user_modified,
          },
       });
+
+      logAudit(user_modified, "CREATE", "tb_relasi_usulan_iku", req.ip, null, { ...newData });
+
       res.status(201).json({ status: true, message: "Relasi IKU berhasil ditambahkan." });
    } catch (error) {
       res.status(500).json({ error: error.message });
@@ -215,10 +245,22 @@ router.post("/relasi-iku", async (req, res) => {
 router.delete("/relasi-iku/:id", async (req, res) => {
    try {
       const { id } = req.params;
+      const { user_modified } = req.body;
+
+      const oldData = await prisma.tb_relasi_usulan_iku.findUnique({
+         where: { id: Number.parseInt(id) },
+      });
+
+      if (!oldData) {
+         return res.json({ status: false, message: "Relasi IKU tidak ditemukan" });
+      }
 
       await prisma.tb_relasi_usulan_iku.delete({
          where: { id: Number.parseInt(id) },
       });
+
+      logAudit(user_modified, "DELETE", "tb_relasi_usulan_iku", req.ip, { ...oldData }, null);
+
       res.json({ status: true, message: "Relasi IKU berhasil dihapus." });
    } catch (error) {
       res.status(500).json({ error: error.message });
@@ -238,7 +280,7 @@ router.get("/rab/:id_usulan/:id", async (req, res) => {
    }
 });
 
-router.get("/rab/:id", async (req, res) => {
+router.get("/:id/rab", async (req, res) => {
    try {
       const { id } = req.params;
       const total = await prisma.tb_rab_detail.count({
@@ -274,7 +316,7 @@ router.post("/rab", async (req, res) => {
          });
       }
 
-      await prisma.tb_rab_detail.create({
+      const newData = await prisma.tb_rab_detail.create({
          data: {
             id_usulan: Number.parseInt(id_usulan),
             uraian_biaya,
@@ -287,6 +329,9 @@ router.post("/rab", async (req, res) => {
             user_modified,
          },
       });
+
+      logAudit(user_modified, "CREATE", "tb_rab_detail", req.ip, null, { ...newData });
+
       res.status(201).json({ status: true, message: "Rencana anggaran biaya berhasil ditambahkan.", id_usulan });
    } catch (error) {
       res.status(500).json({ error: error.message });
@@ -313,7 +358,15 @@ router.put("/rab/:id_usulan/:id", async (req, res) => {
       });
    }
 
-   await prisma.tb_rab_detail.update({
+   const oldData = await prisma.tb_rab_detail.findUnique({
+      where: { id_usulan: Number.parseInt(id_usulan), id: Number.parseInt(id) },
+   });
+
+   if (!oldData) {
+      return res.json({ status: false, message: "Rencana anggaran biaya tidak ditemukan" });
+   }
+
+   const newData = await prisma.tb_rab_detail.update({
       where: { id_usulan: Number.parseInt(id_usulan), id: Number.parseInt(id) },
       data: {
          uraian_biaya,
@@ -326,17 +379,32 @@ router.put("/rab/:id_usulan/:id", async (req, res) => {
          user_modified,
       },
    });
-   res.status(201).json({ status: true, message: "Rencana anggaran biaya berhasil diperbaharui.", id_usulan });
+
+   logAudit(user_modified, "UPDATE", "tb_rab_detail", req.ip, null, { ...newData });
+
+   res.status(201).json({ status: true, message: "Rencana anggaran biaya berhasil diperbaharui", id_usulan });
 });
 
 router.delete("/rab/:id", async (req, res) => {
    try {
       const { id } = req.params;
+      const { user_modified } = req.body;
+
+      const oldData = await prisma.tb_rab_detail.findUnique({
+         where: { id: Number.parseInt(id) },
+      });
+
+      if (!oldData) {
+         return res.json({ status: false, message: "Rencana anggaran biaya tidak ditemukan" });
+      }
 
       await prisma.tb_rab_detail.delete({
          where: { id: Number.parseInt(id) },
       });
-      res.json({ status: true, message: "Rencana anggaran biaya berhasil dihapus." });
+
+      logAudit(user_modified, "DELETE", "tb_rab_detail", req.ip, { ...oldData }, null);
+
+      res.json({ status: true, message: "Rencana anggaran biaya berhasil dihapus" });
    } catch (error) {
       res.status(500).json({ error: error.message });
    }

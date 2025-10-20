@@ -53,7 +53,7 @@ export const getColumns = (id_usulan_kegiatan?: string): Array<ColumnDef<RowData
          <ConfirmDialog
             url={`/usulan-kegiatan/relasi-iku`}
             id={original.id as string | number}
-            refetchKey={[[`/usulan-kegiatan/relasi-iku/${id_usulan_kegiatan}`]]}
+            refetchKey={[[`/usulan-kegiatan/${id_usulan_kegiatan}/relasi-iku`]]}
          />
       ),
       meta: { className: "w-[10px]" },

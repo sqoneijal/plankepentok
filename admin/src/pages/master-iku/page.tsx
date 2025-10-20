@@ -18,5 +18,5 @@ export default function Page() {
       };
    }, [setButton]);
 
-   return <Table columns={getColumns()} data={results} total={total} isLoading={isLoading} />;
+   return <Table columns={getColumns(endpoint)} data={results} total={total} isLoading={isLoading} />;
 }

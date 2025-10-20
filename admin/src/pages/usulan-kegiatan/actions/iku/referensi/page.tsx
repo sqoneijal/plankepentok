@@ -1,7 +1,6 @@
 import Table from "@/components/table";
 import { getYearOptions } from "@/helpers/init";
 import { FormInput, FormSelect } from "@/lib/helpers";
-import { useParams } from "react-router";
 import { toast } from "sonner";
 import { getColumns } from "./column";
 import { useCreateRelasiIKU, useInitPage } from "./init";
@@ -12,11 +11,11 @@ type ResponseType = {
    errors?: Record<string, string>;
 };
 
-export default function Page({ setOpenSheet }: Readonly<{ setOpenSheet: (open: boolean) => void }>) {
-   const { id_usulan_kegiatan } = useParams();
-
+export default function Page({ setOpenSheet, id_usulan_kegiatan }: Readonly<{ id_usulan_kegiatan?: string; setOpenSheet: (open: boolean) => void }>) {
    const { results, total, isLoading, setSearch, search, tahun_berlaku, setTahun_berlaku } = useInitPage();
-   const { mutate, isPending } = useCreateRelasiIKU(id_usulan_kegiatan!);
+   const { mutate, isPending } = useCreateRelasiIKU(id_usulan_kegiatan || "");
+
+   if (!id_usulan_kegiatan) return null;
 
    return (
       <>
@@ -42,22 +41,19 @@ export default function Page({ setOpenSheet }: Readonly<{ setOpenSheet: (open: b
             isLoading={isLoading}
             trCursor={true}
             onRowClick={(row) =>
-               mutate(
-                  { ...row, id_usulan: id_usulan_kegiatan! },
-                  {
-                     onSuccess: (response: ResponseType) => {
-                        if (response?.status) {
-                           toast.success(response?.message);
-                           setOpenSheet(false);
-                           return;
-                        }
-                        toast.error(response?.message);
-                     },
-                     onError: (error: Error) => {
-                        toast.error(`Gagal: ${error?.message}`);
-                     },
-                  }
-               )
+               mutate(Object.fromEntries(Object.entries(row).map(([k, v]) => [k, String(v)])), {
+                  onSuccess: (response: ResponseType) => {
+                     if (response?.status) {
+                        toast.success(response?.message);
+                        setOpenSheet(false);
+                        return;
+                     }
+                     toast.error(response?.message);
+                  },
+                  onError: (error: Error) => {
+                     toast.error(`Gagal: ${error?.message}`);
+                  },
+               })
             }
             isLoadingRow={isPending}
          />

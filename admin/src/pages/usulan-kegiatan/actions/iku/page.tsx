@@ -32,7 +32,7 @@ export default function Page({ id_usulan_kegiatan }: Readonly<{ id_usulan_kegiat
                      </SheetHeader>
                      <Suspense fallback={<LoadingSkeleton />}>
                         <div className="p-4">
-                           <ReferensiIku setOpenSheet={setOpenSheet} />
+                           <ReferensiIku setOpenSheet={setOpenSheet} id_usulan_kegiatan={id_usulan_kegiatan} />
                         </div>
                      </Suspense>
                   </SheetContent>

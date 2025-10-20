@@ -36,11 +36,11 @@ const columnConfigs: Array<ColumnConfig> = [
    },
 ];
 
-export const getColumns = (): Array<ColumnDef<RowData, unknown>> => [
+export const getColumns = (endpoint: string): Array<ColumnDef<RowData, unknown>> => [
    columnHelper.display({
       id: "actions",
       header: "",
-      cell: ({ row: { original } }) => <LinkButton label={<Eye />} url={`/pagu-anggaran/${original.id}`} type="edit" />,
+      cell: ({ row: { original } }) => <LinkButton label={<Eye />} url={`${endpoint}/${original.id}`} type="edit" />,
       meta: { className: "w-[10px]" },
    }),
    ...columnConfigs.map((config) =>

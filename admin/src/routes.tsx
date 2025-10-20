@@ -69,7 +69,7 @@ const route_path = [
    { key: v4(), path: "/referensi/detail-harga-sbm/actions/:id", element: <ReferensiDetailHargaSBMActions /> },
    { key: v4(), path: "/usulan-kegiatan", element: <UsulanKegiatan /> },
    { key: v4(), path: "/usulan-kegiatan/actions/:id", element: <UsulanKegiatanActions /> },
-   { key: v4(), path: "/usulan-kegiatan/actions/:id/rab/:id", element: <UsulanKegiatanActions /> },
+   { key: v4(), path: "/usulan-kegiatan/actions/:id/rab/:id_rab", element: <UsulanKegiatanActions /> },
    { key: v4(), path: "/usulan-kegiatan/:id", element: <UsulanKegiatanActionsDetail /> },
    { key: v4(), path: "/master-iku", element: <MasterIKU /> },
    { key: v4(), path: "/master-iku/actions", element: <MasterIKUActions /> },

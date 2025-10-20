@@ -8,25 +8,19 @@ const Iku = lazy(() => import("./iku/page"));
 const RencanaAnggaranBiaya = lazy(() => import("./rencana-anggaran-biaya/page"));
 
 export default function Page() {
-   const { id_usulan_kegiatan, id_rab_detail } = useParams();
-   const { formData, setFormData, errors, setErrors } = useInitPage(id_usulan_kegiatan);
+   const { id, id_rab } = useParams();
+   const { formData, setFormData, errors, setErrors } = useInitPage(id);
 
    return (
       <>
          <Suspense fallback={<FormInformasiUsulanSkeleton />}>
-            <InformasiUsulan
-               formData={formData}
-               setFormData={setFormData}
-               errors={errors}
-               setErrors={setErrors}
-               id_usulan_kegiatan={id_usulan_kegiatan}
-            />
+            <InformasiUsulan formData={formData} setFormData={setFormData} errors={errors} setErrors={setErrors} id_usulan_kegiatan={id} />
          </Suspense>
          <Suspense>
-            <Iku id_usulan_kegiatan={id_usulan_kegiatan} />
+            <Iku id_usulan_kegiatan={id} />
          </Suspense>
          <Suspense>
-            <RencanaAnggaranBiaya id_usulan_kegiatan={id_usulan_kegiatan} id_rab_detail={id_rab_detail} />
+            <RencanaAnggaranBiaya id_usulan_kegiatan={id} id_rab_detail={id_rab} />
          </Suspense>
       </>
    );

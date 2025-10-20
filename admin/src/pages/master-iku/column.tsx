@@ -38,14 +38,14 @@ const columnConfigs: Array<ColumnConfig> = [
    },
 ];
 
-export const getColumns = (): Array<ColumnDef<RowData, unknown>> => [
+export const getColumns = (endpoint: string): Array<ColumnDef<RowData, unknown>> => [
    columnHelper.display({
       id: "actions",
       header: "",
       cell: ({ row: { original } }) => (
          <>
-            <LinkButton label={<SquarePen />} url={`/master-iku/actions/${original.id}`} type="edit" />
-            <ConfirmDialog url={`/master-iku`} id={original.id as string | number} refetchKey={[["/master-iku"]]} />
+            <LinkButton label={<SquarePen />} url={`${endpoint}/actions/${original.id}`} type="edit" />
+            <ConfirmDialog url={endpoint} id={original.id as string | number} refetchKey={[[endpoint]]} />
          </>
       ),
       meta: { className: "w-[80px]" },

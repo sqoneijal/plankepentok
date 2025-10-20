@@ -54,7 +54,7 @@ export function useOptions() {
 
 export function useInitPage(id_usulan_kegiatan?: string) {
    const { data, isLoading, error } = useApiQuery({
-      url: `/usulan-kegiatan/rab/${id_usulan_kegiatan}`,
+      url: `/usulan-kegiatan/${id_usulan_kegiatan}/rab`,
       options: { enabled: !!id_usulan_kegiatan },
    });
 
@@ -106,7 +106,7 @@ export function useCreateData({
    handleSheetForm: (status: boolean) => void;
 }) {
    const { mutate, isPending } = usePostMutation<FormData, unknown>("/usulan-kegiatan/rab", (data) => ({ ...data, id_usulan: id_usulan_kegiatan }), [
-      [`/usulan-kegiatan/rab/${id_usulan_kegiatan}`],
+      [`/usulan-kegiatan/${id_usulan_kegiatan}/rab`],
    ]);
 
    const navigate = useNavigate();

@@ -17,7 +17,7 @@ export function useInitPage() {
 
    const { data, isLoading, error } = useApiQuery({
       url: "/master-iku",
-      params: { limit, offset, search, tahun_berlaku },
+      params: { limit: String(limit), offset: String(offset), search, tahun_berlaku },
    });
 
    if (error) {
@@ -30,9 +30,9 @@ export function useInitPage() {
    return { results, total, isLoading, setSearch, search, tahun_berlaku, setTahun_berlaku };
 }
 
-export function useCreateRelasiIKU(id_usulan_kegiatan: string) {
-   const { mutate, isPending } = usePostMutation<FormData, unknown>("/usulan-kegiatan/relasi-iku", (data) => ({ ...data }), [
-      [`/usulan-kegiatan/relasi-iku/${id_usulan_kegiatan}`],
+export function useCreateRelasiIKU(id_usulan_kegiatan: string | undefined) {
+   const { mutate, isPending } = usePostMutation<FormData, unknown>(`/usulan-kegiatan/${id_usulan_kegiatan}/relasi-iku`, (data) => ({ ...data }), [
+      id_usulan_kegiatan ? [`/usulan-kegiatan/${id_usulan_kegiatan}/relasi-iku`] : [],
    ]);
 
    return { mutate, isPending };
