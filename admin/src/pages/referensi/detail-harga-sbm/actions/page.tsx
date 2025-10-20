@@ -1,24 +1,38 @@
-import { LoadingSkeleton } from "@/components/loading-skeleton";
-import { covertToSTring, getValue } from "@/helpers/init";
-import { FormDatePicker, FormInput, FormSelect, SubmitButton } from "@/lib/helpers";
+import { FormDetailHargaSBMSkeleton } from "@/components/loading-skeleton";
+import { covertToSTring, getValue, objectLength } from "@/helpers/init";
+import { useHeaderButton } from "@/hooks/store";
+import { FormDatePicker, FormInput, FormSelect, LinkButton, SubmitButton } from "@/lib/helpers";
+import { useGetQueryDetail, useSubmitData } from "@/lib/utils";
 import moment from "moment";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router";
-import type { FormData } from "./init";
-import { useCreateData, useGetDetailData, useInitPage, useOptions, useUpdateData } from "./init";
+import { useOptionsStandarBiaya, useOptionsTahunAnggaran, useOptionsUnitSatuan } from "./options";
+
+const endpoint = "/referensi/detail-harga-sbm";
+
+type FormData = Record<string, string>;
 
 export default function Page() {
-   const { id_detail_harga } = useParams();
-   const isEdit = !!id_detail_harga;
+   const { id } = useParams();
+   const isEdit = !!id;
 
-   const { tahunAnggaran, isLoadingTahunAnggaran, standarBiaya, isLoadingStandarBiaya, unitSatuan, isLoadingUnitSatuan } = useOptions();
-   const { formData, setFormData, errors, setErrors } = useInitPage();
-   const { content, isLoading } = useGetDetailData(id_detail_harga);
+   const { setButton } = useHeaderButton();
 
-   const createData = useCreateData(formData, setErrors);
-   const updateData = useUpdateData(id_detail_harga, formData, setErrors);
+   const [formData, setFormData] = useState<FormData>({});
+   const [errors, setErrors] = useState<FormData>({});
 
-   const { onSubmit, isPending } = isEdit ? updateData : createData;
+   useEffect(() => {
+      setButton(<LinkButton label="Batal" url={endpoint} />);
+      return () => {
+         setButton(<div />);
+      };
+   }, [setButton]);
+
+   const { results, isLoading } = useGetQueryDetail(endpoint, id);
+   const { onSubmit, isPending } = useSubmitData({ id, formData, setErrors, endpoint });
+   const { tahunAnggaran, isLoadingTahunAnggaran } = useOptionsTahunAnggaran();
+   const { standarBiaya, isLoadingStandarBiaya } = useOptionsStandarBiaya();
+   const { unitSatuan, isLoadingUnitSatuan } = useOptionsUnitSatuan();
 
    const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault();
@@ -26,16 +40,15 @@ export default function Page() {
    };
 
    useEffect(() => {
-      if (!isLoading && Object.keys(content).length > 0) {
-         const formated = covertToSTring(content);
-         setFormData(formated as FormData);
+      if (id && !isLoading && objectLength(results)) {
+         const data = covertToSTring(results);
+         setFormData({ ...(data as FormData) });
       }
       return () => {};
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-   }, [isLoading, content]);
+   }, [id, isLoading, results]);
 
    if (isLoading || isLoadingTahunAnggaran || isLoadingStandarBiaya || isLoadingUnitSatuan) {
-      return <LoadingSkeleton />;
+      return <FormDetailHargaSBMSkeleton />;
    }
 
    return (
@@ -68,11 +81,11 @@ export default function Page() {
                   <FormInput
                      divClassName="col-12 col-md-2"
                      label="Harga Satuan"
-                     type="number"
                      value={getValue(formData, "harga_satuan")}
                      name="harga_satuan"
                      onChange={(value) => setFormData((prev) => ({ ...prev, harga_satuan: value }))}
                      errors={errors}
+                     apakahFormatRupiah={true}
                   />
                   <FormSelect
                      divClassName="col-12 col-md-2"

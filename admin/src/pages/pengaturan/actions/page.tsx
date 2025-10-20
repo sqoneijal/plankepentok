@@ -1,38 +1,49 @@
-import { LoadingSkeleton } from "@/components/loading-skeleton";
+import { FormPengaturanSkeleton } from "@/components/loading-skeleton";
 import { covertToSTring, getValue, getYearOptions } from "@/helpers/init";
-import { FormInput, FormSelect, SubmitButton } from "@/lib/helpers";
-import { useEffect } from "react";
+import { useHeaderButton } from "@/hooks/store";
+import { FormInput, FormSelect, LinkButton, SubmitButton } from "@/lib/helpers";
+import { useGetQueryDetail, useSubmitData } from "@/lib/utils";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router";
-import { useCreateData, useGetDetailData, useInitPage, useUpdateData, type FormData } from "./init";
+
+const endpoint = "/pengaturan";
+
+export type FormData = Record<string, string>;
 
 export default function Page() {
    const { id } = useParams();
    const isEdit = !!id;
 
-   const { formData, setFormData, errors, setErrors } = useInitPage();
-   const { content, isLoading } = useGetDetailData(id);
+   const { setButton } = useHeaderButton();
 
-   const createData = useCreateData(formData, setErrors);
-   const updateData = useUpdateData(id, formData, setErrors);
+   const [formData, setFormData] = useState<FormData>({});
+   const [errors, setErrors] = useState<FormData>({});
 
-   const { onSubmit, isPending } = isEdit ? updateData : createData;
+   const { results, isLoading } = useGetQueryDetail(endpoint, id);
+   const { onSubmit, isPending } = useSubmitData({ id, formData, setErrors, endpoint });
+
+   useEffect(() => {
+      if (id && !isLoading && Object.keys(results).length > 0) {
+         const data = covertToSTring(results);
+         setFormData({ ...(data as FormData) });
+      }
+      return () => {};
+   }, [id, results, isLoading]);
+
+   useEffect(() => {
+      setButton(<LinkButton label="Batal" url={endpoint} />);
+      return () => {
+         setButton(<div />);
+      };
+   }, [setButton]);
 
    const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault();
       onSubmit();
    };
 
-   useEffect(() => {
-      if (!isLoading && Object.keys(content).length > 0) {
-         const converted = covertToSTring(content);
-         setFormData({ ...(converted as FormData) });
-      }
-      return () => {};
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-   }, [isLoading, content]);
-
    if (isLoading) {
-      return <LoadingSkeleton />;
+      return <FormPengaturanSkeleton />;
    }
 
    return (

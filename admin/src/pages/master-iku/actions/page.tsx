@@ -1,66 +1,26 @@
-import { FormSelect, FormText, FormTextarea } from "@/components/forms";
-import { Button } from "@/components/ui/button";
-import { btn_loading, getValue } from "@/helpers/init";
-import { getTahunAnggaranOptions, loadingElement } from "./helper";
-import { useMasterIKUActionsPage } from "./use-page";
+import { SubmitButton } from "@/lib/helpers";
+import { useParams } from "react-router";
 
 export default function Page() {
-   const { formData, setFormData, errors, submit, handleSubmit, isLoading } = useMasterIKUActionsPage();
+   const { id } = useParams();
+   const isEdit = !!id;
 
-   if (isLoading) return loadingElement;
+   const createData = useCreateData(formData, setErrors);
+   const updateData = useUpdateData(id, formData, setErrors);
+
+   const { onSubmit, isPending } = isEdit ? updateData : createData;
+
+   const handleSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
+      onSubmit();
+   };
 
    return (
       <div className="p-0">
          <div className="border rounded-lg p-6 shadow-sm bg-white">
             <form onSubmit={handleSubmit} className="space-y-4">
-               <div className="row">
-                  <div className="col-12 col-md-4 mb-3 sm:mb-0">
-                     <FormSelect
-                        label="Jenis IKU"
-                        name="jenis"
-                        value={getValue(formData, "jenis")}
-                        onValueChange={(value) => setFormData((prev) => ({ ...prev, jenis: value }))}
-                        errors={errors}
-                        options={[
-                           { value: "rektor", label: "Rektor" },
-                           { value: "perguruan_tinggi", label: "Perguruan Tinggi" },
-                        ]}
-                     />
-                  </div>
-                  <div className="col-12 col-md-4 mb-3 sm:mb-0">
-                     <FormText
-                        label="Kode"
-                        name="kode"
-                        value={getValue(formData, "kode")}
-                        onChange={(value) => setFormData((prev) => ({ ...prev, kode: value }))}
-                        errors={errors}
-                     />
-                  </div>
-                  <div className="col-12 col-md-4">
-                     <FormSelect
-                        label="Tahun Berlaku"
-                        name="tahun_berlaku"
-                        value={getValue(formData, "tahun_berlaku")}
-                        onValueChange={(value) => setFormData((prev) => ({ ...prev, tahun_berlaku: value }))}
-                        errors={errors}
-                        options={getTahunAnggaranOptions()}
-                     />
-                  </div>
-               </div>
-               <div className="row">
-                  <div className="col-12">
-                     <FormTextarea
-                        label="Deskripsi"
-                        name="deskripsi"
-                        value={getValue(formData, "deskripsi")}
-                        onChange={(value) => setFormData((prev) => ({ ...prev, deskripsi: value }))}
-                        errors={errors}
-                     />
-                  </div>
-               </div>
-               <Button type="submit" size="sm" disabled={submit.isPending}>
-                  {submit.isPending ? btn_loading() : "Simpan"}
-               </Button>
+               <div className="row"></div>
+               <SubmitButton label={isEdit ? "Perbarui" : "Simpan"} isLoading={isPending} />
             </form>
          </div>
       </div>

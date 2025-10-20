@@ -1,22 +1,35 @@
 import { FormSubUnitSkeleton } from "@/components/loading-skeleton";
-import { covertToSTring, getValue } from "@/helpers/init";
-import { FormInput, FormSelect, SubmitButton } from "@/lib/helpers";
-import { useEffect } from "react";
+import { covertToSTring, getValue, objectLength } from "@/helpers/init";
+import { useHeaderButton } from "@/hooks/store";
+import { FormInput, FormSelect, LinkButton, SubmitButton } from "@/lib/helpers";
+import { useGetQueryDetail, useSubmitData } from "@/lib/utils";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router";
-import { useCreateData, useGetDetailData, useInitPage, useOptions, useUpdateData, type FormData } from "./init";
+import { useOptionsParentUnit } from "./options";
+
+type FormData = Record<string, string>;
+
+const endpoint = "/unit-kerja/sub-unit";
 
 export default function Page() {
    const { id } = useParams();
    const isEdit = !!id;
 
-   const { formData, setFormData, errors, setErrors } = useInitPage();
-   const { results, isLoading } = useOptions();
-   const { detailData, isLoadingDetail } = useGetDetailData(id);
+   const { setButton } = useHeaderButton();
 
-   const createData = useCreateData(formData, setErrors);
-   const updateData = useUpdateData(id, formData, setErrors);
+   const [formData, setFormData] = useState<FormData>({});
+   const [errors, setErrors] = useState<FormData>({});
 
-   const { onSubmit, isPending } = isEdit ? updateData : createData;
+   useEffect(() => {
+      setButton(<LinkButton label="Batal" url={endpoint} />);
+      return () => {
+         setButton(<div />);
+      };
+   }, [setButton]);
+
+   const { results, isLoading } = useGetQueryDetail(endpoint, id);
+   const { onSubmit, isPending } = useSubmitData({ id, formData, setErrors, endpoint });
+   const { parentUnit, isLoadingParentUnit } = useOptionsParentUnit();
 
    const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault();
@@ -24,22 +37,20 @@ export default function Page() {
    };
 
    useEffect(() => {
-      if (!isLoadingDetail && Object.keys(detailData).length > 0) {
-         const converted = covertToSTring(detailData);
-         const level = converted.level as string;
-         const parentObj = converted[level] as Record<string, unknown>;
-         const parentId = parentObj.id as string;
+      if (id && !isLoading && objectLength(results)) {
+         const data = covertToSTring(results) as FormData;
+         const level = data.level;
+         const parentData = (results as Record<string, { id: number; nama: string }>)?.[level];
+         const parentId = parentData?.id || "";
          setFormData({
-            id_parent: String(`${parentId}-${level}`),
-            nama: String(converted?.nama),
+            ...data,
+            id_parent: `${String(parentId)}-${level}`,
          });
       }
-
       return () => {};
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-   }, [detailData, isLoadingDetail]);
+   }, [id, isLoading, results]);
 
-   if (isLoading || isLoadingDetail) {
+   if (isLoading || isLoadingParentUnit) {
       return <FormSubUnitSkeleton />;
    }
 
@@ -49,13 +60,14 @@ export default function Page() {
             <form onSubmit={handleSubmit} className="space-y-4">
                <div className="row">
                   <FormSelect
+                     useCommand={true}
                      divClassName="col-12 col-md-6"
                      label="Parent Unit"
                      value={getValue(formData, "id_parent")}
                      onChange={(value) => setFormData((prev) => ({ ...prev, id_parent: value }))}
                      name="id_parent"
                      errors={errors}
-                     options={results.map((row: FormData) => ({
+                     options={parentUnit.map((row: FormData) => ({
                         value: `${row.id}-${row.level}`,
                         label: row.nama,
                      }))}

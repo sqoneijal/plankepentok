@@ -1,55 +1,59 @@
 import ConfirmDialog from "@/components/confirm-delete";
-import { Button } from "@/components/ui/button";
-import { getValue } from "@/helpers/init";
-import type { Lists } from "@/types/init";
-import type { ColumnDef } from "@tanstack/react-table";
-import { Pencil } from "lucide-react";
-import type { NavigateFunction } from "react-router";
+import { LinkButton } from "@/lib/helpers";
+import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
+import { SquarePen } from "lucide-react";
 
-const jenis_iku: { [key: string]: string } = {
-   rektor: "Rektor",
-   perguruan_tinggi: "Perguruan Tinggi",
+type RowData = Record<string, unknown>;
+
+const columnHelper = createColumnHelper<RowData>();
+
+type ColumnConfig = {
+   key: string;
+   header: string;
+   cell?: (value: unknown) => React.ReactNode;
 };
 
-type ColumnDeps = { navigate: NavigateFunction; limit: number; offset: number };
-
-const getColumns = ({ navigate, limit, offset }: ColumnDeps): Array<ColumnDef<Lists>> => [
+const columnConfigs: Array<ColumnConfig> = [
    {
-      accessorKey: "aksi",
-      header: "",
-      cell: ({ row: { original } }) => {
-         return (
-            <>
-               <Button variant="ghost" onClick={() => navigate(`/master-iku/actions/${getValue(original, "id")}`)}>
-                  <Pencil />
-               </Button>
-               <ConfirmDialog url={`/master-iku/${getValue(original, "id")}`} refetchKey={[["master-iku", limit, offset]]} />
-            </>
-         );
-      },
-      meta: { className: "text-start w-[100px]" },
-   },
-   {
-      accessorKey: "jenis",
+      key: "jenis",
       header: "jenis",
-      enableSorting: true,
-      cell: ({ row: { original } }) => jenis_iku?.[getValue(original, "jenis")],
+      cell: (value: unknown) => {
+         let displayValue = value as string;
+         if (displayValue === "rektor") displayValue = "Rektor";
+         if (displayValue === "perguruan_tinggi") displayValue = "Perguruan Tinggi";
+         return displayValue;
+      },
    },
    {
-      accessorKey: "kode",
-      header: "kode",
-      enableSorting: true,
-   },
-   {
-      accessorKey: "deskripsi",
-      header: "deskripsi",
-      enableSorting: true,
-   },
-   {
-      accessorKey: "tahun_berlaku",
+      key: "tahun_berlaku",
       header: "tahun",
-      enableSorting: true,
+   },
+   {
+      key: "kode",
+      header: "kode",
+   },
+   {
+      key: "deskripsi",
+      header: "deskripsi",
    },
 ];
 
-export { getColumns };
+export const getColumns = (): Array<ColumnDef<RowData, unknown>> => [
+   columnHelper.display({
+      id: "actions",
+      header: "",
+      cell: ({ row: { original } }) => (
+         <>
+            <LinkButton label={<SquarePen />} url={`/master-iku/actions/${original.id}`} type="edit" />
+            <ConfirmDialog url={`/master-iku`} id={original.id as string | number} refetchKey={[["/master-iku"]]} />
+         </>
+      ),
+      meta: { className: "w-[80px]" },
+   }),
+   ...columnConfigs.map((config) =>
+      columnHelper.accessor(config.key, {
+         header: config.header,
+         cell: config.cell ? (info) => config.cell!(info.getValue()) : (info) => String(info.getValue()),
+      })
+   ),
+];

@@ -30,14 +30,14 @@ const columnConfigs: Array<ColumnConfig> = [
    },
 ];
 
-export const getColumns = (): Array<ColumnDef<RowData, unknown>> => [
+export const getColumns = (endpoint: string): Array<ColumnDef<RowData, unknown>> => [
    columnHelper.display({
       id: "actions",
       header: "",
       cell: ({ row: { original } }) => (
          <>
-            <LinkButton label={<SquarePen />} url={`/unit-kerja/sub-unit/actions/${original.id}`} type="edit" />
-            <ConfirmDialog url={`/unit-kerja/sub-unit`} id={original.id as string | number} refetchKey={[["/unit-kerja/sub-unit"]]} />
+            <LinkButton label={<SquarePen />} url={`${endpoint}/actions/${original.id}`} type="edit" />
+            <ConfirmDialog url={endpoint} id={original.id as string | number} refetchKey={[[endpoint]]} />
          </>
       ),
       meta: { className: "w-[80px]" },

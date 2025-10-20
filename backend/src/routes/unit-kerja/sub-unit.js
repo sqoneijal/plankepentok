@@ -1,7 +1,8 @@
 const express = require("express");
 const { PrismaClient } = require("@prisma/client");
-const { z, includes } = require("zod");
+const { z } = require("zod");
 const errorHandler = require("../../handle-error.js");
+const { logAudit } = require("../../helpers.js");
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -68,12 +69,20 @@ router.get("/", async (req, res) => {
       const total = await prisma.tb_sub_unit.count({ where });
       const results = await prisma.tb_sub_unit.findMany({
          where,
-         orderBy: { id: "asc" },
+         orderBy: { id: "desc" },
          include: {
-            biro: true,
-            fakultas: true,
-            lembaga: true,
-            upt: true,
+            biro: {
+               select: { id: true, nama: true },
+            },
+            fakultas: {
+               select: { id: true, nama: true },
+            },
+            lembaga: {
+               select: { id: true, nama: true },
+            },
+            upt: {
+               select: { id: true, nama: true },
+            },
          },
          take: limit,
          skip: offset,
@@ -117,7 +126,7 @@ router.post("/", async (req, res) => {
       const id_relation = Number.parseInt(extract[0]);
       const level = extract[1];
 
-      await prisma.tb_sub_unit.create({
+      const newData = await prisma.tb_sub_unit.create({
          data: {
             level,
             id_biro: level === "biro" ? id_relation : null,
@@ -129,6 +138,9 @@ router.post("/", async (req, res) => {
             user_modified,
          },
       });
+
+      logAudit(user_modified, "CREATE", "tb_sub_unit", req.ip, null, { ...newData });
+
       res.status(201).json({ status: true, message: "Sub unit berhasil ditambahkan" });
    } catch (error) {
       res.status(500).json({ error: error.message });
@@ -146,11 +158,19 @@ router.put("/:id", async (req, res) => {
          return errorHandler(parsed, res);
       }
 
+      const oldData = await prisma.tb_sub_unit.findUnique({
+         where: { id: Number.parseInt(id) },
+      });
+
+      if (!oldData) {
+         return res.json({ status: false, message: "Sub unit tidak ditemukan" });
+      }
+
       const extract = id_parent.split("-");
       const id_relation = Number.parseInt(extract[0]);
       const level = extract[1];
 
-      await prisma.tb_sub_unit.update({
+      const newData = await prisma.tb_sub_unit.update({
          where: { id: Number.parseInt(id) },
          data: {
             level,
@@ -163,6 +183,9 @@ router.put("/:id", async (req, res) => {
             user_modified,
          },
       });
+
+      logAudit(user_modified, "UPDATE", "tb_sub_unit", req.ip, { ...oldData }, { ...newData });
+
       res.status(201).json({ status: true, message: "Sub unit berhasil diperbaharui" });
    } catch (error) {
       res.status(500).json({ error: error.message });
@@ -172,9 +195,22 @@ router.put("/:id", async (req, res) => {
 router.delete("/:id", async (req, res) => {
    try {
       const { id } = req.params;
+      const { user_modified } = req.body;
+
+      const oldData = await prisma.tb_sub_unit.findUnique({
+         where: { id: Number.parseInt(id) },
+      });
+
+      if (!oldData) {
+         return res.json({ status: false, message: "Sub unit tidak ditemukan" });
+      }
+
       await prisma.tb_sub_unit.delete({
          where: { id: Number.parseInt(id) },
       });
+
+      logAudit(user_modified, "DELETE", "tb_sub_unit", req.ip, { ...oldData }, null);
+
       res.json({ status: true, message: "Sub unit berhasil dihapus" });
    } catch (error) {
       if (error.code === "P2025") {

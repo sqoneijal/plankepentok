@@ -1,40 +1,22 @@
 import Table from "@/components/table";
-import { FormInput, FormSelect } from "@/lib/helpers";
+import { useHeaderButton } from "@/hooks/store";
+import { LinkButton } from "@/lib/helpers";
+import { useGetQuery } from "@/lib/utils";
+import { useEffect } from "react";
 import { getColumns } from "./column";
-import { useMasterIKUPage } from "./use-page";
+
+const endpoint = "/master-iku";
 
 export default function Page() {
-   const { data, isLoading, limit, offset, navigate, search, setSearch, year, setYear } = useMasterIKUPage();
+   const { setButton } = useHeaderButton();
+   const { results, total, isLoading } = useGetQuery(endpoint);
 
-   const currentYear = new Date().getFullYear();
-   const yearOptions = Array.from({ length: 10 }, (_, i) => ({
-      label: (currentYear - i).toString(),
-      value: (currentYear - i).toString(),
-   }));
+   useEffect(() => {
+      setButton(<LinkButton label="Tambah Master IKU" url={`${endpoint}/actions`} />);
+      return () => {
+         setButton(<div />);
+      };
+   }, [setButton]);
 
-   return (
-      <>
-         <div className="mb-4 row">
-            <div className="col-12 col-md-3">
-               <FormInput label="Cari master IKU..." value={search} onChange={setSearch} name="search" withLabel={false} />
-            </div>
-            <div className="col-12 col-md-2">
-               <FormSelect
-                  withLabel={false}
-                  label="Tahun"
-                  name="year"
-                  options={yearOptions}
-                  value={year.toString()}
-                  onChange={(value) => setYear(value)}
-               />
-            </div>
-         </div>
-         <Table
-            columns={getColumns({ navigate, limit, offset })}
-            data={Array.isArray(data?.results) ? data?.results : []}
-            total={data?.total ?? 0}
-            isLoading={isLoading}
-         />
-      </>
-   );
+   return <Table columns={getColumns()} data={results} total={total} isLoading={isLoading} />;
 }

@@ -1,4 +1,3 @@
-import ConfirmDialog from "@/components/confirm-delete";
 import { Badge } from "@/components/ui/badge";
 import { toRupiah } from "@/helpers/init";
 import { LinkButton } from "@/lib/helpers";
@@ -37,17 +36,12 @@ const columnConfigs: Array<ColumnConfig> = [
    },
 ];
 
-export const getColumns = (): Array<ColumnDef<RowData, unknown>> => [
+export const getColumns = (endpoint: string): Array<ColumnDef<RowData, unknown>> => [
    columnHelper.display({
       id: "actions",
       header: "",
-      cell: ({ row: { original } }) => (
-         <>
-            <LinkButton label={<SquarePen />} url={`/pengaturan/actions/${original.id}`} type="edit" />
-            <ConfirmDialog url={`/pengaturan`} id={original.id as string | number} refetchKey={[["/pengaturan"]]} />
-         </>
-      ),
-      meta: { className: "w-[80px]" },
+      cell: ({ row: { original } }) => <LinkButton label={<SquarePen />} url={`${endpoint}/actions/${original.id}`} type="edit" />,
+      meta: { className: "w-[10px]" },
    }),
    ...columnConfigs.map((config) =>
       columnHelper.accessor(config.key, {

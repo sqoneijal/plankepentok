@@ -1,6 +1,5 @@
 import { InfoPaguUniversitasSkeleton, PaguTableSkeleton } from "@/components/loading-skeleton";
-import { Button } from "@/components/ui/button";
-import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { lazy, Suspense } from "react";
 import { useParams } from "react-router";
@@ -23,14 +22,6 @@ export default function Page() {
 
    return (
       <Card>
-         <CardHeader>
-            <CardTitle>Pagu Anggaran</CardTitle>
-            <CardAction>
-               <Button variant="outline" className="-mt-2">
-                  Perbaharui Pagu Anggaran
-               </Button>
-            </CardAction>
-         </CardHeader>
          <CardContent>
             {isLoading ? (
                <InfoPaguUniversitasSkeleton />

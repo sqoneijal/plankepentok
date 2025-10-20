@@ -1,73 +1,74 @@
 const express = require("express");
 const { PrismaClient } = require("@prisma/client");
+const errorHandler = require("../../handle-error.js");
+const { logAudit } = require("../../helpers.js");
+const { z } = require("zod");
+
+const validation = z.object({
+   nama: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Nama biro wajib diisi")),
+});
 
 const router = express.Router();
 const prisma = new PrismaClient();
 
-// GET /api/unir-kerja/biro - Get all biro
 router.get("/", async (req, res) => {
    try {
       const limit = Number.parseInt(req.query.limit) || 25;
       const offset = Number.parseInt(req.query.offset) || 0;
       const search = req.query.search || "";
 
-      const where = search
-         ? {
-              nama: { contains: search, mode: "insensitive" },
-           }
-         : {};
+      const query = {
+         nama: { contains: search, mode: "insensitive" },
+      };
+      const where = search ? query : {};
 
       const total = await prisma.tb_biro_master.count({ where });
       const results = await prisma.tb_biro_master.findMany({
          where,
-         orderBy: { id: "asc" },
+         orderBy: { id: "desc" },
          take: limit,
          skip: offset,
       });
+
       res.json({ results, total });
    } catch (error) {
       res.status(500).json({ error: error.message });
    }
 });
 
-// GET /api/unir-kerja/biro/:id - Get biro by id
 router.get("/:id", async (req, res) => {
    try {
       const { id } = req.params;
       const results = await prisma.tb_biro_master.findUnique({
          where: { id: Number.parseInt(id) },
       });
-      if (!results) {
-         return res.json({ status: false, error: "Biro tidak ditemukan" });
-      }
-      res.json({ results, status: true });
+
+      res.json({ results });
    } catch (error) {
       res.status(500).json({ error: error.message });
    }
 });
 
-// POST /api/unir-kerja/biro - Create new biro
 router.post("/", async (req, res) => {
    try {
       const { nama, user_modified } = req.body;
 
-      const errors = {};
+      const parsed = validation.safeParse(req.body);
 
-      if (!nama?.trim()) {
-         errors.nama = "Nama biro wajib diisi";
+      if (!parsed.success) {
+         return errorHandler(parsed, res);
       }
 
-      if (Object.keys(errors).length > 0) {
-         return res.json({ status: false, errors, message: "Periksa kembali isian anda" });
-      }
-
-      await prisma.tb_biro_master.create({
+      const newData = await prisma.tb_biro_master.create({
          data: {
             nama,
             uploaded: new Date(),
             user_modified,
          },
       });
+
+      logAudit(user_modified, "CREATE", "tb_biro_master", req.ip, null, { ...newData });
+
       res.status(201).json({ status: true, message: "Biro berhasil ditambahkan" });
    } catch (error) {
       res.status(500).json({ error: error.message });
@@ -80,17 +81,21 @@ router.put("/:id", async (req, res) => {
       const { id } = req.params;
       const { nama, user_modified } = req.body;
 
-      const errors = {};
+      const parsed = validation.safeParse(req.body);
 
-      if (!nama?.trim()) {
-         errors.nama = "Nama biro wajib diisi";
+      if (!parsed.success) {
+         return errorHandler(parsed, res);
       }
 
-      if (Object.keys(errors).length > 0) {
-         return res.json({ status: false, errors, message: "Periksa kembali isian anda" });
+      const oldData = await prisma.tb_biro_master.findUnique({
+         where: { id: Number.parseInt(id) },
+      });
+
+      if (!oldData) {
+         return res.json({ status: false, message: "Biro tidak ditemukan" });
       }
 
-      await prisma.tb_biro_master.update({
+      const newData = await prisma.tb_biro_master.update({
          where: { id: Number.parseInt(id) },
          data: {
             nama,
@@ -98,6 +103,9 @@ router.put("/:id", async (req, res) => {
             user_modified,
          },
       });
+
+      logAudit(user_modified, "UPDATE", "tb_biro_master", req.ip, { ...oldData }, { ...newData });
+
       res.json({ status: true, message: "Biro berhasil diperbaharui" });
    } catch (error) {
       if (error.code === "P2025") {
@@ -108,13 +116,25 @@ router.put("/:id", async (req, res) => {
    }
 });
 
-// DELETE /api/unir-kerja/biro/:id - Delete biro
 router.delete("/:id", async (req, res) => {
    try {
       const { id } = req.params;
+      const { user_modified } = req.body;
+
+      const oldData = await prisma.tb_biro_master.findUnique({
+         where: { id: Number.parseInt(id) },
+      });
+
+      if (!oldData) {
+         return res.json({ status: false, message: "Biro tidak ditemukan" });
+      }
+
       await prisma.tb_biro_master.delete({
          where: { id: Number.parseInt(id) },
       });
+
+      logAudit(user_modified, "DELETE", "tb_biro_master", req.ip, { ...oldData }, null);
+
       res.json({ status: true });
    } catch (error) {
       if (error.code === "P2025") {

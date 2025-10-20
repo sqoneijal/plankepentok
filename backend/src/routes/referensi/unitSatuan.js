@@ -1,26 +1,32 @@
 const express = require("express");
 const { PrismaClient } = require("@prisma/client");
+const { z } = require("zod");
+const errorHandler = require("../../handle-error.js");
+const { logAudit } = require("../../helpers.js");
+
+const validation = z.object({
+   nama: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Nama unit satuan wajib diisi")),
+   aktif: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Status unit satuan wajib diisi")),
+});
 
 const router = express.Router();
 const prisma = new PrismaClient();
 
-// GET /api/referensi/unit-satuan - Get all unit satuan
 router.get("/", async (req, res) => {
    try {
       const limit = Number.parseInt(req.query.limit) || 25;
       const offset = Number.parseInt(req.query.offset) || 0;
       const search = req.query.search || "";
 
-      const where = search
-         ? {
-              OR: [{ nama: { contains: search, mode: "insensitive" } }, { deskripsi: { contains: search, mode: "insensitive" } }],
-           }
-         : {};
+      const query = {
+         OR: [{ nama: { contains: search, mode: "insensitive" } }, { deskripsi: { contains: search, mode: "insensitive" } }],
+      };
+      const where = search ? query : {};
 
       const total = await prisma.tb_unit_satuan.count({ where });
       const results = await prisma.tb_unit_satuan.findMany({
          where,
-         orderBy: { id: "asc" },
+         orderBy: { id: "desc" },
          take: limit,
          skip: offset,
       });
@@ -30,42 +36,30 @@ router.get("/", async (req, res) => {
    }
 });
 
-// GET /api/referensi/unit-satuan/:id - Get unit satuan by id
 router.get("/:id", async (req, res) => {
    try {
       const { id } = req.params;
-      const data = await prisma.tb_unit_satuan.findUnique({
+      const results = await prisma.tb_unit_satuan.findUnique({
          where: { id: Number.parseInt(id) },
       });
-      if (!data) {
-         return res.json({ status: false, error: "Unit satuan tidak ditemukan" });
-      }
-      res.json({ data, status: true });
+
+      res.json({ results });
    } catch (error) {
       res.status(500).json({ error: error.message });
    }
 });
 
-// POST /api/referensi/unit-satuan - Create new unit satuan
 router.post("/", async (req, res) => {
    try {
       const { nama, deskripsi, aktif, user_modified } = req.body;
 
-      const errors = {};
+      const parsed = validation.safeParse(req.body);
 
-      if (!nama?.trim()) {
-         errors.nama = "Nama unit satuan wajib diisi";
+      if (!parsed.success) {
+         return errorHandler(parsed, res);
       }
 
-      if (!aktif?.trim()) {
-         errors.aktif = "Status unit satuan wajib dipilih";
-      }
-
-      if (Object.keys(errors).length > 0) {
-         return res.json({ status: false, errors, message: "Periksa kembali isian anda" });
-      }
-
-      await prisma.tb_unit_satuan.create({
+      const newData = await prisma.tb_unit_satuan.create({
          data: {
             nama,
             deskripsi,
@@ -74,33 +68,35 @@ router.post("/", async (req, res) => {
             user_modified,
          },
       });
+
+      logAudit(user_modified, "CREATE", "tb_unit_satuan", req.ip, null, { ...newData });
+
       res.status(201).json({ status: true, message: "Unit satuan berhasil ditambahkan" });
    } catch (error) {
       res.status(500).json({ error: error.message });
    }
 });
 
-// PUT /api/referensi/unit-satuan/:id - Update unit satuan
 router.put("/:id", async (req, res) => {
    try {
       const { id } = req.params;
       const { nama, deskripsi, aktif, user_modified } = req.body;
 
-      const errors = {};
+      const parsed = validation.safeParse(req.body);
 
-      if (!nama?.trim()) {
-         errors.nama = "Nama unit satuan wajib diisi";
+      if (!parsed.success) {
+         return errorHandler(parsed, res);
       }
 
-      if (!aktif?.trim()) {
-         errors.aktif = "Status unit satuan wajib dipilih";
+      const oldData = await prisma.tb_unit_satuan.findUnique({
+         where: { id: Number.parseInt(id) },
+      });
+
+      if (!oldData) {
+         return res.json({ status: false, message: "Unit satuan tidak ditemukan" });
       }
 
-      if (Object.keys(errors).length > 0) {
-         return res.json({ status: false, errors, message: "Periksa kembali isian anda" });
-      }
-
-      await prisma.tb_unit_satuan.update({
+      const newData = await prisma.tb_unit_satuan.update({
          where: { id: Number.parseInt(id) },
          data: {
             nama,
@@ -110,6 +106,9 @@ router.put("/:id", async (req, res) => {
             user_modified,
          },
       });
+
+      logAudit(user_modified, "UPDATE", "tb_unit_satuan", req.ip, { ...oldData }, { ...newData });
+
       res.json({ status: true, message: "Unit satuan berhasil diperbaharui" });
    } catch (error) {
       if (error.code === "P2025") {
@@ -120,13 +119,25 @@ router.put("/:id", async (req, res) => {
    }
 });
 
-// DELETE /api/referensi/unit-satuan/:id - Delete unit satuan
 router.delete("/:id", async (req, res) => {
    try {
       const { id } = req.params;
+      const { user_modified } = req.body;
+
+      const oldData = await prisma.tb_unit_satuan.findUnique({
+         where: { id: Number.parseInt(id) },
+      });
+
+      if (!oldData) {
+         return res.json({ status: false, message: "Unit satuan tidak ditemukan" });
+      }
+
       await prisma.tb_unit_satuan.delete({
          where: { id: Number.parseInt(id) },
       });
+
+      logAudit(user_modified, "DELETE", "tb_unit_satuan", req.ip, { ...oldData }, null);
+
       res.json({ status: true });
    } catch (error) {
       if (error.code === "P2025") {

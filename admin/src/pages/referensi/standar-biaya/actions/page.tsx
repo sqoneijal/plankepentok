@@ -1,23 +1,36 @@
-import { LoadingSkeleton } from "@/components/loading-skeleton";
-import { getValue } from "@/helpers/init";
-import { FormInput, FormSelect, FormTextarea, SubmitButton } from "@/lib/helpers";
-import { useEffect } from "react";
+import { FormStandarBiayaSkeleton } from "@/components/loading-skeleton";
+import { covertToSTring, getValue, objectLength } from "@/helpers/init";
+import { useHeaderButton } from "@/hooks/store";
+import { FormInput, FormSelect, FormTextarea, LinkButton, SubmitButton } from "@/lib/helpers";
+import { useGetQueryDetail, useSubmitData } from "@/lib/utils";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router";
-import { useCreateData, useGetDetailData, useInitPage, useOptions, useUpdateData } from "./init";
+import { useOptionsKategoriSBM, useOptionsUnitSatuan } from "./options";
+
+const endpoint = "/referensi/standar-biaya";
+
+type FormData = Record<string, string>;
 
 export default function Page() {
-   const { id_standar_biaya } = useParams();
-   const isEdit = !!id_standar_biaya;
+   const { id } = useParams();
+   const isEdit = !!id;
 
-   const { kategoriSBM, unitSatuan, isLoadingKategoriSBM, isLoadingUnitSatuan } = useOptions();
+   const { setButton } = useHeaderButton();
 
-   const { formData, setFormData, errors, setErrors } = useInitPage();
-   const { content, isLoading } = useGetDetailData(id_standar_biaya);
+   const [formData, setFormData] = useState<FormData>({});
+   const [errors, setErrors] = useState<FormData>({});
 
-   const createData = useCreateData(formData, setErrors);
-   const updateData = useUpdateData(id_standar_biaya, formData, setErrors);
+   useEffect(() => {
+      setButton(<LinkButton label="Batal" url={endpoint} />);
+      return () => {
+         setButton(<div />);
+      };
+   }, [setButton]);
 
-   const { onSubmit, isPending } = isEdit ? updateData : createData;
+   const { results, isLoading } = useGetQueryDetail(endpoint, id);
+   const { onSubmit, isPending } = useSubmitData({ id, formData, setErrors, endpoint });
+   const { kategoriSBM, isLoadingKategoriSBM } = useOptionsKategoriSBM();
+   const { unitSatuan, isLoadingUnitSatuan } = useOptionsUnitSatuan();
 
    const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault();
@@ -25,15 +38,15 @@ export default function Page() {
    };
 
    useEffect(() => {
-      if (!isLoading && Object.keys(content).length > 0) {
-         setFormData(content);
+      if (id && !isLoading && objectLength(results)) {
+         const data = covertToSTring(results);
+         setFormData({ ...(data as FormData) });
       }
       return () => {};
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-   }, [isLoading, content]);
+   }, [id, isLoading, results]);
 
    if (isLoading || isLoadingKategoriSBM || isLoadingUnitSatuan) {
-      return <LoadingSkeleton />;
+      return <FormStandarBiayaSkeleton />;
    }
 
    return (

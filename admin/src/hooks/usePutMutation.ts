@@ -6,33 +6,33 @@ import { queryClient } from "./queryClient";
 export const usePutMutation = <TData, TTransformed = TData>(
    url: string,
    transformData?: (data: TData) => TTransformed,
-   queryKey?: Array<Array<string>>
+   queryKeys?: Array<Array<string>>
 ) => {
-   const { user } = UseAuth();
+   const { token, user } = UseAuth();
 
    return useMutation({
       mutationFn: async (data: TData) => {
          const transformed = transformData ? transformData(data) : (data as unknown as TTransformed);
-         const bodyData = { ...transformed, user_modified: user?.preferred_username || "" };
          const response = await fetch(`${import.meta.env.VITE_API_URL}${url}`, {
             method: "PUT",
             headers: {
                "Content-Type": "application/json",
+               Authorization: `Bearer ${token}`,
             },
-            body: JSON.stringify(bodyData),
+            body: JSON.stringify({ ...transformed, user_modified: user?.preferred_username }),
          });
 
          if (!response.ok) {
             const errorData = await response.json();
-            toast.error(errorData.message);
+            toast.error(errorData.message || "Failed to update data");
          }
 
          return response.json();
       },
       onSuccess: (response) => {
-         if (queryKey && response.status) {
-            for (const qk of queryKey) {
-               queryClient.invalidateQueries({ queryKey: qk, exact: false });
+         if (queryKeys && response.status) {
+            for (const queryKey of queryKeys) {
+               queryClient.invalidateQueries({ queryKey, exact: false });
             }
          }
       },

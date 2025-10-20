@@ -1,31 +1,35 @@
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { UseAuth } from "./auth-context";
 
-type UseApiQueryProps = {
+export function useApiQuery({
+   queryKey,
+   url,
+   params,
+   options,
+}: {
    queryKey?: string | Array<unknown>;
    url: string;
-   params?: Record<string, unknown>;
-   options?: {
-      enabled?: boolean;
-      queryKey?: Array<string | number>;
-   };
-};
-
-export const useApiQuery = ({ queryKey, url, options, params }: UseApiQueryProps) => {
-   const queryString = params
-      ? new URLSearchParams(Object.fromEntries(Object.entries(params).map(([key, value]) => [key, String(value)]))).toString()
-      : "";
-   const fullUrl = `${import.meta.env.VITE_API_URL}${url}?${queryString}`;
+   params?: Record<string, string>;
+   options?: Record<string, unknown>;
+}) {
+   const { token } = UseAuth();
+   const queryString = params ? new URLSearchParams(Object.fromEntries(Object.entries(params).map(([k, v]) => [k, String(v)]))).toString() : "";
+   const fullUrl = import.meta.env.VITE_API_URL + url + (queryString ? `?${queryString}` : "");
 
    return useQuery({
-      queryKey: Array.isArray(queryKey) ? [fullUrl, queryString] : [url, params],
+      queryKey: Array.isArray(queryKey) ? [queryKey] : [url, params],
       queryFn: async () => {
-         const response = await fetch(fullUrl);
+         const response = await fetch(fullUrl, {
+            headers: {
+               Authorization: `Bearer ${token}`,
+            },
+         });
          if (!response.ok) {
-            toast.error("Failed to fetch data");
+            toast.error(response?.statusText || "Failed to fetch data");
          }
          return response.json();
       },
       ...options,
    });
-};
+}

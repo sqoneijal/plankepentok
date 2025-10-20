@@ -30,16 +30,17 @@ const columnConfigs: Array<ColumnConfig> = [
    },
 ];
 
-export const getColumns = (): Array<ColumnDef<RowData, unknown>> => [
+export const getColumns = (endpoint: string): Array<ColumnDef<RowData, unknown>> => [
    columnHelper.display({
       id: "actions",
       header: "",
       cell: ({ row: { original } }) => (
          <>
-            <LinkButton label={<SquarePen />} url={`/referensi/unit-satuan/actions/${original.id}`} type="edit" />
-            <ConfirmDialog url={`/referensi/unit-satuan`} id={original.id as string | number} refetchKey={[["/referensi/unit-satuan"]]} />
+            <LinkButton label={<SquarePen />} url={`${endpoint}/actions/${original.id}`} type="edit" />
+            <ConfirmDialog url={endpoint} id={original.id as string | number} refetchKey={[[endpoint]]} />
          </>
       ),
+      meta: { className: "w-[80px]" },
    }),
    ...columnConfigs.map((config) =>
       columnHelper.accessor(config.key, {

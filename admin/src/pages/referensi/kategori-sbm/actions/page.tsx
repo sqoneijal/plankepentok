@@ -1,21 +1,32 @@
-import { LoadingSkeleton } from "@/components/loading-skeleton";
-import { getValue } from "@/helpers/init";
-import { FormInput, FormTextarea, SubmitButton } from "@/lib/helpers";
-import { useEffect } from "react";
+import { FormKategoriSBMSkeleton } from "@/components/loading-skeleton";
+import { covertToSTring, getValue, objectLength } from "@/helpers/init";
+import { useHeaderButton } from "@/hooks/store";
+import { FormInput, FormTextarea, LinkButton, SubmitButton } from "@/lib/helpers";
+import { useGetQueryDetail, useSubmitData } from "@/lib/utils";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router";
-import { useCreateData, useGetDetailData, useInitPage, useUpdateData } from "./init";
+
+type FormData = Record<string, string>;
+const endpoint = "/referensi/kategori-sbm";
 
 export default function Page() {
-   const { id_kategori_sbm } = useParams();
-   const isEdit = !!id_kategori_sbm;
+   const { id } = useParams();
+   const isEdit = !!id;
 
-   const { formData, setFormData, errors, setErrors } = useInitPage();
-   const { content, isLoading } = useGetDetailData(id_kategori_sbm);
+   const { setButton } = useHeaderButton();
 
-   const createData = useCreateData(formData, setErrors);
-   const updateData = useUpdateData(id_kategori_sbm, formData, setErrors);
+   const [formData, setFormData] = useState<FormData>({});
+   const [errors, setErrors] = useState<FormData>({});
 
-   const { onSubmit, isPending } = isEdit ? updateData : createData;
+   useEffect(() => {
+      setButton(<LinkButton label="Batal" url={endpoint} />);
+      return () => {
+         setButton(<div />);
+      };
+   }, [setButton]);
+
+   const { results, isLoading } = useGetQueryDetail(endpoint, id);
+   const { onSubmit, isPending } = useSubmitData({ id, formData, setErrors, endpoint });
 
    const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault();
@@ -23,15 +34,15 @@ export default function Page() {
    };
 
    useEffect(() => {
-      if (!isLoading && Object.keys(content).length > 0) {
-         setFormData(content);
+      if (id && !isLoading && objectLength(results)) {
+         const data = covertToSTring(results);
+         setFormData({ ...(data as FormData) });
       }
       return () => {};
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-   }, [isLoading, content]);
+   }, [id, isLoading, results]);
 
    if (isLoading) {
-      return <LoadingSkeleton />;
+      return <FormKategoriSBMSkeleton />;
    }
 
    return (

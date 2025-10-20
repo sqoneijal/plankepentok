@@ -1,21 +1,33 @@
-import { LoadingSkeleton } from "@/components/loading-skeleton";
-import { covertToSTring, getValue } from "@/helpers/init";
-import { FormInput, SubmitButton } from "@/lib/helpers";
-import { useEffect } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { covertToSTring, getValue, objectLength } from "@/helpers/init";
+import { useHeaderButton } from "@/hooks/store";
+import { FormInput, LinkButton, SubmitButton } from "@/lib/helpers";
+import { useGetQueryDetail, useSubmitData } from "@/lib/utils";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router";
-import { useCreateData, useGetDetailData, useInitPage, useUpdateData, type FormData } from "./init";
+
+type FormData = Record<string, string>;
+
+const endpoint = "/unit-kerja/upt";
 
 export default function Page() {
    const { id } = useParams();
    const isEdit = !!id;
 
-   const { formData, setFormData, errors, setErrors } = useInitPage();
-   const { content, isLoading } = useGetDetailData(id);
+   const { setButton } = useHeaderButton();
 
-   const createData = useCreateData(formData, setErrors);
-   const updateData = useUpdateData(id, formData, setErrors);
+   const [formData, setFormData] = useState<FormData>({});
+   const [errors, setErrors] = useState<FormData>({});
 
-   const { onSubmit, isPending } = isEdit ? updateData : createData;
+   useEffect(() => {
+      setButton(<LinkButton label="Batal" url={endpoint} />);
+      return () => {
+         setButton(<div />);
+      };
+   }, [setButton]);
+
+   const { results, isLoading } = useGetQueryDetail(endpoint, id);
+   const { onSubmit, isPending } = useSubmitData({ id, formData, setErrors, endpoint });
 
    const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault();
@@ -23,16 +35,31 @@ export default function Page() {
    };
 
    useEffect(() => {
-      if (!isLoading && Object.keys(content).length > 0) {
-         const converted = covertToSTring(content);
-         setFormData(converted as FormData);
+      if (id && !isLoading && objectLength(results)) {
+         const data = covertToSTring(results);
+         setFormData({ ...(data as FormData) });
       }
       return () => {};
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-   }, [isLoading, content]);
+   }, [id, isLoading, results]);
 
    if (isLoading) {
-      return <LoadingSkeleton />;
+      return (
+         <div className="p-0">
+            <div className="border rounded-lg p-6 shadow-sm bg-white">
+               <div className="space-y-4">
+                  <div className="row">
+                     <div className="col-12">
+                        <div className="space-y-2">
+                           <Skeleton className="h-4 w-20" />
+                           <Skeleton className="h-10 w-full" />
+                        </div>
+                     </div>
+                  </div>
+                  <Skeleton className="h-10 w-32" />
+               </div>
+            </div>
+         </div>
+      );
    }
 
    return (

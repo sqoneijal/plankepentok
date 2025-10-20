@@ -1,10 +1,22 @@
 const express = require("express");
 const { PrismaClient } = require("@prisma/client");
+const errorHandler = require("../../handle-error.js");
+const { logAudit } = require("../../helpers.js");
+const { z } = require("zod");
+
+const validation = z.object({
+   id_standar_biaya: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Standar biaya wajib diisi")),
+   tahun_anggaran: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Tahun anggaran wajib diisi")),
+   id_satuan: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Unit satuan wajib diisi")),
+   harga_satuan: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Harga satuan wajib diisi")),
+   tanggal_mulai_efektif: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Tanggal mulai efektif wajib diisi")),
+   tanggal_akhir_efektif: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Tanggal akhir efektif wajib diisi")),
+   status_validasi: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Status wajib diisi")),
+});
 
 const router = express.Router();
 const prisma = new PrismaClient();
 
-// GET /api/referensi/detail-harga-sbm - Get all detail harga sbm
 router.get("/", async (req, res) => {
    try {
       const limit = Number.parseInt(req.query.limit) || 25;
@@ -23,18 +35,23 @@ router.get("/", async (req, res) => {
       const total = await prisma.tb_detail_harga_sbm.count({ where });
       const results = await prisma.tb_detail_harga_sbm.findMany({
          where,
-         include: {
-            standar_biaya: {
-               include: {
-                  kategori_sbm: true,
-                  unit_satuan: true,
-               },
-            },
-            unit_satuan: true,
-         },
-         orderBy: { id: "asc" },
+         orderBy: { id: "desc" },
          take: limit,
          skip: offset,
+         include: {
+            standar_biaya: {
+               select: {
+                  kode: true,
+                  nama: true,
+               },
+            },
+            unit_satuan: {
+               select: {
+                  deskripsi: true,
+                  nama: true,
+               },
+            },
+         },
       });
       res.json({ results, total });
    } catch (error) {
@@ -42,32 +59,23 @@ router.get("/", async (req, res) => {
    }
 });
 
-// GET /api/referensi/detail-harga-sbm/:id - Get detail harga sbm by id
 router.get("/:id", async (req, res) => {
    try {
       const { id } = req.params;
-      const data = await prisma.tb_detail_harga_sbm.findUnique({
+      const results = await prisma.tb_detail_harga_sbm.findUnique({
          where: { id: Number.parseInt(id) },
          include: {
-            standar_biaya: {
-               include: {
-                  tb_kategori_sbm: true,
-                  unit_satuan: true,
-               },
-            },
+            standar_biaya: true,
             unit_satuan: true,
          },
       });
-      if (!data) {
-         return res.json({ status: false, error: "Detail harga SBM tidak ditemukan" });
-      }
-      res.json({ data, status: true });
+
+      res.json({ results });
    } catch (error) {
       res.status(500).json({ error: error.message });
    }
 });
 
-// POST /api/referensi/detail-harga-sbm - Create new detail harga sbm
 router.post("/", async (req, res) => {
    try {
       const {
@@ -81,57 +89,29 @@ router.post("/", async (req, res) => {
          user_modified,
       } = req.body;
 
-      const errors = {};
+      const parsed = validation.safeParse(req.body);
 
-      if (!id_standar_biaya?.trim()) {
-         errors.id_standar_biaya = "Standar biaya wajib dipilih";
+      if (!parsed.success) {
+         return errorHandler(parsed, res);
       }
 
-      if (!tahun_anggaran?.trim()) {
-         errors.tahun_anggaran = "Tahun anggaran wajib diisi";
-      }
-
-      if (!id_satuan?.trim()) {
-         errors.id_satuan = "Unit satuan wajib dipilih";
-      }
-
-      if (!harga_satuan?.trim()) {
-         errors.harga_satuan = "Harga satuan wajib diisi";
-      }
-
-      if (!tanggal_mulai_efektif?.trim()) {
-         errors.tanggal_mulai_efektif = "Tanggal mulai efektif wajib diisi";
-      }
-
-      if (!tanggal_akhir_efektif?.trim()) {
-         errors.tanggal_akhir_efektif = "Tanggal akhir efektif wajib diisi";
-      }
-
-      if (!status_validasi?.trim()) {
-         errors.status_validasi = "Status validasi wajib diisi";
-      }
-
-      // Validasi apakah kombinasi sudah terdaftar
-      const existing = await prisma.tb_detail_harga_sbm.findFirst({
+      const duplicate = await prisma.tb_detail_harga_sbm.findFirst({
          where: {
             id_standar_biaya: Number.parseInt(id_standar_biaya),
             tahun_anggaran: Number.parseFloat(tahun_anggaran),
             id_satuan: Number.parseInt(id_satuan),
          },
       });
-      if (existing) {
-         errors.tahun_anggaran = "Kombinasi standar biaya, tahun anggaran, dan unit satuan sudah terdaftar";
+
+      if (duplicate) {
+         return res.json({ status: false, errors: { tahun_anggaran: "Kombinasi standar biaya, tahun anggaran, dan unit satuan sudah terdaftar" } });
       }
 
-      if (Object.keys(errors).length > 0) {
-         return res.json({ status: false, errors, message: "Periksa kembali isian anda" });
-      }
-
-      await prisma.tb_detail_harga_sbm.create({
+      const newData = await prisma.tb_detail_harga_sbm.create({
          data: {
             id_standar_biaya: Number.parseInt(id_standar_biaya),
             tahun_anggaran: Number.parseFloat(tahun_anggaran),
-            harga_satuan: Number.parseFloat(harga_satuan),
+            harga_satuan: Number.parseFloat(harga_satuan.toString().replaceAll(".", "")),
             id_satuan: Number.parseInt(id_satuan),
             tanggal_mulai_efektif: new Date(tanggal_mulai_efektif),
             tanggal_akhir_efektif: new Date(tanggal_akhir_efektif),
@@ -140,6 +120,9 @@ router.post("/", async (req, res) => {
             user_modified,
          },
       });
+
+      logAudit(user_modified, "CREATE", "tb_detail_harga_sbm", req.ip, null, { ...newData });
+
       res.status(201).json({ status: true, message: "Detail harga SBM berhasil ditambahkan" });
    } catch (error) {
       if (error.code === "P2002") {
@@ -149,7 +132,6 @@ router.post("/", async (req, res) => {
    }
 });
 
-// PUT /api/referensi/detail-harga-sbm/:id - Update detail harga sbm
 router.put("/:id", async (req, res) => {
    try {
       const { id } = req.params;
@@ -164,46 +146,39 @@ router.put("/:id", async (req, res) => {
          user_modified,
       } = req.body;
 
-      const errors = {};
+      const parsed = validation.safeParse(req.body);
 
-      if (!id_standar_biaya) {
-         errors.id_standar_biaya = "Standar biaya wajib dipilih";
+      if (!parsed.success) {
+         return errorHandler(parsed, res);
       }
 
-      if (!tahun_anggaran) {
-         errors.tahun_anggaran = "Tahun anggaran wajib dipilih";
+      const oldData = await prisma.tb_detail_harga_sbm.findUnique({
+         where: { id: Number.parseInt(id) },
+      });
+
+      if (!oldData) {
+         return res.json({ status: false, errors: { tahun_anggaran: "Detail harga SBM tidak ditemukan" } });
       }
 
-      if (!harga_satuan) {
-         errors.harga_satuan = "Harga satuan wajib diisi";
+      const duplicate = await prisma.tb_detail_harga_sbm.findFirst({
+         where: {
+            id_standar_biaya: Number.parseInt(id_standar_biaya),
+            tahun_anggaran: Number.parseFloat(tahun_anggaran),
+            id_satuan: Number.parseInt(id_satuan),
+            id: { not: Number.parseInt(id) },
+         },
+      });
+
+      if (duplicate) {
+         return res.json({ status: false, errors: { tahun_anggaran: "Kombinasi standar biaya, tahun anggaran, dan unit satuan sudah terdaftar" } });
       }
 
-      if (!id_satuan) {
-         errors.id_satuan = "Unit satuan wajib dipilih";
-      }
-
-      if (!tanggal_mulai_efektif) {
-         errors.tanggal_mulai_efektif = "Tanggal mulai efektif wajib diisi";
-      }
-
-      if (!tanggal_akhir_efektif) {
-         errors.tanggal_akhir_efektif = "Tanggal akhir efektif wajib diisi";
-      }
-
-      if (!status_validasi?.trim()) {
-         errors.status_validasi = "Status validasi wajib diisi";
-      }
-
-      if (Object.keys(errors).length > 0) {
-         return res.json({ status: false, errors, message: "Periksa kembali isian anda" });
-      }
-
-      await prisma.tb_detail_harga_sbm.update({
+      const newData = await prisma.tb_detail_harga_sbm.update({
          where: { id: Number.parseInt(id) },
          data: {
             id_standar_biaya: Number.parseInt(id_standar_biaya),
             tahun_anggaran: Number.parseFloat(tahun_anggaran),
-            harga_satuan: Number.parseFloat(harga_satuan),
+            harga_satuan: Number.parseFloat(harga_satuan.toString().replaceAll(".", "")),
             id_satuan: Number.parseInt(id_satuan),
             tanggal_mulai_efektif: new Date(tanggal_mulai_efektif),
             tanggal_akhir_efektif: new Date(tanggal_akhir_efektif),
@@ -212,6 +187,9 @@ router.put("/:id", async (req, res) => {
             user_modified,
          },
       });
+
+      logAudit(user_modified, "UPDATE", "tb_detail_harga_sbm", req.ip, { ...oldData }, { ...newData });
+
       res.json({ status: true, message: "Detail harga SBM berhasil diperbaharui" });
    } catch (error) {
       if (error.code === "P2025") {
@@ -224,13 +202,25 @@ router.put("/:id", async (req, res) => {
    }
 });
 
-// DELETE /api/referensi/detail-harga-sbm/:id - Delete detail harga sbm
 router.delete("/:id", async (req, res) => {
    try {
       const { id } = req.params;
+      const { user_modified } = req.body;
+
+      const oldData = await prisma.tb_detail_harga_sbm.findUnique({
+         where: { id: Number.parseInt(id) },
+      });
+
+      if (!oldData) {
+         return res.json({ status: false, errors: { tahun_anggaran: "Detail harga SBM tidak ditemukan" } });
+      }
+
       await prisma.tb_detail_harga_sbm.delete({
          where: { id: Number.parseInt(id) },
       });
+
+      logAudit(user_modified, "DELETE", "tb_detail_harga_sbm", req.ip, { ...oldData }, null);
+
       res.json({ status: true });
    } catch (error) {
       res.status(500).json({ error: error.message });

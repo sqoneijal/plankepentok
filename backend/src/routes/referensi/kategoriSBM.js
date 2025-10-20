@@ -1,30 +1,36 @@
 const express = require("express");
 const { PrismaClient } = require("@prisma/client");
+const errorHandler = require("../../handle-error.js");
+const { logAudit } = require("../../helpers.js");
+const { z } = require("zod");
+
+const validation = z.object({
+   kode: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Kode kategori SBM wajib diisi")),
+   nama: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Nama kategori SBM wajib diisi")),
+});
 
 const router = express.Router();
 const prisma = new PrismaClient();
 
-// GET /api/referensi/kategori-sbm - Get all kategori sbm
 router.get("/", async (req, res) => {
    try {
-      const limit = parseInt(req.query.limit) || 25;
-      const offset = parseInt(req.query.offset) || 0;
+      const limit = Number.parseInt(req.query.limit) || 25;
+      const offset = Number.parseInt(req.query.offset) || 0;
       const search = req.query.search || "";
 
-      const where = search
-         ? {
-              OR: [
-                 { nama: { contains: search, mode: "insensitive" } },
-                 { deskripsi: { contains: search, mode: "insensitive" } },
-                 { kode: { contains: search, mode: "insensitive" } },
-              ],
-           }
-         : {};
+      const query = {
+         OR: [
+            { nama: { contains: search, mode: "insensitive" } },
+            { deskripsi: { contains: search, mode: "insensitive" } },
+            { kode: { contains: search, mode: "insensitive" } },
+         ],
+      };
+      const where = search ? query : {};
 
       const total = await prisma.tb_kategori_sbm.count({ where });
       const results = await prisma.tb_kategori_sbm.findMany({
          where,
-         orderBy: { id: "asc" },
+         orderBy: { id: "desc" },
          take: limit,
          skip: offset,
       });
@@ -34,50 +40,38 @@ router.get("/", async (req, res) => {
    }
 });
 
-// GET /api/referensi/kategori-sbm/:id - Get kategori sbm by id
 router.get("/:id", async (req, res) => {
    try {
       const { id } = req.params;
-      const data = await prisma.tb_kategori_sbm.findUnique({
-         where: { id: parseInt(id) },
+      const results = await prisma.tb_kategori_sbm.findUnique({
+         where: { id: Number.parseInt(id) },
       });
-      if (!data) {
-         return res.json({ status: false, error: "Kategori SBM tidak ditemukan" });
-      }
-      res.json({ data, status: true });
+
+      res.json({ results });
    } catch (error) {
       res.status(500).json({ error: error.message });
    }
 });
 
-// POST /api/referensi/kategori-sbm - Create new kategori sbm
 router.post("/", async (req, res) => {
    try {
       const { kode, nama, deskripsi, user_modified } = req.body;
 
-      const errors = {};
+      const parsed = validation.safeParse(req.body);
 
-      if (kode?.trim()) {
-         const duplicate = await prisma.tb_kategori_sbm.findUnique({
-            where: { kode },
-         });
-
-         if (duplicate) {
-            errors.kode = "Kode kategori SBM sudah ada";
-         }
-      } else {
-         errors.kode = "Kode kategori SBM wajib diisi";
+      if (!parsed.success) {
+         return errorHandler(parsed, res);
       }
 
-      if (!nama?.trim()) {
-         errors.nama = "Nama kategori SBM wajib diisi";
+      const duplicate = await prisma.tb_kategori_sbm.findUnique({
+         where: { kode },
+      });
+
+      if (duplicate) {
+         return res.json({ status: false, errors: { kode: "Kode kategori SMB sudah terdaftar" } });
       }
 
-      if (Object.keys(errors).length > 0) {
-         return res.json({ status: false, errors, message: "Periksa kembali isian anda" });
-      }
-
-      await prisma.tb_kategori_sbm.create({
+      const newData = await prisma.tb_kategori_sbm.create({
          data: {
             kode,
             nama,
@@ -86,6 +80,9 @@ router.post("/", async (req, res) => {
             user_modified,
          },
       });
+
+      logAudit(user_modified, "CREATE", "tb_kategori_sbm", req.ip, null, { ...newData });
+
       res.status(201).json({ status: true, message: "Kategori SBM berhasil ditambahkan" });
    } catch (error) {
       if (error.code === "P2002") {
@@ -95,36 +92,35 @@ router.post("/", async (req, res) => {
    }
 });
 
-// PUT /api/referensi/kategori-sbm/:id - Update kategori sbm
 router.put("/:id", async (req, res) => {
    try {
       const { id } = req.params;
       const { kode, nama, deskripsi, user_modified } = req.body;
 
-      const errors = {};
+      const parsed = validation.safeParse(req.body);
 
-      if (kode?.trim()) {
-         const duplicate = await prisma.tb_kategori_sbm.findFirst({
-            where: { kode, id: { not: parseInt(id) } },
-         });
-
-         if (duplicate) {
-            errors.kode = "Kode kategori SBM sudah ada";
-         }
-      } else {
-         errors.kode = "Kode kategori SBM wajib diisi";
+      if (!parsed.success) {
+         return errorHandler(parsed, res);
       }
 
-      if (!nama?.trim()) {
-         errors.nama = "Nama kategori SBM wajib diisi";
+      const duplicate = await prisma.tb_kategori_sbm.findFirst({
+         where: { kode, id: { not: Number.parseInt(id) } },
+      });
+
+      if (duplicate) {
+         return res.json({ status: false, errors: { kode: "Kode kategori SMB sudah terdaftar" } });
       }
 
-      if (Object.keys(errors).length > 0) {
-         return res.json({ status: false, errors, message: "Periksa kembali isian anda" });
+      const oldData = await prisma.tb_kategori_sbm.findUnique({
+         where: { id: Number.parseInt(id) },
+      });
+
+      if (!oldData) {
+         return res.json({ status: false, message: "Kategori SBM tidak ditemukan" });
       }
 
-      await prisma.tb_kategori_sbm.update({
-         where: { id: parseInt(id) },
+      const newData = await prisma.tb_kategori_sbm.update({
+         where: { id: Number.parseInt(id) },
          data: {
             kode,
             nama,
@@ -133,6 +129,9 @@ router.put("/:id", async (req, res) => {
             user_modified,
          },
       });
+
+      logAudit(user_modified, "UPDATE", "tb_kategori_sbm", req.ip, { ...oldData }, { ...newData });
+
       res.json({ status: true, message: "Kategori SBM berhasil diperbaharui" });
    } catch (error) {
       if (error.code === "P2025") {
@@ -145,13 +144,25 @@ router.put("/:id", async (req, res) => {
    }
 });
 
-// DELETE /api/referensi/kategori-sbm/:id - Delete kategori sbm
 router.delete("/:id", async (req, res) => {
    try {
       const { id } = req.params;
-      await prisma.tb_kategori_sbm.delete({
-         where: { id: parseInt(id) },
+      const { user_modified } = req.body;
+
+      const oldData = await prisma.tb_kategori_sbm.findUnique({
+         where: { id: Number.parseInt(id) },
       });
+
+      if (!oldData) {
+         return res.json({ status: false, message: "Kategori SBM tidak ditemukan" });
+      }
+
+      await prisma.tb_kategori_sbm.delete({
+         where: { id: Number.parseInt(id) },
+      });
+
+      logAudit(user_modified, "DELETE", "tb_kategori_sbm", req.ip, { ...oldData }, null);
+
       res.json({ status: true });
    } catch (error) {
       if (error.code === "P2025") {

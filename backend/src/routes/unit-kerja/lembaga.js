@@ -2,6 +2,7 @@ const express = require("express");
 const { PrismaClient } = require("@prisma/client");
 const { z } = require("zod");
 const errorHandler = require("../../handle-error.js");
+const { logAudit } = require("../../helpers.js");
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -10,7 +11,6 @@ const lembagaSchema = z.object({
    nama: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Nama lembaga wajib diisi")),
 });
 
-// GET /api/unit-kerja/lembaga - Get all lembaga
 router.get("/", async (req, res) => {
    try {
       const limit = Number.parseInt(req.query.limit) || 25;
@@ -23,33 +23,31 @@ router.get("/", async (req, res) => {
       const total = await prisma.tb_lembaga_master.count({ where });
       const results = await prisma.tb_lembaga_master.findMany({
          where,
-         orderBy: { id: "asc" },
+         orderBy: { id: "desc" },
          take: limit,
          skip: offset,
       });
+
       res.json({ results, total });
    } catch (error) {
       res.status(500).json({ error: error.message });
    }
 });
 
-// GET /api/unit-kerja/lembaga/:id - Get lembaga by id
 router.get("/:id", async (req, res) => {
    try {
       const { id } = req.params;
+
       const results = await prisma.tb_lembaga_master.findUnique({
          where: { id: Number.parseInt(id) },
       });
-      if (!results) {
-         return res.json({ status: false, error: "Lembaga tidak ditemukan" });
-      }
-      res.json({ results, status: true });
+
+      res.json({ results });
    } catch (error) {
       res.status(500).json({ error: error.message });
    }
 });
 
-// POST /api/unit-kerja/lembaga - Create new lembaga
 router.post("/", async (req, res) => {
    try {
       const { nama, user_modified } = req.body;
@@ -60,20 +58,22 @@ router.post("/", async (req, res) => {
          return errorHandler(parsed, res);
       }
 
-      await prisma.tb_lembaga_master.create({
+      const newData = await prisma.tb_lembaga_master.create({
          data: {
             nama,
             uploaded: new Date(),
             user_modified,
          },
       });
+
+      logAudit(user_modified, "CREATE", "tb_lembaga_master", req.ip, null, { ...newData });
+
       res.status(201).json({ status: true, message: "Lembaga berhasil ditambahkan" });
    } catch (error) {
       res.status(500).json({ error: error.message });
    }
 });
 
-// PUT /api/unit-kerja/lembaga/:id - Update lembaga
 router.put("/:id", async (req, res) => {
    try {
       const { id } = req.params;
@@ -85,7 +85,15 @@ router.put("/:id", async (req, res) => {
          return errorHandler(parsed, res);
       }
 
-      await prisma.tb_lembaga_master.update({
+      const oldData = prisma.tb_lembaga_master.findUnique({
+         where: { id: Number.parseInt(id) },
+      });
+
+      if (!oldData) {
+         return res.json({ status: false, message: "Lembaga tidak ditemukan" });
+      }
+
+      const newData = await prisma.tb_lembaga_master.update({
          where: { id: Number.parseInt(id) },
          data: {
             nama,
@@ -93,6 +101,9 @@ router.put("/:id", async (req, res) => {
             user_modified,
          },
       });
+
+      logAudit(user_modified, "UPDATE", "tb_lembaga_master", req.ip, { ...oldData }, { ...newData });
+
       res.json({ status: true, message: "Lembaga berhasil diperbaharui" });
    } catch (error) {
       if (error.code === "P2025") {
@@ -103,13 +114,25 @@ router.put("/:id", async (req, res) => {
    }
 });
 
-// DELETE /api/unit-kerja/lembaga/:id - Delete lembaga
 router.delete("/:id", async (req, res) => {
    try {
       const { id } = req.params;
+      const { user_modified } = req.body;
+
+      const oldData = prisma.tb_lembaga_master.findUnique({
+         where: { id: Number.parseInt(id) },
+      });
+
+      if (!oldData) {
+         return res.json({ status: false, message: "Lembaga tidak ditemukan" });
+      }
+
       await prisma.tb_lembaga_master.delete({
          where: { id: Number.parseInt(id) },
       });
+
+      logAudit(user_modified, "DELETE", "tb_lembaga_master", req.ip, { ...oldData }, null);
+
       res.json({ status: true });
    } catch (error) {
       if (error.code === "P2025") {

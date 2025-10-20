@@ -2,6 +2,7 @@ const express = require("express");
 const { PrismaClient } = require("@prisma/client");
 const { z } = require("zod");
 const errorHandler = require("../handle-error.js");
+const { logAudit } = require("../helpers.js");
 
 const validation = z.object({
    tahun_anggaran: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Tahun anggaran wajib diisi")),
@@ -59,7 +60,7 @@ router.post("/", async (req, res) => {
          return errorHandler(parsed, res);
       }
 
-      await prisma.tb_pengaturan.create({
+      const newData = await prisma.tb_pengaturan.create({
          data: {
             tahun_anggaran: Number.parseInt(tahun_anggaran),
             total_pagu: cleanRupiah(total_pagu),
@@ -68,6 +69,9 @@ router.post("/", async (req, res) => {
             user_modified,
          },
       });
+
+      logAudit(user_modified, "CREATE", "tb_pengaturan", req.ip, null, { ...newData });
+
       res.status(201).json({ status: true, message: "Pengaturan berhasil ditambahkan" });
    } catch (error) {
       res.status(500).json({ error: error.message, status: false });
@@ -85,7 +89,15 @@ router.put("/:id", async (req, res) => {
          return errorHandler(parsed, res);
       }
 
-      await prisma.tb_pengaturan.update({
+      const oldData = await prisma.tb_pengaturan.findUnique({
+         where: { id: Number.parseInt(id) },
+      });
+
+      if (!oldData) {
+         return res.json({ status: false, message: "Data pengaturan tidak ditemukan" });
+      }
+
+      const newData = await prisma.tb_pengaturan.update({
          where: { id: Number.parseInt(id) },
          data: {
             total_pagu: cleanRupiah(total_pagu),
@@ -94,7 +106,9 @@ router.put("/:id", async (req, res) => {
             user_modified,
          },
       });
-      res.status(201).json({ status: true, message: "Pengaturan berhasil ditambahkan" });
+
+      logAudit(user_modified, "UPDATE", "tb_pengaturan", req.ip, { ...oldData }, { ...newData });
+      res.status(201).json({ status: true, message: "Pengaturan berhasil diperbaharui" });
    } catch (error) {
       res.status(500).json({ error: error.message, status: false });
    }

@@ -166,6 +166,147 @@ function FormSubUnitSkeleton() {
    );
 }
 
+function FormPengaturanSkeleton() {
+   return (
+      <div className="p-0">
+         <div className="border rounded-lg p-6 shadow-sm bg-white">
+            <form className="space-y-4">
+               <div className="row">
+                  <div className="col-12 col-md-2">
+                     <Skeleton className="h-10 w-full" />
+                  </div>
+                  <div className="col-12 col-md-3">
+                     <Skeleton className="h-10 w-full" />
+                  </div>
+                  <div className="col-12 col-md-2">
+                     <Skeleton className="h-10 w-full" />
+                  </div>
+               </div>
+               <Skeleton className="h-10 w-32" />
+            </form>
+         </div>
+      </div>
+   );
+}
+
+function FormUnitSatuanSkeleton() {
+   return (
+      <div className="p-0">
+         <div className="border rounded-lg p-6 shadow-sm bg-white">
+            <form className="space-y-4">
+               <div className="row">
+                  <div className="col-12 col-md-10">
+                     <Skeleton className="h-10 w-full" />
+                  </div>
+                  <div className="col-12 col-md-2">
+                     <Skeleton className="h-10 w-full" />
+                  </div>
+               </div>
+               <div className="row">
+                  <div className="col-12">
+                     <Skeleton className="h-20 w-full" />
+                  </div>
+               </div>
+               <Skeleton className="h-10 w-32" />
+            </form>
+         </div>
+      </div>
+   );
+}
+
+function FormKategoriSBMSkeleton() {
+   return (
+      <div className="p-0">
+         <div className="border rounded-lg p-6 shadow-sm bg-white">
+            <form className="space-y-4">
+               <div className="row">
+                  <div className="col-12 col-md-2">
+                     <Skeleton className="h-10 w-full" />
+                  </div>
+                  <div className="col-12 col-md-10">
+                     <Skeleton className="h-10 w-full" />
+                  </div>
+               </div>
+               <div className="row">
+                  <div className="col-12">
+                     <Skeleton className="h-20 w-full" />
+                  </div>
+               </div>
+               <Skeleton className="h-10 w-32" />
+            </form>
+         </div>
+      </div>
+   );
+}
+
+function FormStandarBiayaSkeleton() {
+   return (
+      <div className="p-0">
+         <div className="border rounded-lg p-6 shadow-sm bg-white">
+            <form className="space-y-4">
+               <div className="row">
+                  <div className="col-12 col-md-2">
+                     <Skeleton className="h-10 w-full" />
+                  </div>
+                  <div className="col-12 col-md-2">
+                     <Skeleton className="h-10 w-full" />
+                  </div>
+                  <div className="col-12 col-md-4">
+                     <Skeleton className="h-10 w-full" />
+                  </div>
+                  <div className="col-12 col-md-2">
+                     <Skeleton className="h-10 w-full" />
+                  </div>
+               </div>
+               <div className="row">
+                  <div className="col-12">
+                     <Skeleton className="h-20 w-full" />
+                  </div>
+               </div>
+               <Skeleton className="h-10 w-32" />
+            </form>
+         </div>
+      </div>
+   );
+}
+
+function FormDetailHargaSBMSkeleton() {
+   return (
+      <div className="p-0">
+         <div className="border rounded-lg p-6 shadow-sm bg-white">
+            <form className="space-y-4">
+               <div className="row">
+                  <div className="col-12 col-md-2">
+                     <Skeleton className="h-10 w-full" />
+                  </div>
+                  <div className="col-12 col-md-4">
+                     <Skeleton className="h-10 w-full" />
+                  </div>
+                  <div className="col-12 col-md-2">
+                     <Skeleton className="h-10 w-full" />
+                  </div>
+                  <div className="col-12 col-md-2">
+                     <Skeleton className="h-10 w-full" />
+                  </div>
+               </div>
+               <div className="row">
+                  <div className="col-12 col-md-2">
+                     <Skeleton className="h-10 w-full" />
+                  </div>
+                  <div className="col-12 col-md-2">
+                     <Skeleton className="h-10 w-full" />
+                  </div>
+                  <div className="col-12 col-md-2">
+                     <Skeleton className="h-10 w-full" />
+                  </div>
+               </div>
+               <Skeleton className="h-10 w-32" />
+            </form>
+         </div>
+      </div>
+   );
+}
+
 function InfoPaguUniversitasSkeleton() {
    return (
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -205,9 +346,14 @@ function PaguTableSkeleton() {
 export {
    AppHeaderSkeleton,
    AppSidebarSkeleton,
+   FormDetailHargaSBMSkeleton,
    FormInformasiUsulanSkeleton,
+   FormKategoriSBMSkeleton,
+   FormPengaturanSkeleton,
    FormRencanaAnggaranSkeleton,
+   FormStandarBiayaSkeleton,
    FormSubUnitSkeleton,
+   FormUnitSatuanSkeleton,
    InfoPaguUniversitasSkeleton,
    LoadingSkeleton,
    LoadingSkeletonEditContent,

@@ -50,9 +50,6 @@ const UnitKerjaUPTActions = lazy(() => import("@/pages/unit-kerja/upt/actions/pa
 const UnitKerjaFakultas = lazy(() => import("@/pages/unit-kerja/fakultas/page"));
 const UnitKerjaFakultasActions = lazy(() => import("@/pages/unit-kerja/fakultas/actions/page"));
 
-const UnitKerjaProgramStudi = lazy(() => import("@/pages/unit-kerja/prodi/page"));
-const UnitKerjaProgramStudiActions = lazy(() => import("@/pages/unit-kerja/prodi/actions/page"));
-
 const UnitKerjaSubUnit = lazy(() => import("@/pages/unit-kerja/sub-unit/page"));
 const UnitKerjaSubUnitActions = lazy(() => import("@/pages/unit-kerja/sub-unit/actions/page"));
 
@@ -60,27 +57,27 @@ const route_path = [
    { key: v4(), path: "/", element: <Dashboard /> },
    { key: v4(), path: "/referensi/unit-satuan", element: <ReferensiUnitSatuan /> },
    { key: v4(), path: "/referensi/unit-satuan/actions", element: <ReferensiUnitSatuanActions /> },
-   { key: v4(), path: "/referensi/unit-satuan/actions/:id_unit_satuan", element: <ReferensiUnitSatuanActions /> },
+   { key: v4(), path: "/referensi/unit-satuan/actions/:id", element: <ReferensiUnitSatuanActions /> },
    { key: v4(), path: "/referensi/kategori-sbm", element: <ReferensiKategoriSBM /> },
    { key: v4(), path: "/referensi/kategori-sbm/actions", element: <ReferensiKategoriSBMActions /> },
-   { key: v4(), path: "/referensi/kategori-sbm/actions/:id_kategori_sbm", element: <ReferensiKategoriSBMActions /> },
+   { key: v4(), path: "/referensi/kategori-sbm/actions/:id", element: <ReferensiKategoriSBMActions /> },
    { key: v4(), path: "/referensi/standar-biaya", element: <ReferensiStandarBiaya /> },
    { key: v4(), path: "/referensi/standar-biaya/actions", element: <ReferensiStandarBiayaActions /> },
-   { key: v4(), path: "/referensi/standar-biaya/actions/:id_standar_biaya", element: <ReferensiStandarBiayaActions /> },
+   { key: v4(), path: "/referensi/standar-biaya/actions/:id", element: <ReferensiStandarBiayaActions /> },
    { key: v4(), path: "/referensi/detail-harga-sbm", element: <ReferensiDetailHargaSBM /> },
    { key: v4(), path: "/referensi/detail-harga-sbm/actions", element: <ReferensiDetailHargaSBMActions /> },
-   { key: v4(), path: "/referensi/detail-harga-sbm/actions/:id_detail_harga", element: <ReferensiDetailHargaSBMActions /> },
+   { key: v4(), path: "/referensi/detail-harga-sbm/actions/:id", element: <ReferensiDetailHargaSBMActions /> },
    { key: v4(), path: "/usulan-kegiatan", element: <UsulanKegiatan /> },
-   { key: v4(), path: "/usulan-kegiatan/actions/:id_usulan_kegiatan", element: <UsulanKegiatanActions /> },
-   { key: v4(), path: "/usulan-kegiatan/actions/:id_usulan_kegiatan/rab/:id_rab_detail", element: <UsulanKegiatanActions /> },
-   { key: v4(), path: "/usulan-kegiatan/:id_usulan_kegiatan", element: <UsulanKegiatanActionsDetail /> },
+   { key: v4(), path: "/usulan-kegiatan/actions/:id", element: <UsulanKegiatanActions /> },
+   { key: v4(), path: "/usulan-kegiatan/actions/:id/rab/:id", element: <UsulanKegiatanActions /> },
+   { key: v4(), path: "/usulan-kegiatan/:id", element: <UsulanKegiatanActionsDetail /> },
    { key: v4(), path: "/master-iku", element: <MasterIKU /> },
    { key: v4(), path: "/master-iku/actions", element: <MasterIKUActions /> },
-   { key: v4(), path: "/master-iku/actions/:id_iku_master", element: <MasterIKUActions /> },
+   { key: v4(), path: "/master-iku/actions/:id", element: <MasterIKUActions /> },
    { key: v4(), path: "/verifikasi-usulan/pengajuan", element: <VerifikasiUsulanPengajuan /> },
-   { key: v4(), path: "/verifikasi-usulan/pengajuan/:id_usulan_kegiatan", element: <VerifikasiUsulanPengajuanDetail /> },
+   { key: v4(), path: "/verifikasi-usulan/pengajuan/:id", element: <VerifikasiUsulanPengajuanDetail /> },
    { key: v4(), path: "/verifikasi-usulan/perbaikan", element: <VerifikasiUsulanPerbaikan /> },
-   { key: v4(), path: "/verifikasi-usulan/perbaikan/:id_usulan_kegiatan", element: <VerifikasiUsulanPerbaikanDetail /> },
+   { key: v4(), path: "/verifikasi-usulan/perbaikan/:id", element: <VerifikasiUsulanPerbaikanDetail /> },
    { key: v4(), path: "/pagu-anggaran", element: <PaguAnggaran /> },
    { key: v4(), path: "/pagu-anggaran/:id", element: <PaguAnggaranDetail /> },
    { key: v4(), path: "/realisasi", element: <Realisasi /> },
@@ -99,9 +96,6 @@ const route_path = [
    { key: v4(), path: "/unit-kerja/fakultas", element: <UnitKerjaFakultas /> },
    { key: v4(), path: "/unit-kerja/fakultas/actions", element: <UnitKerjaFakultasActions /> },
    { key: v4(), path: "/unit-kerja/fakultas/actions/:id", element: <UnitKerjaFakultasActions /> },
-   { key: v4(), path: "/unit-kerja/program-studi", element: <UnitKerjaProgramStudi /> },
-   { key: v4(), path: "/unit-kerja/program-studi/actions", element: <UnitKerjaProgramStudiActions /> },
-   { key: v4(), path: "/unit-kerja/program-studi/actions/:id", element: <UnitKerjaProgramStudiActions /> },
    { key: v4(), path: "/unit-kerja/sub-unit", element: <UnitKerjaSubUnit /> },
    { key: v4(), path: "/unit-kerja/sub-unit/actions", element: <UnitKerjaSubUnitActions /> },
    { key: v4(), path: "/unit-kerja/sub-unit/actions/:id", element: <UnitKerjaSubUnitActions /> },

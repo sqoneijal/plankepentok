@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -7,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { ChevronDownIcon } from "lucide-react";
+import { Check, ChevronDownIcon, ChevronsUpDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import { v4 } from "uuid";
@@ -15,7 +16,7 @@ import { cn } from "./utils";
 
 export function LinkButton({ label, url, type }: Readonly<{ label: React.ReactNode; url?: string; type?: string }>) {
    return (
-      <Button variant="outline" asChild className={cn(type === "edit" && "size-6 ", type === "delete" && "size-6")}>
+      <Button variant="outline" asChild className={cn((type === "edit" || type === "delete") && "size-6")}>
          <Link to={url || ""} className="dark:text-foreground">
             {label}
          </Link>
@@ -130,6 +131,7 @@ export function FormSelect({
    errors,
    options,
    withLabel = true,
+   useCommand = false,
 }: Readonly<{
    onChange?: (value: string) => void;
    divClassName?: string;
@@ -139,9 +141,58 @@ export function FormSelect({
    errors?: Record<string, string | null>;
    options: Array<Record<string, string>>;
    withLabel?: boolean;
+   useCommand?: boolean;
 }>) {
    const id = v4();
    const errorMessage = name ? errors?.[name] : undefined;
+   const [open, setOpen] = useState(false);
+
+   const selectedLabel = options?.find((row: Record<string, string>) => row.value === value)?.label;
+
+   if (useCommand) {
+      return (
+         <div className={cn(divClassName)}>
+            <Label htmlFor={id} className="mb-2">
+               {label}
+            </Label>
+            <Popover open={open} onOpenChange={setOpen}>
+               <PopoverTrigger asChild>
+                  <Button
+                     variant="outline"
+                     role="combobox"
+                     aria-expanded={open}
+                     className={cn("w-full justify-between", errorMessage && "border-red-500")}>
+                     {selectedLabel || `Pilih ${label?.toLowerCase() || "opsi"}...`}
+                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+               </PopoverTrigger>
+               <PopoverContent className="p-0" style={{ width: "var(--radix-popover-trigger-width)" }}>
+                  <Command>
+                     <CommandInput placeholder={`Cari ${label?.toLowerCase() || "opsi"}...`} />
+                     <CommandList>
+                        <CommandEmpty>Tidak ada opsi ditemukan.</CommandEmpty>
+                        <CommandGroup>
+                           {options?.map((row) => (
+                              <CommandItem
+                                 key={row.value}
+                                 value={row.label}
+                                 onSelect={() => {
+                                    onChange?.(row.value);
+                                    setOpen(false);
+                                 }}>
+                                 <Check className={cn("mr-2 h-4 w-4", value === row.value ? "opacity-100" : "opacity-0")} />
+                                 {row.label}
+                              </CommandItem>
+                           ))}
+                        </CommandGroup>
+                     </CommandList>
+                  </Command>
+               </PopoverContent>
+            </Popover>
+            {errorMessage && <p className="text-red-500 text-sm mt-1">{errorMessage}</p>}
+         </div>
+      );
+   }
 
    return (
       <div className={cn(divClassName)}>

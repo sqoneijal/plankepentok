@@ -55,14 +55,14 @@ const columnConfigs: Array<ColumnConfig> = [
    },
 ];
 
-export const getColumns = (): Array<ColumnDef<RowData, unknown>> => [
+export const getColumns = (endpoint: string): Array<ColumnDef<RowData, unknown>> => [
    columnHelper.display({
       id: "actions",
       header: "",
       cell: ({ row: { original } }) => (
          <>
-            <LinkButton label={<SquarePen />} url={`/referensi/standar-biaya/actions/${original.id}`} type="edit" />
-            <ConfirmDialog url={`/referensi/standar-biaya`} id={original.id as string | number} refetchKey={[["/referensi/standar-biaya"]]} />
+            <LinkButton label={<SquarePen />} url={`${endpoint}/actions/${original.id}`} type="edit" />
+            <ConfirmDialog url={endpoint} id={original.id as string | number} refetchKey={[[endpoint]]} />
          </>
       ),
       meta: { className: "w-[80px]" },

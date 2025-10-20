@@ -1,9 +1,23 @@
 import Table from "@/components/table";
+import { useHeaderButton } from "@/hooks/store";
+import { LinkButton } from "@/lib/helpers";
+import { useGetQuery } from "@/lib/utils";
+import { useEffect } from "react";
 import { getColumns } from "./column";
-import { useInitPage } from "./init";
+
+const endpoint = "/unit-kerja/fakultas";
 
 export default function Page() {
-   const { results, total, isLoading } = useInitPage();
+   const { setButton } = useHeaderButton();
 
-   return <Table columns={getColumns()} data={results} total={total} isLoading={isLoading} />;
+   useEffect(() => {
+      setButton(<LinkButton label="Tambah " url={`${endpoint}/actions`} />);
+      return () => {
+         setButton(<div />);
+      };
+   }, [setButton]);
+
+   const { results, total, isLoading } = useGetQuery(endpoint);
+
+   return <Table columns={getColumns(endpoint)} data={results} total={total} isLoading={isLoading} />;
 }
