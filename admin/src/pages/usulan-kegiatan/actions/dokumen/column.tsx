@@ -53,23 +53,29 @@ export const getColumns = (
    columnHelper.display({
       id: "actions",
       header: "",
-      cell: ({ row: { original } }) => (
-         <>
-            <LinkButton
-               label={<SquarePen />}
-               type="edit"
-               onClick={() => {
-                  setOpenSheet(true);
-                  setDetailRow(Object.fromEntries(Object.entries(original).map(([k, v]) => [k, String(v)])));
-               }}
-            />
-            <ConfirmDialog
-               url={`/usulan-kegiatan/dokumen`}
-               id={original.id as string | number}
-               refetchKey={[[`/usulan-kegiatan/${id_usulan_kegiatan}/dokumen`]]}
-            />
-         </>
-      ),
+      cell: ({ row: { original } }) => {
+         const status_usulan = (original?.usulan_kegiatan as RowData)?.status_usulan as string;
+
+         return (
+            ["", "draft", "ditolak", "perbaiki"].includes(status_usulan) && (
+               <>
+                  <LinkButton
+                     label={<SquarePen />}
+                     type="edit"
+                     onClick={() => {
+                        setOpenSheet(true);
+                        setDetailRow(Object.fromEntries(Object.entries(original).map(([k, v]) => [k, String(v)])));
+                     }}
+                  />
+                  <ConfirmDialog
+                     url={`/usulan-kegiatan/dokumen`}
+                     id={original.id as string | number}
+                     refetchKey={[[`/usulan-kegiatan/${id_usulan_kegiatan}/dokumen`]]}
+                  />
+               </>
+            )
+         );
+      },
       meta: { className: "w-[80px]" },
    }),
    ...columnConfigs.map((config) =>

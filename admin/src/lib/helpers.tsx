@@ -14,10 +14,10 @@ import { Link } from "react-router";
 import { v4 } from "uuid";
 import { cn } from "./utils";
 
-export function LinkButton({ label, url, type, onClick }: Readonly<{ label: React.ReactNode; url?: string; type?: string; onClick?: () => void }>) {
+export function LinkButton({ label, url, type, onClick }: Readonly<{ label: React.ReactNode; url?: string; type: string; onClick?: () => void }>) {
    return (
       <Button variant="outline" asChild className={cn(["edit", "delete"].includes(String(type)) && "size-6")} onClick={onClick}>
-         {["edit", "delete"].includes(String(type)) ? (
+         {["edit", "delete", "actions"].includes(String(type)) ? (
             <Link to={url || ""} className="dark:text-foreground">
                {label}
             </Link>
@@ -276,6 +276,7 @@ export function FormTextarea({
    onChange,
    value,
    name,
+   disabled,
 }: Readonly<{
    label?: string;
    divClassName?: string;
@@ -283,6 +284,7 @@ export function FormTextarea({
    onChange?: (value: string) => void;
    value?: string;
    name?: string;
+   disabled?: boolean;
 }>) {
    const id = v4();
    const errorMessage = name ? errors?.[name] : undefined;
@@ -293,6 +295,7 @@ export function FormTextarea({
             {label}
          </Label>
          <Textarea
+            disabled={disabled}
             id={id}
             placeholder={label}
             value={value || ""}
@@ -311,6 +314,7 @@ export function FormDatePicker({
    onChange,
    value,
    divClassName,
+   disabled = false,
 }: Readonly<{
    errors: Record<string, string | null>;
    name: string;
@@ -318,6 +322,7 @@ export function FormDatePicker({
    onChange?: (value: Date | string | undefined) => void;
    value?: string;
    divClassName?: string;
+   disabled?: boolean;
 }>) {
    const id = v4();
 
@@ -339,6 +344,7 @@ export function FormDatePicker({
                   variant="outline"
                   id={id}
                   size="sm"
+                  disabled={disabled}
                   className={cn("w-full justify-between font-normal h-9", errors?.[name] ? "border border-red-500" : "")}>
                   {date ? date.toLocaleDateString() : <span className="opacity-80 font-light">Pilih tanggal</span>}
                   <ChevronDownIcon />

@@ -11,7 +11,7 @@ export default function Page() {
    const { setButton } = useHeaderButton();
 
    useEffect(() => {
-      setButton(<LinkButton label="Tambah" url={`${endpoint}/actions`} />);
+      setButton(<LinkButton label="Tambah" url={`${endpoint}/actions`} type="actions" />);
       return () => {
          setButton(<div />);
       };

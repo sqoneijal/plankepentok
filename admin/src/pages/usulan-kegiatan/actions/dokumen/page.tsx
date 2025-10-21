@@ -30,28 +30,32 @@ export default function Page({ id_usulan_kegiatan }: Readonly<{ id_usulan_kegiat
       <Card className="mt-4">
          <CardHeader>
             <CardTitle>Dokumen Pendukung</CardTitle>
-            <CardAction>
-               <Button variant="outline" onClick={() => setOpenSheet(true)} className="-mt-1">
-                  Tambah Dokumen Pendukung
-               </Button>
-               <Sheet
-                  open={openSheet}
-                  onOpenChange={() => {
-                     setOpenSheet(false);
-                  }}>
-                  <SheetContent>
-                     <SheetHeader className="-mb-8">
-                        <SheetTitle>Dokumen Pendukung</SheetTitle>
-                        <SheetDescription>Tambahkan atau perbarui dokumen pendukung untuk kegiatan usulan.</SheetDescription>
-                     </SheetHeader>
-                     <Suspense>
-                        <div className="p-4">
-                           <Forms id_usulan_kegiatan={id_usulan_kegiatan} setOpenSheet={setOpenSheet} />
-                        </div>
-                     </Suspense>
-                  </SheetContent>
-               </Sheet>
-            </CardAction>
+            {["", "draft", "ditolak", "perbaiki"].includes(
+               results?.find((e: { usulan_kegiatan: string }) => e.usulan_kegiatan)?.usulan_kegiatan?.status_usulan
+            ) && (
+               <CardAction>
+                  <Button variant="outline" onClick={() => setOpenSheet(true)} className="-mt-1">
+                     Tambah Dokumen Pendukung
+                  </Button>
+                  <Sheet
+                     open={openSheet}
+                     onOpenChange={() => {
+                        setOpenSheet(false);
+                     }}>
+                     <SheetContent>
+                        <SheetHeader className="-mb-8">
+                           <SheetTitle>Dokumen Pendukung</SheetTitle>
+                           <SheetDescription>Tambahkan atau perbarui dokumen pendukung untuk kegiatan usulan.</SheetDescription>
+                        </SheetHeader>
+                        <Suspense>
+                           <div className="p-4">
+                              <Forms id_usulan_kegiatan={id_usulan_kegiatan} setOpenSheet={setOpenSheet} />
+                           </div>
+                        </Suspense>
+                     </SheetContent>
+                  </Sheet>
+               </CardAction>
+            )}
          </CardHeader>
          <CardContent>
             <Table

@@ -15,7 +15,7 @@ export default function Page() {
    const [search, setSearch] = useState("");
 
    useEffect(() => {
-      setButton(<LinkButton label="Tambah" url={`${endpoint}/actions`} />);
+      setButton(<LinkButton label="Tambah" url={`${endpoint}/actions`} type="actions" />);
       return () => {
          setButton(<div />);
       };

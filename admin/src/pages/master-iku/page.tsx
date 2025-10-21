@@ -12,7 +12,7 @@ export default function Page() {
    const { results, total, isLoading } = useGetQuery(endpoint);
 
    useEffect(() => {
-      setButton(<LinkButton label="Tambah Master IKU" url={`${endpoint}/actions`} />);
+      setButton(<LinkButton label="Tambah" url={`${endpoint}/actions`} type="actions" />);
       return () => {
          setButton(<div />);
       };

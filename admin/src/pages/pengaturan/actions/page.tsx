@@ -31,7 +31,7 @@ export default function Page() {
    }, [id, results, isLoading]);
 
    useEffect(() => {
-      setButton(<LinkButton label="Batal" url={endpoint} />);
+      setButton(<LinkButton label="Batal" url={endpoint} type="actions" />);
       return () => {
          setButton(<div />);
       };

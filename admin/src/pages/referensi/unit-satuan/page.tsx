@@ -12,7 +12,7 @@ export default function Page() {
 
    const [search, setSearch] = useState("");
 
-   const actionButton = useMemo(() => <LinkButton label="Tambah" url={`${endpoint}/actions`} />, []);
+   const actionButton = useMemo(() => <LinkButton label="Tambah" url={`${endpoint}/actions`} type="actions" />, []);
 
    useEffect(() => {
       setButton(actionButton);

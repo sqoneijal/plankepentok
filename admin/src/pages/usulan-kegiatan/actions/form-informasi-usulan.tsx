@@ -23,11 +23,13 @@ export default function FormInformasiUsulan({ formData, setFormData, errors, set
       <Card>
          <CardHeader>
             <CardTitle>Informasi Usulan Kegiatan</CardTitle>
-            <CardAction>
-               <Button variant="outline" disabled={isPending} onClick={onSubmit} className="-mt-1">
-                  {isPending && <Spinner />}Simpan
-               </Button>
-            </CardAction>
+            {["", "draft", "perbaiki", "ditolak"].includes(formData?.status_usulan as string) && (
+               <CardAction>
+                  <Button variant="outline" disabled={isPending} onClick={onSubmit} className="-mt-1">
+                     {isPending && <Spinner />}Simpan
+                  </Button>
+               </CardAction>
+            )}
          </CardHeader>
          <CardContent>
             <div className="row">
@@ -47,6 +49,7 @@ export default function FormInformasiUsulan({ formData, setFormData, errors, set
                   value={getValue(formData, "nama")}
                   onChange={(value) => setFormData({ ...formData, nama: value })}
                   errors={errors}
+                  disabled={!["", "draft", "perbaiki", "ditolak"].includes(formData?.status_usulan as string)}
                />
                <FormDatePicker
                   divClassName="col-12 col-md-2"
@@ -55,6 +58,7 @@ export default function FormInformasiUsulan({ formData, setFormData, errors, set
                   value={getValue(formData, "waktu_mulai")}
                   onChange={(value) => setFormData({ ...formData, waktu_mulai: moment(value).format("YYYY-MM-DD") || null })}
                   errors={errors}
+                  disabled={!["", "draft", "perbaiki", "ditolak"].includes(formData?.status_usulan as string)}
                />
                <FormDatePicker
                   divClassName="col-12 col-md-2"
@@ -63,6 +67,7 @@ export default function FormInformasiUsulan({ formData, setFormData, errors, set
                   value={getValue(formData, "waktu_selesai")}
                   onChange={(value) => setFormData({ ...formData, waktu_selesai: moment(value).format("YYYY-MM-DD") || null })}
                   errors={errors}
+                  disabled={!["", "draft", "perbaiki", "ditolak"].includes(formData?.status_usulan as string)}
                />
             </div>
             <div className="row">
@@ -80,6 +85,7 @@ export default function FormInformasiUsulan({ formData, setFormData, errors, set
                   value={getValue(formData, "tempat_pelaksanaan")}
                   onChange={(value) => setFormData({ ...formData, tempat_pelaksanaan: value })}
                   errors={errors}
+                  disabled={!["", "draft", "perbaiki", "ditolak"].includes(formData?.status_usulan as string)}
                />
                <FormInput
                   divClassName="col-12 col-md-2"
@@ -89,6 +95,7 @@ export default function FormInformasiUsulan({ formData, setFormData, errors, set
                   onChange={(value) => setFormData({ ...formData, rencana_total_anggaran: value })}
                   errors={errors}
                   apakahFormatRupiah={true}
+                  disabled={!["", "draft", "perbaiki", "ditolak"].includes(formData?.status_usulan as string)}
                />
             </div>
             <div className="row">
@@ -99,6 +106,7 @@ export default function FormInformasiUsulan({ formData, setFormData, errors, set
                   value={getValue(formData, "latar_belakang")}
                   onChange={(value) => setFormData({ ...formData, latar_belakang: value })}
                   errors={errors}
+                  disabled={!["", "draft", "perbaiki", "ditolak"].includes(formData?.status_usulan as string)}
                />
                <FormTextarea
                   divClassName="col-12 col-md-4"
@@ -107,6 +115,7 @@ export default function FormInformasiUsulan({ formData, setFormData, errors, set
                   value={getValue(formData, "tujuan")}
                   onChange={(value) => setFormData({ ...formData, tujuan: value })}
                   errors={errors}
+                  disabled={!["", "draft", "perbaiki", "ditolak"].includes(formData?.status_usulan as string)}
                />
                <FormTextarea
                   divClassName="col-12 col-md-4"
@@ -115,6 +124,7 @@ export default function FormInformasiUsulan({ formData, setFormData, errors, set
                   value={getValue(formData, "sasaran")}
                   onChange={(value) => setFormData({ ...formData, sasaran: value })}
                   errors={errors}
+                  disabled={!["", "draft", "perbaiki", "ditolak"].includes(formData?.status_usulan as string)}
                />
             </div>
          </CardContent>

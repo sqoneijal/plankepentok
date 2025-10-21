@@ -1,4 +1,4 @@
-import ConfirmDialog from "@/components/confirm-delete";
+import ConfirmDelete from "@/components/confirm-delete";
 import { Badge } from "@/components/ui/badge";
 import { toRupiah } from "@/helpers/init";
 import { LinkButton } from "@/lib/helpers";
@@ -85,13 +85,19 @@ export const getColumns = (endpoint: string): Array<ColumnDef<RowData, unknown>>
    columnHelper.display({
       id: "actions",
       header: "",
-      cell: ({ row: { original } }) => (
-         <>
-            <LinkButton label={<Eye />} url={`${endpoint}/${original.id}`} type="edit" />
-            <LinkButton label={<SquarePen />} url={`${endpoint}/actions/${original.id}`} type="edit" />
-            <ConfirmDialog url={endpoint} id={original.id as string | number} refetchKey={[[endpoint]]} />
-         </>
-      ),
+      cell: ({ row: { original } }) => {
+         return (
+            <>
+               <LinkButton label={<Eye />} url={`${endpoint}/${original.id}`} type="edit" />
+               {["", "draft", "perbaiki", "ditolak"].includes(original?.status_usulan as string) && (
+                  <LinkButton label={<SquarePen />} url={`${endpoint}/actions/${original.id}`} type="edit" />
+               )}
+               {["", "draft", "perbaiki", "ditolak"].includes(original?.status_usulan as string) && (
+                  <ConfirmDelete url={endpoint} id={original.id as string | number} refetchKey={[[endpoint]]} />
+               )}
+            </>
+         );
+      },
       meta: { className: "w-[110px]" },
    }),
    ...columnConfigs.map((config) =>

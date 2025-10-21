@@ -1,5 +1,9 @@
+import ConfirmDialog from "@/components/confirm-submit";
 import { DetailUsulanKegiatanSkeleton, IkuSkeleton, RencanaAnggaranBiayaSkeleton } from "@/components/loading-skeleton";
-import { lazy, Suspense } from "react";
+import { Button } from "@/components/ui/button";
+import { useHeaderButton } from "@/hooks/store";
+import { LinkButton } from "@/lib/helpers";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { useParams } from "react-router";
 
 const endpoint = "/usulan-kegiatan";
@@ -12,10 +16,34 @@ const Dokumen = lazy(() => import("./dokumen"));
 export default function Page() {
    const { id } = useParams();
 
+   const [statusUsulan, setStatusUsulan] = useState("");
+
+   const { setButton } = useHeaderButton();
+
+   useEffect(() => {
+      setButton(
+         <>
+            <LinkButton label="Kembali" url="/usulan-kegiatan" type="actions" />
+            {["", "draft", "perbaiki", "ditolak"].includes(statusUsulan) && (
+               <ConfirmDialog
+                  url="/usulan-kegiatan/usul"
+                  refetchKey={[[`/usulan-kegiatan`], [`/usulan-kegiatan/${id}`]]}
+                  formData={{ id_usulan: String(id) }}
+                  actionButton={<Button className="text-dark bg-green-200 hover:text-white">Usul Kegiatan</Button>}
+                  message="Apakah Anda yakin ingin mengajukan usulan kegiatan ini?"
+               />
+            )}
+         </>
+      );
+      return () => {
+         setButton(<div />);
+      };
+   }, [setButton, id, statusUsulan]);
+
    return (
       <>
          <Suspense fallback={<DetailUsulanKegiatanSkeleton />}>
-            <UsulanKegiatan endpoint={endpoint} id={id} />
+            <UsulanKegiatan endpoint={endpoint} id={id} setStatusUsulan={setStatusUsulan} />
          </Suspense>
          <Suspense fallback={<IkuSkeleton />}>
             <Iku endpoint={endpoint} id={id} />

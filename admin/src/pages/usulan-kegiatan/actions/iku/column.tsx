@@ -49,13 +49,19 @@ export const getColumns = (id_usulan_kegiatan?: string): Array<ColumnDef<RowData
    columnHelper.display({
       id: "actions",
       header: "",
-      cell: ({ row: { original } }) => (
-         <ConfirmDialog
-            url={`/usulan-kegiatan/relasi-iku`}
-            id={original.id as string | number}
-            refetchKey={[[`/usulan-kegiatan/${id_usulan_kegiatan}/relasi-iku`]]}
-         />
-      ),
+      cell: ({ row: { original } }) => {
+         const status_usulan = (original?.usulan_kegiatan as RowData)?.status_usulan as string;
+
+         return (
+            ["", "draft", "perbaiki", "ditolak"].includes(status_usulan) && (
+               <ConfirmDialog
+                  url={`/usulan-kegiatan/relasi-iku`}
+                  id={original.id as string | number}
+                  refetchKey={[[`/usulan-kegiatan/${id_usulan_kegiatan}/relasi-iku`]]}
+               />
+            )
+         );
+      },
       meta: { className: "w-[10px]" },
    }),
    ...columnConfigs.map((config) =>

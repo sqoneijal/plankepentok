@@ -22,7 +22,7 @@ export default function Page() {
    const [errors, setErrors] = useState<FormData>({});
 
    useEffect(() => {
-      setButton(<LinkButton label="Batal" url={endpoint} />);
+      setButton(<LinkButton label="Batal" url={endpoint} type="actions" />);
       return () => {
          setButton(<div />);
       };

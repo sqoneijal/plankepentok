@@ -27,29 +27,33 @@ export default function Page({ id_usulan_kegiatan, id_rab_detail }: Readonly<{ i
       <Card className="mt-4">
          <CardHeader>
             <CardTitle>Rencana Anggaran Biaya</CardTitle>
-            <CardAction>
-               <Button variant="outline" onClick={() => setOpenSheet(true)} className="-mt-1">
-                  Tambah Anggaran Biaya
-               </Button>
-               <Sheet
-                  open={openSheet}
-                  onOpenChange={() => {
-                     setOpenSheet(false);
-                     navigate(`/usulan-kegiatan/actions/${id_usulan_kegiatan}`);
-                  }}>
-                  <SheetContent>
-                     <SheetHeader className="-mb-8">
-                        <SheetTitle>Rencana Anggaran Biaya</SheetTitle>
-                        <SheetDescription>Tambahkan atau perbarui rencana anggaran biaya untuk kegiatan usulan.</SheetDescription>
-                     </SheetHeader>
-                     <Suspense fallback={<FormRencanaAnggaranSkeleton />}>
-                        <div className="p-4">
-                           <Forms id_usulan_kegiatan={id_usulan_kegiatan} id_rab_detail={id_rab_detail} handleSheetForm={setOpenSheet} />
-                        </div>
-                     </Suspense>
-                  </SheetContent>
-               </Sheet>
-            </CardAction>
+            {["", "draft", "ditolak", "perbaiki"].includes(
+               results?.find((e: { usulan_kegiatan: string }) => e.usulan_kegiatan)?.usulan_kegiatan?.status_usulan
+            ) && (
+               <CardAction>
+                  <Button variant="outline" onClick={() => setOpenSheet(true)} className="-mt-1">
+                     Tambah Anggaran Biaya
+                  </Button>
+                  <Sheet
+                     open={openSheet}
+                     onOpenChange={() => {
+                        setOpenSheet(false);
+                        navigate(`/usulan-kegiatan/actions/${id_usulan_kegiatan}`);
+                     }}>
+                     <SheetContent>
+                        <SheetHeader className="-mb-8">
+                           <SheetTitle>Rencana Anggaran Biaya</SheetTitle>
+                           <SheetDescription>Tambahkan atau perbarui rencana anggaran biaya untuk kegiatan usulan.</SheetDescription>
+                        </SheetHeader>
+                        <Suspense fallback={<FormRencanaAnggaranSkeleton />}>
+                           <div className="p-4">
+                              <Forms id_usulan_kegiatan={id_usulan_kegiatan} id_rab_detail={id_rab_detail} handleSheetForm={setOpenSheet} />
+                           </div>
+                        </Suspense>
+                     </SheetContent>
+                  </Sheet>
+               </CardAction>
+            )}
          </CardHeader>
          <CardContent>
             <Table columns={getColumns(id_usulan_kegiatan)} data={results} total={total} isLoading={isLoading} usePagination={false} />

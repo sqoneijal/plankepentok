@@ -2,11 +2,23 @@ import { DetailUsulanKegiatanSkeleton } from "@/components/loading-skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { toRupiah } from "@/helpers/init";
+import { objectLength, toRupiah } from "@/helpers/init";
 import { useGetQueryDetail } from "@/hooks/useGetQueryDetail";
+import { useEffect } from "react";
 
-export default function UsulanKegiatan({ endpoint, id }: Readonly<{ endpoint: string; id: string | undefined }>) {
+export default function UsulanKegiatan({
+   endpoint,
+   id,
+   setStatusUsulan,
+}: Readonly<{ endpoint: string; id: string | undefined; setStatusUsulan: (value: string) => void }>) {
    const { results, isLoading } = useGetQueryDetail(endpoint, id);
+
+   useEffect(() => {
+      if (!isLoading && objectLength(results)) {
+         setStatusUsulan(results?.status_usulan);
+      }
+      return () => {};
+   }, [isLoading, results, setStatusUsulan]);
 
    if (isLoading) {
       return <DetailUsulanKegiatanSkeleton />;

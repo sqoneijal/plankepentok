@@ -272,6 +272,35 @@ router.get("/", async (req, res) => {
    }
 });
 
+router.put("/usul", async (req, res) => {
+   try {
+      const { id_usulan, user_modified } = req.body;
+
+      const oldData = await prisma.tb_usulan_kegiatan.findUnique({
+         where: { id: Number.parseInt(id_usulan) },
+      });
+
+      if (!oldData) {
+         return res.json({ status: false, message: "Usulan kegiatan tidak ditemukan" });
+      }
+
+      const newData = await prisma.tb_usulan_kegiatan.update({
+         where: { id: Number.parseInt(id_usulan) },
+         data: {
+            modified: new Date(),
+            user_modified,
+            status_usulan: "pengajuan",
+         },
+      });
+
+      logAudit(user_modified, "UPDATE", "tb_usulan_kegiatan", req.ip, { ...oldData }, { ...newData });
+
+      res.json({ status: true, message: "Usulan kegiatan berhasil diperbaharui" });
+   } catch (error) {
+      res.status(500).json({ error: error.message });
+   }
+});
+
 router.post("/", async (req, res) => {
    try {
       const { kode, id_unit_pengusul, tempat_pelaksanaan, user_modified } = req.body;
@@ -401,14 +430,17 @@ router.delete("/:id", async (req, res) => {
 router.get("/:id/relasi-iku", async (req, res) => {
    try {
       const { id } = req.params;
+
       const total = await prisma.tb_relasi_usulan_iku.count({
          where: { id_usulan: Number.parseInt(id) },
       });
+
       const results = await prisma.tb_relasi_usulan_iku.findMany({
          where: { id_usulan: Number.parseInt(id) },
-         include: { iku_master: true },
+         include: { iku_master: true, usulan_kegiatan: { select: { status_usulan: true } } },
          orderBy: { iku_master: { kode: "asc" } },
       });
+
       res.json({ results, total });
    } catch (error) {
       res.status(500).json({ error: error.message });
@@ -490,13 +522,16 @@ router.get("/rab/:id_usulan/:id", async (req, res) => {
 router.get("/:id/rab", async (req, res) => {
    try {
       const { id } = req.params;
+
       const total = await prisma.tb_rab_detail.count({
          where: { id_usulan: Number.parseInt(id) },
       });
+
       const results = await prisma.tb_rab_detail.findMany({
          where: { id_usulan: Number.parseInt(id) },
-         include: { unit_satuan: true },
+         include: { unit_satuan: true, usulan_kegiatan: { select: { status_usulan: true } } },
       });
+
       res.json({ results, total });
    } catch (error) {
       res.status(500).json({ error: error.message });
@@ -623,7 +658,10 @@ router.get("/:id/dokumen", async (req, res) => {
       const where = { id_usulan: Number.parseInt(id) };
 
       const total = await prisma.tb_dokumen_pendukung.count({ where });
-      const results = await prisma.tb_dokumen_pendukung.findMany({ where });
+      const results = await prisma.tb_dokumen_pendukung.findMany({
+         where,
+         include: { usulan_kegiatan: { select: { status_usulan: true } } },
+      });
 
       res.json({ results, total });
    } catch (error) {
