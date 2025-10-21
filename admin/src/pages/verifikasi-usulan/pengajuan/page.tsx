@@ -1,22 +1,11 @@
 import Table from "@/components/table";
-import { useNavigate } from "react-router";
-import { toast } from "sonner";
+import { useGetQuery } from "@/lib/utils";
 import { getColumns } from "./column";
-import { usePengajuanData } from "./init";
+
+const endpoint = "/verifikasi-usulan/pengajuan";
 
 export default function Page() {
-   const navigate = useNavigate();
+   const { results, total, isLoading } = useGetQuery(endpoint);
 
-   const { data, isLoading, error } = usePengajuanData();
-
-   if (error) return toast.error(error?.message);
-
-   return (
-      <Table
-         columns={getColumns({ navigate })}
-         data={Array.isArray(data?.results) ? data?.results : []}
-         total={data?.total ?? 0}
-         isLoading={isLoading}
-      />
-   );
+   return <Table columns={getColumns(endpoint)} data={results} total={total} isLoading={isLoading} />;
 }

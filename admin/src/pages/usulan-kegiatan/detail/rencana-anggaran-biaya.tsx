@@ -91,20 +91,7 @@ const columns: ColumnDef<RencanaAnggaranBiayaItem>[] = [
 export default function RencanaAnggaranBiaya({ endpoint, id }: Readonly<{ endpoint: string; id: string | undefined }>) {
    const { results, isLoading } = useGetQueryDetail(endpoint, `${id}/rab`);
 
-   if (!results || !Array.isArray(results) || results.length === 0) {
-      return (
-         <Card className="mt-4">
-            <CardHeader>
-               <CardTitle>Rencana Anggaran Biaya</CardTitle>
-            </CardHeader>
-            <CardContent>
-               <div>Data tidak ditemukan</div>
-            </CardContent>
-         </Card>
-      );
-   }
-
-   const totalBiaya = results.reduce((sum, item) => sum + Number.parseFloat(item.total_biaya || "0"), 0);
+   const totalBiaya = results.reduce((sum: number, item: RencanaAnggaranBiayaItem) => sum + Number.parseFloat(item.total_biaya || "0"), 0);
 
    return (
       <Card className="mt-4">

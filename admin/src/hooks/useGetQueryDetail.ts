@@ -11,7 +11,7 @@ export function useGetQueryDetail(enpoint: string, id: string | undefined) {
       toast.error(error?.message);
    }
 
-   const results = data?.results ?? {};
+   const results = data?.results ?? [];
 
    return { results, isLoading };
 }
