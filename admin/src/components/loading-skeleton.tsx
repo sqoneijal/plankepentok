@@ -343,9 +343,137 @@ function PaguTableSkeleton() {
    );
 }
 
+function DetailUsulanKegiatanSkeleton() {
+   return (
+      <Card>
+         <CardHeader>
+            <Skeleton className="h-6 w-48" />
+         </CardHeader>
+         <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+               {Array.from({ length: 15 }).map((_, i) => (
+                  <div key={i} className={i >= 3 && i < 12 ? "md:col-span-3" : ""}>
+                     <Skeleton className="h-4 w-24 mb-2" />
+                     <Skeleton className="h-6 w-full" />
+                  </div>
+               ))}
+            </div>
+         </CardContent>
+      </Card>
+   );
+}
+
+function IkuSkeleton() {
+   return (
+      <Card className="mt-4">
+         <CardHeader>
+            <Skeleton className="h-6 w-12" />
+         </CardHeader>
+         <CardContent className="space-y-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+               <div key={i} className="border rounded-lg p-4 space-y-2">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                     <div>
+                        <Skeleton className="h-4 w-8 mb-2" />
+                        <Skeleton className="h-4 w-16" />
+                     </div>
+                     <div>
+                        <Skeleton className="h-4 w-8 mb-2" />
+                        <Skeleton className="h-4 w-20" />
+                     </div>
+                     <div>
+                        <Skeleton className="h-4 w-20 mb-2" />
+                        <Skeleton className="h-4 w-12" />
+                     </div>
+                     <div>
+                        <Skeleton className="h-4 w-12 mb-2" />
+                        <Skeleton className="h-6 w-24" />
+                     </div>
+                     <div className="md:col-span-4">
+                        <Skeleton className="h-4 w-16 mb-2" />
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-3/4" />
+                     </div>
+                  </div>
+               </div>
+            ))}
+         </CardContent>
+      </Card>
+   );
+}
+
+function RencanaAnggaranBiayaSkeleton() {
+   return (
+      <Card className="mt-4">
+         <CardHeader>
+            <Skeleton className="h-6 w-48" />
+            <div className="flex items-center justify-end gap-2 -mt-1">
+               <Skeleton className="h-4 w-32" />
+               <Skeleton className="h-6 w-24" />
+            </div>
+         </CardHeader>
+         <CardContent className="space-y-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+               <div key={i} className="border rounded-lg p-4 space-y-2">
+                  <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+                     <div>
+                        <Skeleton className="h-4 w-24 mb-2" />
+                        <Skeleton className="h-4 w-full" />
+                     </div>
+                     <div>
+                        <Skeleton className="h-4 w-8 mb-2" />
+                        <Skeleton className="h-4 w-12" />
+                     </div>
+                     <div>
+                        <Skeleton className="h-4 w-12 mb-2" />
+                        <Skeleton className="h-4 w-16" />
+                     </div>
+                     <div>
+                        <Skeleton className="h-4 w-20 mb-2" />
+                        <Skeleton className="h-4 w-24" />
+                     </div>
+                     <div>
+                        <Skeleton className="h-4 w-20 mb-2" />
+                        <Skeleton className="h-4 w-24" />
+                     </div>
+                     <div>
+                        <Skeleton className="h-4 w-24 mb-2" />
+                        <Skeleton className="h-6 w-20" />
+                     </div>
+                  </div>
+               </div>
+            ))}
+         </CardContent>
+      </Card>
+   );
+}
+
+function DokumenSkeleton() {
+   return (
+      <Card className="mt-4">
+         <CardHeader>
+            <Skeleton className="h-6 w-24" />
+         </CardHeader>
+         <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+               {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="border rounded-lg p-4 space-y-2">
+                     <Skeleton className="h-4 w-16 mb-2" />
+                     <Skeleton className="h-6 w-full" />
+                     <Skeleton className="h-4 w-3/4" />
+                  </div>
+               ))}
+            </div>
+         </CardContent>
+      </Card>
+   );
+}
+
 export {
    AppHeaderSkeleton,
    AppSidebarSkeleton,
+   DetailUsulanKegiatanSkeleton,
+   DokumenSkeleton,
    FormDetailHargaSBMSkeleton,
    FormInformasiUsulanSkeleton,
    FormKategoriSBMSkeleton,
@@ -354,8 +482,10 @@ export {
    FormStandarBiayaSkeleton,
    FormSubUnitSkeleton,
    FormUnitSatuanSkeleton,
+   IkuSkeleton,
    InfoPaguUniversitasSkeleton,
    LoadingSkeleton,
    LoadingSkeletonEditContent,
    PaguTableSkeleton,
+   RencanaAnggaranBiayaSkeleton,
 };

@@ -1,4 +1,5 @@
 import { covertToSTring } from "@/helpers/init";
+import { UseAuth } from "@/hooks/auth-context";
 import { useApiQuery } from "@/hooks/useApiQuery";
 import { usePutMutation } from "@/hooks/usePutMutation";
 import { useEffect, useState } from "react";
@@ -59,9 +60,13 @@ export function useInitPage(id?: string) {
 }
 
 export function useUpdateInformasiUsulan(id: string | undefined, formData: FormData, setErrors: (errors: FormData) => void) {
-   const { mutate, isPending } = usePutMutation<FormData, unknown>(`/usulan-kegiatan/${id}`, (data) => ({ id, ...covertToSTring(data) }), [
-      [`/usulan-kegiatan/${id}`],
-   ]);
+   const { user } = UseAuth();
+
+   const { mutate, isPending } = usePutMutation<FormData, unknown>(
+      `/usulan-kegiatan/${id}`,
+      (data) => ({ ...covertToSTring(data), operator_input: String(user?.preferred_username) }),
+      [[`/usulan-kegiatan/${id}`]]
+   );
 
    const onSubmit = () => {
       handleSubmit(mutate, formData, setErrors);

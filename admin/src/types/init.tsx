@@ -1,5 +1,7 @@
 export type Lists = Record<string, string | null>;
 
+export type FormData = Record<string, string>;
+
 export type Option = {
    value: string;
    label: string;

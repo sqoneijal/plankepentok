@@ -83,20 +83,6 @@ export function useKeycloakAuth() {
       });
    }, [auth.keycloak]);
 
-   useEffect(() => {
-      if (auth.keycloak?.realmAccess) {
-         const keycloakRoles = auth.keycloak.realmAccess.roles;
-         const allowedRoles = ["ADM", "FUNG", "STR"];
-
-         const hasAccess = allowedRoles.some((role) => keycloakRoles.includes(role));
-
-         if (!hasAccess) {
-            logout();
-         }
-      }
-      return () => {};
-   }, [auth.keycloak, logout]);
-
    return {
       ...auth,
       login,

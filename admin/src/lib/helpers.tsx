@@ -14,12 +14,16 @@ import { Link } from "react-router";
 import { v4 } from "uuid";
 import { cn } from "./utils";
 
-export function LinkButton({ label, url, type }: Readonly<{ label: React.ReactNode; url?: string; type?: string }>) {
+export function LinkButton({ label, url, type, onClick }: Readonly<{ label: React.ReactNode; url?: string; type?: string; onClick?: () => void }>) {
    return (
-      <Button variant="outline" asChild className={cn((type === "edit" || type === "delete") && "size-6")}>
-         <Link to={url || ""} className="dark:text-foreground">
-            {label}
-         </Link>
+      <Button variant="outline" asChild className={cn(["edit", "delete"].includes(String(type)) && "size-6")} onClick={onClick}>
+         {["edit", "delete"].includes(String(type)) ? (
+            <Link to={url || ""} className="dark:text-foreground">
+               {label}
+            </Link>
+         ) : (
+            <span className="dark:text-foreground">{label}</span>
+         )}
       </Button>
    );
 }
@@ -37,6 +41,47 @@ export function SubmitButton({ label, isLoading = false }: Readonly<{ label: str
       <Button type="submit" disabled={isLoading}>
          {isLoading && <Spinner />} {label}
       </Button>
+   );
+}
+
+export function FormFile({
+   divClassName,
+   label,
+   disabled = false,
+   name,
+   errors,
+   className,
+   onChange,
+}: Readonly<{
+   divClassName: string;
+   label: string;
+   disabled?: boolean;
+   name: string;
+   errors: Record<string, string | null>;
+   className?: string;
+   onChange?: (value: File) => void;
+}>) {
+   const id = v4();
+   const errorMessage = name ? errors?.[name] : undefined;
+
+   return (
+      <div className={cn(divClassName)}>
+         <Label htmlFor={id} className="mb-2">
+            {label}
+         </Label>
+         <Input
+            disabled={disabled}
+            type="file"
+            id={id}
+            placeholder={label}
+            className={cn(errorMessage && "border-red-500", className)}
+            onChange={(e) => {
+               const file = e.target.files?.[0];
+               if (file) onChange?.(file);
+            }}
+         />
+         {errorMessage && <p className="text-red-500 text-sm mt-1">{errorMessage}</p>}
+      </div>
    );
 }
 
@@ -59,7 +104,7 @@ export function FormInput({
    divClassName?: string;
    errors?: Record<string, string | null>;
    onChange?: (value: string) => void;
-   value?: string;
+   value?: string | null;
    name?: string;
    className?: string;
    withLabel?: boolean;
@@ -96,7 +141,6 @@ export function FormInput({
       if (apakahFormatRupiah) {
          val = formatRupiah(val, inputRef.current);
       }
-
       onChange?.(val);
    };
 

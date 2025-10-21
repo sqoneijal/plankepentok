@@ -24,7 +24,7 @@ export default function FormInformasiUsulan({ formData, setFormData, errors, set
          <CardHeader>
             <CardTitle>Informasi Usulan Kegiatan</CardTitle>
             <CardAction>
-               <Button variant="outline" disabled={isPending} onClick={onSubmit}>
+               <Button variant="outline" disabled={isPending} onClick={onSubmit} className="-mt-1">
                   {isPending && <Spinner />}Simpan
                </Button>
             </CardAction>

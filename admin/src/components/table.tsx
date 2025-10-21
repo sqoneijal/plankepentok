@@ -17,10 +17,21 @@ type Props<T> = {
    total?: number;
    trCursor?: boolean;
    onRowClick?: (row: T) => void;
+   usePagination?: boolean;
 };
 
-export default function Table<T>({ columns, data, isLoading, total = 0, trCursor = false, onRowClick, isLoadingRow = false }: Readonly<Props<T>>) {
+export default function Table<T>({
+   columns,
+   data,
+   isLoading,
+   total = 0,
+   trCursor = false,
+   onRowClick,
+   isLoadingRow = false,
+   usePagination = true,
+}: Readonly<Props<T>>) {
    const { pagination, setPagination } = useTablePagination();
+
    const [loadingRowId, setLoadingRowId] = useState<string | null>(null);
 
    const table = useReactTable<T>({
@@ -131,7 +142,7 @@ export default function Table<T>({ columns, data, isLoading, total = 0, trCursor
 
          <div className="flex items-center justify-between px-2 mt-2 mb-2">
             <div className="text-muted-foreground flex-1 text-sm">Total {total} data</div>
-            {total > pagination?.pageSize && (
+            {usePagination && total > pagination?.pageSize && (
                <div className="flex items-center space-x-6 lg:space-x-8">
                   <div className="flex items-center space-x-2">
                      <p className="text-xs font-medium">Baris per halaman</p>

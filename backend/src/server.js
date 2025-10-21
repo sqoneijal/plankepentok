@@ -10,6 +10,7 @@ const prisma = new PrismaClient().$extends(withAccelerate());
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use("/uploads", express.static("uploads"));
 
 // Routes
 app.use("/api/options", require("./routes/options"));

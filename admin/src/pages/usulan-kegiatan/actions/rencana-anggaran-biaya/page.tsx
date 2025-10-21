@@ -28,7 +28,7 @@ export default function Page({ id_usulan_kegiatan, id_rab_detail }: Readonly<{ i
          <CardHeader>
             <CardTitle>Rencana Anggaran Biaya</CardTitle>
             <CardAction>
-               <Button variant="outline" onClick={() => setOpenSheet(true)}>
+               <Button variant="outline" onClick={() => setOpenSheet(true)} className="-mt-1">
                   Tambah Anggaran Biaya
                </Button>
                <Sheet
@@ -52,7 +52,7 @@ export default function Page({ id_usulan_kegiatan, id_rab_detail }: Readonly<{ i
             </CardAction>
          </CardHeader>
          <CardContent>
-            <Table columns={getColumns(id_usulan_kegiatan)} data={results} total={total} isLoading={isLoading} />
+            <Table columns={getColumns(id_usulan_kegiatan)} data={results} total={total} isLoading={isLoading} usePagination={false} />
          </CardContent>
       </Card>
    );

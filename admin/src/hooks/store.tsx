@@ -1,6 +1,14 @@
-import type { Lists } from "@/types/init";
+import type { FormData, Lists } from "@/types/init";
 import React from "react";
 import { create } from "zustand";
+
+export const useDetailRow = create<{
+   detailRow: FormData;
+   setDetailRow: (status: FormData) => void;
+}>((set) => ({
+   detailRow: {},
+   setDetailRow: (detailRow) => set({ detailRow }),
+}));
 
 export const useFormEditPaguAnggaran = create<{
    editStatus: boolean;

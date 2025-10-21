@@ -21,7 +21,9 @@ export default function Page({ id_usulan_kegiatan }: Readonly<{ id_usulan_kegiat
             <CardAction>
                <Sheet open={openSheet} onOpenChange={setOpenSheet}>
                   <SheetTrigger asChild>
-                     <Button variant="outline">Tambah IKU</Button>
+                     <Button variant="outline" className="-mt-1">
+                        Tambah IKU
+                     </Button>
                   </SheetTrigger>
                   <SheetContent className="w-[80%] sm:max-w-none">
                      <SheetHeader className="-mb-8">
