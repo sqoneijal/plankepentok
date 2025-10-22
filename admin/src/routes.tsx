@@ -27,9 +27,6 @@ const MasterIKUActions = lazy(() => import("@/pages/master-iku/actions/page"));
 const VerifikasiUsulanPengajuan = lazy(() => import("@/pages/verifikasi-usulan/pengajuan/page"));
 const VerifikasiUsulanPengajuanDetail = lazy(() => import("@/pages/verifikasi-usulan/pengajuan/detail/page"));
 
-const VerifikasiUsulanPerbaikan = lazy(() => import("@/pages/verifikasi-usulan/perbaikan/page"));
-const VerifikasiUsulanPerbaikanDetail = lazy(() => import("@/pages/verifikasi-usulan/perbaikan/detail/page"));
-
 const PaguAnggaran = lazy(() => import("@/pages/pagu-anggaran/page"));
 const PaguAnggaranDetail = lazy(() => import("@/pages/pagu-anggaran/detail/page"));
 
@@ -76,8 +73,6 @@ const route_path = [
    { key: v4(), path: "/master-iku/actions/:id", element: <MasterIKUActions /> },
    { key: v4(), path: "/verifikasi-usulan/pengajuan", element: <VerifikasiUsulanPengajuan /> },
    { key: v4(), path: "/verifikasi-usulan/pengajuan/:id", element: <VerifikasiUsulanPengajuanDetail /> },
-   { key: v4(), path: "/verifikasi-usulan/perbaikan", element: <VerifikasiUsulanPerbaikan /> },
-   { key: v4(), path: "/verifikasi-usulan/perbaikan/:id", element: <VerifikasiUsulanPerbaikanDetail /> },
    { key: v4(), path: "/pagu-anggaran", element: <PaguAnggaran /> },
    { key: v4(), path: "/pagu-anggaran/:id", element: <PaguAnggaranDetail /> },
    { key: v4(), path: "/realisasi", element: <Realisasi /> },

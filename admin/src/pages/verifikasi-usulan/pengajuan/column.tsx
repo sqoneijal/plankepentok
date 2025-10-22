@@ -1,9 +1,7 @@
-import ConfirmDelete from "@/components/confirm-delete";
-import { Badge } from "@/components/ui/badge";
 import { toRupiah } from "@/helpers/init";
 import { LinkButton } from "@/lib/helpers";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
-import { Eye, SquarePen } from "lucide-react";
+import { Eye } from "lucide-react";
 import moment from "moment";
 import React from "react";
 
@@ -46,39 +44,6 @@ const columnConfigs: Array<ColumnConfig> = [
       header: "anggaran",
       cell: (value: unknown) => toRupiah(value),
    },
-   {
-      key: "status_usulan",
-      header: "status",
-      cell: (value: unknown) => {
-         const status = value as string;
-         let variant: "default" | "secondary" | "destructive" | "outline";
-         let label;
-
-         switch (status) {
-            case "draft":
-               variant = "secondary";
-               label = "Draft";
-               break;
-            case "pengajuan":
-               variant = "outline";
-               label = "Pengajuan";
-               break;
-            case "diterima":
-               variant = "default";
-               label = "Diterima";
-               break;
-            case "ditolak":
-               variant = "destructive";
-               label = "Ditolak";
-               break;
-            default:
-               variant = "secondary";
-               label = status;
-         }
-
-         return <Badge variant={variant}>{label}</Badge>;
-      },
-   },
 ];
 
 export const getColumns = (endpoint: string): Array<ColumnDef<RowData, unknown>> => [
@@ -86,19 +51,9 @@ export const getColumns = (endpoint: string): Array<ColumnDef<RowData, unknown>>
       id: "actions",
       header: "",
       cell: ({ row: { original } }) => {
-         return (
-            <>
-               <LinkButton label={<Eye />} url={`${endpoint}/${original.id}`} type="edit" />
-               {["", "draft", "perbaiki", "ditolak"].includes(original?.status_usulan as string) && (
-                  <LinkButton label={<SquarePen />} url={`${endpoint}/actions/${original.id}`} type="edit" />
-               )}
-               {["", "draft", "perbaiki", "ditolak"].includes(original?.status_usulan as string) && (
-                  <ConfirmDelete url={endpoint} id={original.id as string | number} refetchKey={[[endpoint]]} />
-               )}
-            </>
-         );
+         return <LinkButton label={<Eye />} url={`${endpoint}/${original.id}`} type="edit" />;
       },
-      meta: { className: "w-[110px]" },
+      meta: { className: "w-[10px]" },
    }),
    ...columnConfigs.map((config) =>
       columnHelper.accessor(config.key, {

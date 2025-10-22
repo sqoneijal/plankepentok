@@ -126,11 +126,13 @@ export function FormInput({
       // Hitung perbedaan panjang string sebelum dan sesudah format
       const diff = formattedValue.length - rawValue.length;
 
-      // Set posisi kursor kembali ke posisi semula
-      requestAnimationFrame(() => {
-         const newPos = Math.max(selectionStart + diff, 0);
-         input.setSelectionRange(newPos, newPos);
-      });
+      // Set posisi kursor kembali ke posisi semula, hanya untuk input yang mendukung selection (bukan number)
+      if (input.type !== "number") {
+         requestAnimationFrame(() => {
+            const newPos = Math.max(selectionStart + diff, 0);
+            input.setSelectionRange(newPos, newPos);
+         });
+      }
 
       return formattedValue;
    };

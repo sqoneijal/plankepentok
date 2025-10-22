@@ -185,6 +185,6 @@ export function buatAlias(nama: string) {
       .toUpperCase();
 }
 
-export function objectLength(obj?: Record<string, string>) {
+export function objectLength(obj?: object) {
    return obj ? Object.keys(obj).length > 0 : false;
 }

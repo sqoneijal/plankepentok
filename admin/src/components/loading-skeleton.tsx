@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogFooter, DialogHeader } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TableCell, TableRow } from "@/components/ui/table";
 
@@ -469,10 +470,96 @@ function DokumenSkeleton() {
    );
 }
 
+function DialogValidasiSkeleton() {
+   return (
+      <Dialog open={true}>
+         <DialogContent showCloseButton={false} className="sm:max-w-none w-[80%]">
+            <DialogHeader>
+               <Skeleton className="h-6 w-48" />
+               <Skeleton className="h-4 w-64" />
+            </DialogHeader>
+            <div className="row">
+               <div className="col-12">
+                  <div className="row">
+                     <div className="col-12">
+                        <Skeleton className="h-4 w-32 mb-1" />
+                        <Skeleton className="h-6 w-full" />
+                     </div>
+                     <div className="col-12 col-md-6">
+                        <Skeleton className="h-4 w-8 mb-1" />
+                        <Skeleton className="h-6 w-full" />
+                     </div>
+                     <div className="col-12 col-md-6">
+                        <Skeleton className="h-4 w-12 mb-1" />
+                        <Skeleton className="h-6 w-full" />
+                     </div>
+                     <div className="col-12 col-md-6">
+                        <Skeleton className="h-4 w-20 mb-1" />
+                        <Skeleton className="h-6 w-full" />
+                     </div>
+                     <div className="col-12 col-md-6">
+                        <Skeleton className="h-4 w-16 mb-1" />
+                        <Skeleton className="h-6 w-full" />
+                     </div>
+                  </div>
+                  <div className="row">
+                     <div className="col-12">
+                        <Skeleton className="h-10 w-full" />
+                     </div>
+                     <div className="col-12 col-md-6">
+                        <Skeleton className="h-10 w-full" />
+                     </div>
+                     <div className="col-12 col-md-6">
+                        <Skeleton className="h-10 w-full" />
+                     </div>
+                     <div className="col-12 col-md-6">
+                        <Skeleton className="h-10 w-full" />
+                     </div>
+                     <div className="col-12">
+                        <Skeleton className="h-20 w-full" />
+                     </div>
+                  </div>
+               </div>
+               <div className="col-12 col-md-6">
+                  <div className="row">
+                     <div className="col-12">
+                        <Skeleton className="h-10 w-full" />
+                     </div>
+                  </div>
+                  <div className="row">
+                     <div className="col-12">
+                        <Skeleton className="h-4 w-24 mb-1" />
+                        <Skeleton className="h-6 w-full" />
+                     </div>
+                     <div className="col-12">
+                        <Skeleton className="h-4 w-12 mb-1" />
+                        <Skeleton className="h-6 w-full" />
+                     </div>
+                     <div className="col-12">
+                        <Skeleton className="h-4 w-20 mb-1" />
+                        <Skeleton className="h-6 w-full" />
+                     </div>
+                     <div className="col-12">
+                        <Skeleton className="h-4 w-16 mb-1" />
+                        <Skeleton className="h-6 w-full" />
+                     </div>
+                  </div>
+               </div>
+            </div>
+            <DialogFooter>
+               <Skeleton className="h-7 w-16" />
+               <Skeleton className="h-7 w-20" />
+            </DialogFooter>
+         </DialogContent>
+      </Dialog>
+   );
+}
+
 export {
    AppHeaderSkeleton,
    AppSidebarSkeleton,
    DetailUsulanKegiatanSkeleton,
+   DialogValidasiSkeleton,
    DokumenSkeleton,
    FormDetailHargaSBMSkeleton,
    FormInformasiUsulanSkeleton,
