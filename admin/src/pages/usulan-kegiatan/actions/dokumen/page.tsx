@@ -31,7 +31,7 @@ export default function Page({ id_usulan_kegiatan }: Readonly<{ id_usulan_kegiat
          <CardHeader>
             <CardTitle>Dokumen Pendukung</CardTitle>
             {["", "draft", "ditolak", "perbaiki"].includes(
-               results?.find((e: { usulan_kegiatan: string }) => e.usulan_kegiatan)?.usulan_kegiatan?.status_usulan
+               results?.find((e: { usulan_kegiatan: string }) => e.usulan_kegiatan)?.usulan_kegiatan?.status_usulan || ""
             ) && (
                <CardAction>
                   <Button variant="outline" onClick={() => setOpenSheet(true)} className="-mt-1">

@@ -62,7 +62,7 @@ export function useInitPage(id_usulan_kegiatan?: string) {
       toast.error(error?.message);
    }
 
-   const results = data?.results ?? {};
+   const results = data?.results ?? [];
    const total = data?.total || 0;
 
    return { results, total, isLoading };

@@ -3,8 +3,8 @@ import Table from "@/components/table";
 import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { useGetQuery } from "@/hooks/useGetQuery";
 import { lazy, Suspense, useState } from "react";
-import { useGetRelasiIKU } from "../init";
 import { getColumns } from "./column";
 
 const ReferensiIku = lazy(() => import("./referensi/page"));
@@ -12,14 +12,14 @@ const ReferensiIku = lazy(() => import("./referensi/page"));
 export default function Page({ id_usulan_kegiatan }: Readonly<{ id_usulan_kegiatan?: string }>) {
    const [openSheet, setOpenSheet] = useState(false);
 
-   const { results, total, isLoading } = useGetRelasiIKU(id_usulan_kegiatan);
+   const { results, total, isLoading } = useGetQuery(`/usulan-kegiatan/${id_usulan_kegiatan}/relasi-iku`);
 
    return (
       <Card className="mt-4">
          <CardHeader>
             <CardTitle>IKU</CardTitle>
             {["", "draft", "ditolak", "perbaiki"].includes(
-               results?.find((e: { usulan_kegiatan: string }) => e.usulan_kegiatan)?.usulan_kegiatan?.status_usulan
+               results?.find((e: { usulan_kegiatan: string }) => e.usulan_kegiatan)?.usulan_kegiatan?.status_usulan || ""
             ) && (
                <CardAction>
                   <Sheet open={openSheet} onOpenChange={setOpenSheet}>

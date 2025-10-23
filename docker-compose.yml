@@ -31,13 +31,13 @@ services:
       container_name: prisma-perencanaan
       image: prisma-perencanaan
       build:
-         context: ./prisma
+         context: ./backend
          dockerfile: ./Dockerfile
       volumes:
-         - ./prisma:/app
+         - ./backend:/app
          - /app/node_modules
       restart: always
       ports:
          - "1019:3000"
       env_file:
-         - ./prisma/.env
+         - ./backend/.env
