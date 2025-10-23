@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogFooter, DialogHeader } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TableCell, TableRow } from "@/components/ui/table";
 
@@ -475,8 +475,10 @@ function DialogValidasiSkeleton() {
       <Dialog open={true}>
          <DialogContent showCloseButton={false} className="sm:max-w-none w-[80%]">
             <DialogHeader>
-               <Skeleton className="h-6 w-48" />
-               <Skeleton className="h-4 w-64" />
+               <DialogTitle>
+                  <Skeleton className="h-6 w-48" />
+                  <Skeleton className="h-4 w-64" />
+               </DialogTitle>
             </DialogHeader>
             <div className="row">
                <div className="col-12">

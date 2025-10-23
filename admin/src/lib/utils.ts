@@ -55,8 +55,8 @@ export function useGetQueryDetail(endpoint: string, id?: string) {
    return { results, isLoading };
 }
 
-export const handleMutationSuccess = (response: ResponseType, setErrors: (errors: FormData) => void) => {
-   setErrors(response?.errors || {});
+export const handleMutationSuccess = (response: ResponseType, setErrors?: (errors: FormData) => void) => {
+   if (setErrors) setErrors(response?.errors || {});
    if (response?.status) {
       toast.success(response?.message);
       return;

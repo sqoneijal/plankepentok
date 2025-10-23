@@ -11,6 +11,14 @@ const cleanRupiah = (val, fallback = 0) => {
    return Number.isNaN(num) ? fallback : num;
 };
 
+const validationPenolakan = z.object({
+   catatan: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Asalan penolakan wajib diisi")),
+});
+
+const validationPerbaikan = z.object({
+   catatan: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Asalan perbaikan wajib diisi")),
+});
+
 const validationIKU = z
    .object({
       approve: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Status wajib diisi")),
@@ -252,7 +260,7 @@ router.get("/:id", async (req, res) => {
       });
       res.json({ results });
    } catch (error) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ status: false, message: error.message });
    }
 });
 
@@ -398,6 +406,157 @@ router.put("/dokumen/:id", async (req, res) => {
       res.status(201).json({ status: true, message: "Dokumen berhasil diperbaharui" });
    } catch (error) {
       res.status(500).json({ error: error.message });
+   }
+});
+
+router.post("/:id_usulan/tolak", async (req, res) => {
+   try {
+      const { id_usulan } = req.params;
+      const { user_modified, catatan } = req.body;
+
+      const parsed = validationPenolakan.safeParse(req.body);
+
+      if (!parsed.success) {
+         return errorHandler(parsed, res);
+      }
+
+      const oldData = await prisma.tb_usulan_kegiatan.findUnique({
+         where: { id: Number.parseInt(id_usulan) },
+      });
+
+      if (!oldData) {
+         return res.json({ status: false, message: "Usulan kegiatan tidak ditemukan" });
+      }
+
+      const newDataPenolakan = await prisma.tb_penolakan_usulan.create({
+         data: {
+            id_usulan_kegiatan: Number.parseInt(id_usulan),
+            catatan,
+            uploaded: new Date(),
+            user_modified,
+         },
+      });
+
+      const newData = await prisma.tb_usulan_kegiatan.update({
+         where: { id: Number.parseInt(id_usulan) },
+         data: {
+            catatan_perbaikan: catatan,
+            status_usulan: "ditolak",
+            modified: new Date(),
+         },
+      });
+
+      logAudit(user_modified, "CREATE", "tb_penolakan_usulan", req.ip, null, { ...newDataPenolakan });
+      logAudit(user_modified, "UPDATE", "tb_usulan_kegiatan", req.ip, { ...oldData }, { ...newData });
+
+      return res.json({ status: true, message: "Data berhasil disimpan" });
+   } catch (error) {
+      return res.status(500).json({ status: false, message: error.message });
+   }
+});
+
+router.post("/:id_usulan/perbaiki", async (req, res) => {
+   try {
+      const { id_usulan } = req.params;
+      const { user_modified, catatan } = req.body;
+
+      const parsed = validationPerbaikan.safeParse(req.body);
+
+      if (!parsed.success) {
+         return errorHandler(parsed, res);
+      }
+
+      const oldData = await prisma.tb_usulan_kegiatan.findUnique({
+         where: { id: Number.parseInt(id_usulan) },
+      });
+
+      if (!oldData) {
+         return res.json({ status: false, message: "Usulan kegiatan tidak ditemukan" });
+      }
+
+      const newDataPerbaikan = await prisma.tb_perbaikan_usulan.create({
+         data: {
+            id_usulan_kegiatan: Number.parseInt(id_usulan),
+            catatan,
+            uploaded: new Date(),
+            user_modified,
+         },
+      });
+
+      const newData = await prisma.tb_usulan_kegiatan.update({
+         where: { id: Number.parseInt(id_usulan) },
+         data: {
+            catatan_perbaikan: catatan,
+            status_usulan: "perbaiki",
+            modified: new Date(),
+         },
+      });
+
+      logAudit(user_modified, "CREATE", "tb_perbaikan_usulan", req.ip, null, { ...newDataPerbaikan });
+      logAudit(user_modified, "UPDATE", "tb_usulan_kegiatan", req.ip, { ...oldData }, { ...newData });
+
+      return res.json({ status: true, message: "Data berhasil disimpan" });
+   } catch (error) {
+      return res.status(500).json({ status: false, message: error.message });
+   }
+});
+
+router.get("/:id_usulan/histori-penolakan", async (req, res) => {
+   try {
+      const { id_usulan } = req.params;
+
+      const results = await prisma.tb_penolakan_usulan.findMany({
+         where: { id_usulan_kegiatan: Number.parseInt(id_usulan) },
+         orderBy: { id: "desc" },
+      });
+
+      return res.json({ results });
+   } catch (error) {
+      return res.json({ status: false, message: error?.message });
+   }
+});
+
+router.get("/:id_usulan/histori-perbaikan", async (req, res) => {
+   try {
+      const { id_usulan } = req.params;
+
+      const results = await prisma.tb_perbaikan_usulan.findMany({
+         where: { id_usulan_kegiatan: Number.parseInt(id_usulan) },
+         orderBy: { id: "desc" },
+      });
+
+      return res.json({ results });
+   } catch (error) {
+      return res.json({ status: false, message: error?.message });
+   }
+});
+
+router.put("/setujui", async (req, res) => {
+   try {
+      const { id_usulan, user_modified } = req.body;
+
+      const oldData = await prisma.tb_usulan_kegiatan.findUnique({
+         where: { id: Number.parseInt(id_usulan) },
+      });
+
+      if (!oldData) {
+         return res.json({ status: false, message: "Usulan kegiatan tidak ditemukan" });
+      }
+
+      const newData = await prisma.tb_usulan_kegiatan.update({
+         where: { id: Number.parseInt(id_usulan) },
+         data: {
+            status_usulan: "diterima",
+            user_modified,
+            modified: new Date(),
+         },
+      });
+
+      logAudit(user_modified, "UPDATE", "tb_usulan_kegiatan", req.ip, { ...oldData }, { ...newData });
+
+      return res.json({ status: true, message: "Status usulan berhasil diperbaharui" });
+   } catch (error) {
+      return res.json({ status: false, message: error.message });
    }
 });
 

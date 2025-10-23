@@ -17,6 +17,22 @@ type ColumnConfig = {
    cell?: (value: unknown) => React.ReactNode;
 };
 
+const getStatusStyles = (status: string) => {
+   switch (status) {
+      case "draft":
+      case "perbaiki":
+         return "bg-yellow-500 text-white hover:bg-yellow-600";
+      case "pengajuan":
+         return "bg-blue-500 text-white hover:bg-blue-600";
+      case "diterima":
+         return "bg-green-500 text-white hover:bg-green-600";
+      case "ditolak":
+         return "bg-red-500 text-white hover:bg-red-600";
+      default:
+         return "bg-gray-500 text-white hover:bg-gray-600";
+   }
+};
+
 const columnConfigs: Array<ColumnConfig> = [
    {
       key: "kode",
@@ -51,32 +67,33 @@ const columnConfigs: Array<ColumnConfig> = [
       header: "status",
       cell: (value: unknown) => {
          const status = value as string;
-         let variant: "default" | "secondary" | "destructive" | "outline";
          let label;
 
          switch (status) {
             case "draft":
-               variant = "secondary";
                label = "Draft";
                break;
+            case "perbaiki":
+               label = "Perbaiki";
+               break;
             case "pengajuan":
-               variant = "outline";
                label = "Pengajuan";
                break;
             case "diterima":
-               variant = "default";
                label = "Diterima";
                break;
             case "ditolak":
-               variant = "destructive";
                label = "Ditolak";
                break;
             default:
-               variant = "secondary";
                label = status;
          }
 
-         return <Badge variant={variant}>{label}</Badge>;
+         return (
+            <Badge variant="outline" className={getStatusStyles(status)}>
+               {label}
+            </Badge>
+         );
       },
    },
 ];
