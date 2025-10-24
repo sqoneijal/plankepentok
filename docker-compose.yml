@@ -1,7 +1,7 @@
 services:
    perencanaan-admin:
       container_name: perencanaan-admin
-      image: hub.uinar.ar-raniry.ac.id/perencanaan-admin
+      image: hub.uinar.ar-raniry.ac.id/perencanaan-admin:latest
       build:
          context: ./admin
          dockerfile: ./Dockerfile
@@ -13,9 +13,9 @@ services:
          - NODE_ENV=production
       restart: always
 
-   prisma-perencanaan:
-      container_name: prisma-perencanaan
-      image: hub.uinar.ar-raniry.ac.id/perencanaan-prisma
+   perencanaan-prisma:
+      container_name: perencanaan-prisma
+      image: hub.uinar.ar-raniry.ac.id/perencanaan-prisma:latest
       build:
          context: ./backend
          dockerfile: ./Dockerfile

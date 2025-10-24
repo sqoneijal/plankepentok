@@ -6,6 +6,7 @@ import { route_dashboard } from "@/routes/dashboard";
 import { route_master_iku } from "./routes/master-iku";
 import { route_pagu_anggaran } from "./routes/pagu-anggaran";
 import { route_pengaturan } from "./routes/pengaturan";
+import { route_realisasi } from "./routes/realisasi";
 import { route_referensi } from "./routes/referensi";
 import { route_unit_kerja } from "./routes/unit-kerja";
 import { route_usulan_kegiatan } from "./routes/usulan-kegiatan";
@@ -21,6 +22,7 @@ export default function Routes() {
       route_verifikasi_usulan,
       route_pagu_anggaran,
       route_pengaturan,
+      route_realisasi,
    ];
 
    return (

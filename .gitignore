@@ -16,3 +16,4 @@ admin/prod.js
 admin/public/tinymce
 backend/uploads
 admin/.env
+backend/prod.js

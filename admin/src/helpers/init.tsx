@@ -142,10 +142,10 @@ export const getStatusAktifNonAktif = (status?: string) => {
 
 export const detailLabel = ({ label, value }: { label?: string; value?: React.ReactNode }) => {
    return (
-      <div className="mt-2">
+      <>
          <div className="block text-sm font-medium text-gray-600">{label}</div>
          <p className="mt-1 text-gray-900">{value}</p>
-      </div>
+      </>
    );
 };
 

@@ -28,6 +28,7 @@ app.use("/api/usulan-kegiatan", require("./routes/usulan-kegiatan"));
 app.use("/api/master-iku", require("./routes/master-iku"));
 app.use("/api/pengaturan", require("./routes/pengaturan"));
 app.use("/api/verifikasi-usulan/pengajuan", require("./routes/verifikasi-usulan/pengajuan"));
+app.use("/api/realisasi", require("./routes/realisasi"));
 
 // Health check
 app.get("/health", (req, res) => {
