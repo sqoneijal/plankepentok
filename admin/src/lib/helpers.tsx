@@ -14,9 +14,15 @@ import { Link } from "react-router";
 import { v4 } from "uuid";
 import { cn } from "./utils";
 
-export function LinkButton({ label, url, type, onClick }: Readonly<{ label: React.ReactNode; url?: string; type: string; onClick?: () => void }>) {
+export function LinkButton({
+   label,
+   url,
+   type,
+   onClick,
+   className,
+}: Readonly<{ label: React.ReactNode; url?: string; type: string; onClick?: () => void; className?: string }>) {
    return (
-      <Button variant="outline" asChild className={cn(["edit", "delete"].includes(String(type)) && "size-6")} onClick={onClick}>
+      <Button variant="outline" asChild className={cn(["edit", "delete"].includes(String(type)) && "size-6", className)} onClick={onClick}>
          {["edit", "delete", "actions"].includes(String(type)) ? (
             <Link to={url || ""} className="dark:text-foreground">
                {label}
@@ -348,7 +354,11 @@ export function FormDatePicker({
                   size="sm"
                   disabled={disabled}
                   className={cn("w-full justify-between font-normal h-9", errors?.[name] ? "border border-red-500" : "")}>
-                  {date ? date.toLocaleDateString() : <span className="opacity-80 font-light">Pilih tanggal</span>}
+                  {date ? (
+                     date.toLocaleDateString("id-ID", { day: "2-digit", month: "2-digit", year: "numeric" })
+                  ) : (
+                     <span className="opacity-80 font-light">Pilih tanggal</span>
+                  )}
                   <ChevronDownIcon />
                </Button>
             </PopoverTrigger>

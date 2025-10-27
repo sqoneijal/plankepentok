@@ -12,8 +12,10 @@ const cleanRupiah = (val, fallback = 0) => {
 };
 
 const validation = z.object({
-   new_qty: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Qty wajib diisi")),
-   new_harga_satuan: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Harga satuan wajib diisi")),
+   tanggal_mulai: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Tanggal mulai wajib diisi")),
+   tanggal_selesai: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Tanggal selesai wajib diisi")),
+   anggaran_digunakan: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Anggaran digunakan wajib diisi")),
+   deskripsi: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Deskripsi wajib diisi")),
 });
 
 const router = express.Router();
@@ -22,7 +24,7 @@ const prisma = new PrismaClient();
 router.post("/:id_usulan", async (req, res) => {
    try {
       const { id_usulan } = req.params;
-      const { id, new_harga_satuan, harga_satuan, new_qty, qty } = req.body;
+      const { id, new_total_biaya, anggaran_digunakan, user_modified, deskripsi, tanggal_selesai, tanggal_mulai } = req.body;
 
       const parsed = validation.safeParse(req.body);
 
@@ -30,25 +32,30 @@ router.post("/:id_usulan", async (req, res) => {
          return errorHandler(parsed, res);
       }
 
-      if (Number.parseFloat(cleanRupiah(new_harga_satuan)) > Number.parseFloat(cleanRupiah(harga_satuan))) {
+      if (Number.parseFloat(cleanRupiah(anggaran_digunakan)) > Number.parseFloat(cleanRupiah(new_total_biaya))) {
          return res.json({
             status: false,
             message: "Periksa kembali inputan anda",
             errors: {
-               new_harga_satuan: "Harga satuan lebih besar dari yang disetujui",
+               anggaran_digunakan: "Anggaran digunakan lebih besar dari yang disetujui",
             },
          });
       }
 
-      if (Number.parseInt(new_qty) > Number.parseInt(qty)) {
-         return res.json({
-            status: false,
-            message: "Periksa kembali inputan anda",
-            errors: {
-               new_qty: "Jumlah Qty lebih besar dari yang disetujui",
-            },
-         });
-      }
+      const newData = await prisma.tb_realisasi.create({
+         data: {
+            id_usulan: Number.parseInt(id_usulan),
+            id_rab: Number.parseInt(id),
+            tanggal_mulai: new Date(tanggal_mulai),
+            tanggal_selesai: new Date(tanggal_selesai),
+            deskripsi,
+            anggaran_digunakan: Number.parseFloat(cleanRupiah(anggaran_digunakan)),
+            uploaded: new Date(),
+            user_modified,
+         },
+      });
+
+      logAudit(user_modified, "CREATE", "tb_realisasi", req.ip, null, { ...newData });
 
       return res.json({ status: true, message: "Realisasi berhasil disimpan" });
    } catch (error) {
@@ -98,8 +105,15 @@ router.get("/:id_usulan/ref-rab", async (req, res) => {
    try {
       const { id_usulan } = req.params;
 
+      const realisasi = await prisma.tb_realisasi.findMany({
+         where: { id_usulan: Number.parseInt(id_usulan) },
+         select: { id_rab: true },
+      });
+
+      const realizedIds = realisasi.map((r) => r.id_rab);
+
       const results = await prisma.tb_rab_detail.findMany({
-         where: { id_usulan: Number.parseInt(id_usulan), approve: "valid" },
+         where: { id_usulan: Number.parseInt(id_usulan), approve: "valid", id: { notIn: realizedIds } },
          select: {
             id: true,
             uraian_biaya: true,
@@ -195,6 +209,33 @@ router.get("/:id", async (req, res) => {
                         kode: true,
                         deskripsi: true,
                         tahun_berlaku: true,
+                     },
+                  },
+               },
+            },
+            realisasi: {
+               select: {
+                  id: true,
+                  tanggal_mulai: true,
+                  tanggal_selesai: true,
+                  deskripsi: true,
+                  anggaran_digunakan: true,
+                  rab_detail: {
+                     select: {
+                        id: true,
+                        uraian_biaya: true,
+                        qty: true,
+                        rab_detail_perubahan: {
+                           select: { id: true, qty: true, harga_satuan: true, total_biaya: true },
+                        },
+                        unit_satuan: {
+                           select: {
+                              id: true,
+                              nama: true,
+                              deskripsi: true,
+                              aktif: true,
+                           },
+                        },
                      },
                   },
                },

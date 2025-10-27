@@ -5,7 +5,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { toNumber } from "@/helpers/init";
 import { useHeaderButton } from "@/hooks/store";
 import { usePostMutation } from "@/hooks/usePostMutation";
-import { FormDatePicker, FormInput, LinkButton } from "@/lib/helpers";
+import { FormDatePicker, FormInput, FormTextarea, LinkButton } from "@/lib/helpers";
 import { useGetQueryDetail } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
@@ -21,7 +21,10 @@ export default function Page() {
    const { setButton } = useHeaderButton();
    const { results, isLoading } = useGetQueryDetail(endpoint, `${id}/ref-rab`);
 
-   const { mutate, isPending } = usePostMutation<FormData, unknown>(`${endpoint}/${id}`, (data) => ({ ...data }), [[`${endpoint}/${id}`]]);
+   const { mutate, isPending } = usePostMutation<FormData, unknown>(`${endpoint}/${id}`, (data) => ({ ...data }), [
+      [`${endpoint}/${id}`],
+      [`${endpoint}/${id}/ref-rab`],
+   ]);
 
    useEffect(() => {
       setButton(<LinkButton label="Batal" url={`${endpoint}/${id}`} type="actions" />);
@@ -50,25 +53,18 @@ export default function Page() {
                      usePagination={false}
                      trCursor={true}
                      onRowClick={(row) => {
-                        let harga_satuan: string;
                         let total_biaya: string;
-                        let qty: string;
 
                         if (row.rab_detail_perubahan === null) {
-                           qty = row.qty!;
-                           harga_satuan = row.harga_satuan!;
                            total_biaya = (toNumber(row.qty) * toNumber(row.harga_satuan)).toString();
                         } else {
-                           harga_satuan = row.rab_detail_perubahan.harga_satuan!;
-                           qty = row.rab_detail_perubahan.qty!;
                            total_biaya = (toNumber(row.rab_detail_perubahan.qty) * toNumber(row.rab_detail_perubahan.harga_satuan)).toString();
                         }
 
                         setFormData({
                            ...row,
-                           new_qty: qty,
-                           new_harga_satuan: harga_satuan,
                            new_total_biaya: total_biaya,
+                           anggaran_digunakan: total_biaya,
                         } as FormData);
                      }}
                   />
@@ -84,35 +80,40 @@ export default function Page() {
                   <div className="row">
                      <FormDatePicker
                         divClassName="col-12 col-md-6"
-                        label="Qty"
-                        name="new_qty"
-                        value={formData?.new_qty as string}
-                        onChange={(value) => setFormData({ ...formData, new_qty: String(value) })}
+                        label="Tanggal Mulai"
+                        name="tanggal_mulai"
+                        value={formData?.tanggal_mulai as string}
+                        onChange={(value) => setFormData({ ...formData, tanggal_mulai: String(value) })}
                         errors={errors}
                      />
-                     <FormInput
+                     <FormDatePicker
                         divClassName="col-12 col-md-6"
-                        label="Satuan"
-                        value={(formData?.unit_satuan as Record<string, unknown>)?.nama as string}
-                        disabled={true}
+                        label="Tanggal Selesai"
+                        name="tanggal_selesai"
+                        value={formData?.tanggal_selesai as string}
+                        onChange={(value) => setFormData({ ...formData, tanggal_selesai: String(value) })}
+                        errors={errors}
                      />
                   </div>
                   <div className="row">
                      <FormInput
                         apakahFormatRupiah={true}
-                        divClassName="col-12 col-md-6"
-                        label="Harga Satuan"
-                        name="new_harga_satuan"
-                        value={formData?.new_harga_satuan as string}
-                        onChange={(value) => setFormData({ ...formData, new_harga_satuan: String(value) })}
+                        divClassName="col-12"
+                        label="Anggaran Digunakan"
+                        name="anggaran_digunakan"
+                        value={formData?.anggaran_digunakan as string}
+                        onChange={(value) => setFormData({ ...formData, anggaran_digunakan: String(value) })}
                         errors={errors}
                      />
-                     <FormInput
-                        apakahFormatRupiah={true}
-                        divClassName="col-12 col-md-6"
-                        label="Total Biaya"
-                        value={formData?.new_total_biaya as string}
-                        disabled={true}
+                  </div>
+                  <div className="row">
+                     <FormTextarea
+                        divClassName="col-12"
+                        label="Deskripsi"
+                        name="deskripsi"
+                        value={formData?.deskripsi as string}
+                        onChange={(value) => setFormData({ ...formData, deskripsi: String(value) })}
+                        errors={errors}
                      />
                   </div>
                </CardContent>
@@ -126,6 +127,7 @@ export default function Page() {
                               setErrors({ ...errors });
 
                               if (status) {
+                                 setFormData({});
                                  toast.success(message);
                               } else {
                                  toast.error(message);
