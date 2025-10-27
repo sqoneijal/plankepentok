@@ -9,20 +9,14 @@ import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Check, ChevronDownIcon, ChevronsUpDown } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import { v4 } from "uuid";
 import { cn } from "./utils";
 
-export function LinkButton({
-   label,
-   url,
-   type,
-   onClick,
-   className,
-}: Readonly<{ label: React.ReactNode; url?: string; type: string; onClick?: () => void; className?: string }>) {
+export function LinkButton({ label, url, type, onClick }: Readonly<{ label: React.ReactNode; url?: string; type: string; onClick?: () => void }>) {
    return (
-      <Button variant="outline" asChild className={cn(["edit", "delete"].includes(String(type)) && "size-6", className)} onClick={onClick}>
+      <Button variant="outline" asChild className={cn(["edit", "delete"].includes(String(type)) && "size-6")} onClick={onClick}>
          {["edit", "delete", "actions"].includes(String(type)) ? (
             <Link to={url || ""} className="dark:text-foreground">
                {label}
@@ -174,6 +168,25 @@ export function FormInput({
    );
 }
 
+type Option = {
+   value: string;
+   label: string;
+   hasChild?: boolean;
+   child?: Option[];
+   tooltipContent?: string;
+};
+
+function findOptionByValue(options: Option[], value: string): Option | undefined {
+   for (const option of options) {
+      if (option.value === value) return option;
+      if (option.child) {
+         const found = findOptionByValue(option.child, value);
+         if (found) return found;
+      }
+   }
+   return undefined;
+}
+
 export function FormSelect({
    divClassName,
    label,
@@ -184,6 +197,8 @@ export function FormSelect({
    options,
    withLabel = true,
    useCommand = false,
+   useHeaderAsValue = false,
+   onValueChange,
 }: Readonly<{
    onChange?: (value: string) => void;
    divClassName?: string;
@@ -191,15 +206,17 @@ export function FormSelect({
    name?: string;
    value?: string;
    errors?: Record<string, string | null>;
-   options: Array<Record<string, string>>;
+   options: Array<Option>;
    withLabel?: boolean;
    useCommand?: boolean;
+   useHeaderAsValue?: boolean;
+   onValueChange?: (value: string) => void;
 }>) {
    const id = v4();
    const errorMessage = name ? errors?.[name] : undefined;
    const [open, setOpen] = useState(false);
 
-   const selectedLabel = options?.find((row: Record<string, string>) => row.value === value)?.label;
+   const selectedLabel = findOptionByValue(options, value || "")?.label;
 
    if (useCommand) {
       return (
@@ -220,22 +237,54 @@ export function FormSelect({
                </PopoverTrigger>
                <PopoverContent className="p-0" style={{ width: "var(--radix-popover-trigger-width)" }}>
                   <Command>
-                     <CommandInput placeholder={`Cari ${label?.toLowerCase() || "opsi"}...`} />
+                     <CommandInput placeholder={`Cari ${label?.toLowerCase() || "opsi"}...`} onValueChange={onValueChange} />
                      <CommandList>
                         <CommandEmpty>Tidak ada opsi ditemukan.</CommandEmpty>
                         <CommandGroup>
-                           {options?.map((row) => (
-                              <CommandItem
-                                 key={row.value}
-                                 value={row.label}
-                                 onSelect={() => {
-                                    onChange?.(row.value);
-                                    setOpen(false);
-                                 }}>
-                                 <Check className={cn("mr-2 h-4 w-4", value === row.value ? "opacity-100" : "opacity-0")} />
-                                 {row.label}
-                              </CommandItem>
-                           ))}
+                           {options?.map((row, i: number) =>
+                              row?.hasChild ? (
+                                 <>
+                                    {useHeaderAsValue && (
+                                       <CommandItem
+                                          key={`${row.value}-${i}-header`}
+                                          value={row.label}
+                                          onSelect={() => {
+                                             onChange?.(row.value);
+                                             setOpen(false);
+                                          }}>
+                                          {row.label}
+                                          <Check className={cn("ml-auto h-4 w-4", value === row.value ? "opacity-100" : "opacity-0")} />
+                                       </CommandItem>
+                                    )}
+                                    <CommandGroup key={`${row.value}-group`} heading={row.label} className="ml-0">
+                                       {row.child?.map((sub: Option, index: number) => (
+                                          <CommandItem
+                                             className="ml-4"
+                                             key={`${sub.value}-${index}-sub-item`}
+                                             value={sub.label}
+                                             onSelect={() => {
+                                                onChange?.(sub.value);
+                                                setOpen(false);
+                                             }}>
+                                             {sub.label}
+                                             <Check className={cn("ml-auto h-4 w-4", value === sub.value ? "opacity-100" : "opacity-0")} />
+                                          </CommandItem>
+                                       ))}
+                                    </CommandGroup>
+                                 </>
+                              ) : (
+                                 <CommandItem
+                                    key={`${row.value}-${i}-item`}
+                                    value={row.label}
+                                    onSelect={() => {
+                                       onChange?.(row.value);
+                                       setOpen(false);
+                                    }}>
+                                    {row.label}
+                                    <Check className={cn("ml-auto h-4 w-4", value === row.value ? "opacity-100" : "opacity-0")} />
+                                 </CommandItem>
+                              )
+                           )}
                         </CommandGroup>
                      </CommandList>
                   </Command>
@@ -258,7 +307,7 @@ export function FormSelect({
                <SelectValue placeholder={label} />
             </SelectTrigger>
             <SelectContent>
-               {options?.map((row: Record<string, string>) => (
+               {options?.map((row: Option) => (
                   <SelectItem value={row.value} key={`${row.value}-${row.label.toLowerCase()}`}>
                      {row.tooltipContent ? (
                         <Tooltip>
@@ -354,11 +403,7 @@ export function FormDatePicker({
                   size="sm"
                   disabled={disabled}
                   className={cn("w-full justify-between font-normal h-9", errors?.[name] ? "border border-red-500" : "")}>
-                  {date ? (
-                     date.toLocaleDateString("id-ID", { day: "2-digit", month: "2-digit", year: "numeric" })
-                  ) : (
-                     <span className="opacity-80 font-light">Pilih tanggal</span>
-                  )}
+                  {date ? date.toLocaleDateString() : <span className="opacity-80 font-light">Pilih tanggal</span>}
                   <ChevronDownIcon />
                </Button>
             </PopoverTrigger>

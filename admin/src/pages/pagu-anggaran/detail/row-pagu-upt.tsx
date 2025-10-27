@@ -24,7 +24,7 @@ export default function RowPaguUPT({
          <React.Fragment key={`upt-${row.id}`}>
             <TableRow>
                <TableCell colSpan={2} className={tableCellClass}>
-                  {row?.upt?.nama}
+                  {row?.upt_master?.nama}
                </TableCell>
                <TableCell className={tableCellClass}>{toRupiah(row?.realisasi)}</TableCell>
                <TableCell className={tableCellClass}>
@@ -38,7 +38,7 @@ export default function RowPaguUPT({
                   <ActionButton row={row} selectedRow={selectedRow} setSelectedRow={setSelectedRow} endpoint="upt" />
                </TableCell>
             </TableRow>
-            {row?.upt?.sub_unit?.map((item) => {
+            {row?.upt_master?.sub_unit?.map((item) => {
                const paguSubUnitRow = paguSubUnit?.find((e) => e.id_sub_unit === item.id);
                if (!paguSubUnitRow) return null;
 

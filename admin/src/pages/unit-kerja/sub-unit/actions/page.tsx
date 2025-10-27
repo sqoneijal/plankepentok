@@ -40,11 +40,11 @@ export default function Page() {
       if (id && !isLoading && objectLength(results)) {
          const data = covertToSTring(results) as FormData;
          const level = data.level;
-         const parentData = (results as Record<string, { id: number; nama: string }>)?.[level];
-         const parentId = parentData?.id || "";
+         const id_parent = `id_${level}`;
+
          setFormData({
             ...data,
-            id_parent: `${String(parentId)}-${level}`,
+            id_parent: `${data[id_parent]}-${level}`,
          });
       }
       return () => {};

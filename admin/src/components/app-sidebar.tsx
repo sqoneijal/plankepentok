@@ -25,6 +25,7 @@ import {
    Target,
    TicketsPlane,
    TrendingUp,
+   Users,
 } from "lucide-react";
 import { lazy, Suspense } from "react";
 import { Link, useLocation } from "react-router";
@@ -82,6 +83,15 @@ const data: Array<MenuItem> = [
    },
    { label: "Realisasi", icon: <TrendingUp />, url: "/realisasi" },
    { label: "Pengaturan", icon: <Settings />, url: "/pengaturan" },
+   {
+      label: "Pengguna",
+      icon: <Users />,
+      url: "#",
+      child: [
+         { label: "Daftar", url: "/pengguna/daftar" },
+         { label: "Logs", url: "/pengguna/logs" },
+      ],
+   },
 ];
 
 export default function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {

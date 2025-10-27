@@ -8,7 +8,8 @@ const router = express.Router();
 const prisma = new PrismaClient();
 
 const subUnitSchema = z.object({
-   id_parent: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Nama UPT wajib diisi")),
+   id_parent: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Parent unit wajib diisi")),
+   nama: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Nama sub unit wajib diisi")),
 });
 
 router.get("/options", async (req, res) => {
@@ -61,31 +62,29 @@ router.get("/", async (req, res) => {
    try {
       const limit = Number.parseInt(req.query.limit) || 25;
       const offset = Number.parseInt(req.query.offset) || 0;
-      const search = req.query.search || "";
 
-      const query = { nama: { contains: search, mode: "insensitive" } };
-      const where = search ? query : {};
-
-      const total = await prisma.tb_sub_unit.count({ where });
+      const total = await prisma.tb_sub_unit.count();
       const results = await prisma.tb_sub_unit.findMany({
-         where,
          orderBy: { id: "desc" },
-         include: {
-            biro: {
+         take: limit,
+         skip: offset,
+         select: {
+            id: true,
+            nama: true,
+            level: true,
+            biro_master: {
                select: { id: true, nama: true },
             },
-            fakultas: {
+            fakultas_master: {
                select: { id: true, nama: true },
             },
-            lembaga: {
+            lembaga_master: {
                select: { id: true, nama: true },
             },
-            upt: {
+            upt_master: {
                select: { id: true, nama: true },
             },
          },
-         take: limit,
-         skip: offset,
       });
       res.json({ results, total });
    } catch (error) {
@@ -99,11 +98,26 @@ router.get("/:id", async (req, res) => {
 
       const results = await prisma.tb_sub_unit.findUnique({
          where: { id: Number.parseInt(id) },
-         include: {
-            biro: true,
-            fakultas: true,
-            lembaga: true,
-            upt: true,
+         select: {
+            id: true,
+            nama: true,
+            level: true,
+            id_biro: true,
+            id_lembaga: true,
+            id_upt: true,
+            id_fakultas: true,
+            biro_master: {
+               select: { id: true, nama: true },
+            },
+            fakultas_master: {
+               select: { id: true, nama: true },
+            },
+            lembaga_master: {
+               select: { id: true, nama: true },
+            },
+            upt_master: {
+               select: { id: true, nama: true },
+            },
          },
       });
       res.json({ results });

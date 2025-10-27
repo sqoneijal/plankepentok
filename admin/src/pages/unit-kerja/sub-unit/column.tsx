@@ -24,7 +24,7 @@ const columnConfigs: Array<ColumnConfig> = [
       cell: (_value: unknown, row?: RowData) => {
          if (!row) return "";
          const level = row.level as string;
-         const parent = row[level] as { nama?: string } | null;
+         const parent = row[`${level}_master`] as { nama?: string } | null;
          return parent?.nama || "";
       },
    },

@@ -10,7 +10,7 @@ export interface PaguBiroRow {
    total_pagu: string;
    realisasi: string | null;
    id_biro: number;
-   biro: {
+   biro_master: {
       id: number;
       nama: string;
       sub_unit: {
@@ -26,7 +26,7 @@ export interface PaguLembagaRow {
    total_pagu: string;
    realisasi: string;
    id_lembaga: number;
-   lembaga: {
+   lembaga_master: {
       id: number;
       nama: string;
       sub_unit: {
@@ -42,7 +42,7 @@ export interface PaguUPTRow {
    total_pagu: string;
    realisasi: string;
    id_upt: number;
-   upt: {
+   upt_master: {
       id: number;
       nama: string;
       sub_unit: {
@@ -58,7 +58,7 @@ export interface PaguFakultasRow {
    total_pagu: string;
    realisasi: string;
    id_fakultas: number;
-   fakultas: {
+   fakultas_master: {
       id: number;
       nama: string;
       sub_unit: {

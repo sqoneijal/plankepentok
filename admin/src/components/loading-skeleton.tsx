@@ -190,6 +190,29 @@ function FormPengaturanSkeleton() {
    );
 }
 
+function FormPenggunaSkeleton() {
+   return (
+      <div className="p-0">
+         <div className="border rounded-lg p-6 shadow-sm bg-white">
+            <form className="space-y-4">
+               <div className="row">
+                  <div className="col-12 col-md-2">
+                     <Skeleton className="h-10 w-full" />
+                  </div>
+                  <div className="col-12 col-md-5">
+                     <Skeleton className="h-10 w-full" />
+                  </div>
+                  <div className="col-12 col-md-5">
+                     <Skeleton className="h-10 w-full" />
+                  </div>
+               </div>
+               <Skeleton className="h-10 w-32" />
+            </form>
+         </div>
+      </div>
+   );
+}
+
 function FormUnitSatuanSkeleton() {
    return (
       <div className="p-0">
@@ -567,6 +590,7 @@ export {
    FormInformasiUsulanSkeleton,
    FormKategoriSBMSkeleton,
    FormPengaturanSkeleton,
+   FormPenggunaSkeleton,
    FormRencanaAnggaranSkeleton,
    FormStandarBiayaSkeleton,
    FormSubUnitSkeleton,

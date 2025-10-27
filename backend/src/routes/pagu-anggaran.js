@@ -19,9 +19,16 @@ router.get("/", async (req, res) => {
 
       const total = await prisma.tb_pengaturan.count();
       const results = await prisma.tb_pengaturan.findMany({
-         orderBy: { tahun_anggaran: "desc" },
+         orderBy: { id: "desc" },
          take: limit,
          skip: offset,
+         select: {
+            id: true,
+            tahun_anggaran: true,
+            total_pagu: true,
+            realisasi: true,
+            is_aktif: true,
+         },
       });
       res.json({ results, total });
    } catch (error) {
@@ -72,17 +79,38 @@ router.get("/:tahun_anggaran/biro", async (req, res) => {
             user_modified: "system",
          }));
 
-         await prisma.tb_pagu_anggaran_biro.createMany({
+         const newData = await prisma.tb_pagu_anggaran_biro.createMany({
             data: inserts,
             skipDuplicates: true,
          });
+
+         logAudit("system", "CREATE", "tb_pagu_anggaran_biro", req.ip, null, { ...newData });
       }
 
       // Fetch all results
       const results = await prisma.tb_pagu_anggaran_biro.findMany({
          where: { tahun_anggaran: tahun },
-         include: { biro: { include: { sub_unit: true } } },
          orderBy: { id: "asc" },
+         select: {
+            id: true,
+            tahun_anggaran: true,
+            total_pagu: true,
+            realisasi: true,
+            id_biro: true,
+            biro_master: {
+               select: {
+                  id: true,
+                  nama: true,
+                  sub_unit: {
+                     select: {
+                        id: true,
+                        level: true,
+                        nama: true,
+                     },
+                  },
+               },
+            },
+         },
       });
 
       res.json({ results });
@@ -151,17 +179,37 @@ router.get("/:tahun_anggaran/fakultas", async (req, res) => {
             user_modified: "system",
          }));
 
-         await prisma.tb_pagu_anggaran_fakultas.createMany({
+         const newData = await prisma.tb_pagu_anggaran_fakultas.createMany({
             data: inserts,
             skipDuplicates: true,
          });
+
+         logAudit("system", "CREATE", "tb_pagu_anggaran_fakultas", req.ip, null, { ...newData });
       }
 
       // Fetch all results
       const results = await prisma.tb_pagu_anggaran_fakultas.findMany({
          where: { tahun_anggaran: tahun },
-         include: { fakultas: { include: { sub_unit: true } } },
          orderBy: { id: "asc" },
+         select: {
+            id: true,
+            tahun_anggaran: true,
+            total_pagu: true,
+            realisasi: true,
+            fakultas_master: {
+               select: {
+                  id: true,
+                  nama: true,
+                  sub_unit: {
+                     select: {
+                        id: true,
+                        level: true,
+                        nama: true,
+                     },
+                  },
+               },
+            },
+         },
       });
 
       res.json({ results });
@@ -230,17 +278,37 @@ router.get("/:tahun_anggaran/upt", async (req, res) => {
             user_modified: "system",
          }));
 
-         await prisma.tb_pagu_anggaran_upt.createMany({
+         const newData = await prisma.tb_pagu_anggaran_upt.createMany({
             data: inserts,
             skipDuplicates: true,
          });
+
+         logAudit("system", "CREATE", "tb_pagu_anggaran_upt", req.ip, null, { ...newData });
       }
 
       // Fetch all results
       const results = await prisma.tb_pagu_anggaran_upt.findMany({
          where: { tahun_anggaran: tahun },
-         include: { upt: { include: { sub_unit: true } } },
          orderBy: { id: "asc" },
+         select: {
+            id: true,
+            tahun_anggaran: true,
+            total_pagu: true,
+            realisasi: true,
+            upt_master: {
+               select: {
+                  id: true,
+                  nama: true,
+                  sub_unit: {
+                     select: {
+                        id: true,
+                        level: true,
+                        nama: true,
+                     },
+                  },
+               },
+            },
+         },
       });
 
       res.json({ results });
@@ -309,23 +377,37 @@ router.get("/:tahun_anggaran/lembaga", async (req, res) => {
             user_modified: "system",
          }));
 
-         await prisma.tb_pagu_anggaran_lembaga.createMany({
+         const newData = await prisma.tb_pagu_anggaran_lembaga.createMany({
             data: inserts,
             skipDuplicates: true,
          });
+
+         logAudit("system", "CREATE", "tb_pagu_anggaran_lembaga", req.ip, null, { ...newData });
       }
 
       // Fetch all results
       const results = await prisma.tb_pagu_anggaran_lembaga.findMany({
          where: { tahun_anggaran: tahun },
-         include: {
-            lembaga: {
-               include: {
-                  sub_unit: true,
+         orderBy: { id: "asc" },
+         select: {
+            id: true,
+            tahun_anggaran: true,
+            total_pagu: true,
+            realisasi: true,
+            lembaga_master: {
+               select: {
+                  id: true,
+                  nama: true,
+                  sub_unit: {
+                     select: {
+                        id: true,
+                        level: true,
+                        nama: true,
+                     },
+                  },
                },
             },
          },
-         orderBy: { id: "asc" },
       });
 
       res.json({ results });
@@ -394,17 +476,31 @@ router.get("/:tahun_anggaran/sub-unit", async (req, res) => {
             user_modified: "system",
          }));
 
-         await prisma.tb_pagu_sub_unit.createMany({
+         const newData = await prisma.tb_pagu_sub_unit.createMany({
             data: inserts,
             skipDuplicates: true,
          });
+
+         logAudit("system", "CREATE", "tb_pagu_sub_unit", req.ip, null, { ...newData });
       }
 
       // Fetch all results
       const results = await prisma.tb_pagu_sub_unit.findMany({
          where: { tahun_anggaran: tahun },
-         include: { sub_unit: true },
          orderBy: { id: "asc" },
+         select: {
+            id: true,
+            id_sub_unit: true,
+            tahun_anggaran: true,
+            total_pagu: true,
+            realisasi: true,
+            sub_unit: {
+               select: {
+                  id: true,
+                  nama: true,
+               },
+            },
+         },
       });
 
       res.json({ results });

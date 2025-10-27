@@ -24,7 +24,7 @@ export default function RowPaguBiro({
          <React.Fragment key={`biro-${row.id}`}>
             <TableRow>
                <TableCell colSpan={2} className={tableCellClass}>
-                  {row?.biro?.nama}
+                  {row?.biro_master?.nama}
                </TableCell>
                <TableCell className={tableCellClass}>{toRupiah(row?.realisasi)}</TableCell>
                <TableCell className={tableCellClass}>
@@ -38,7 +38,7 @@ export default function RowPaguBiro({
                   <ActionButton row={row} selectedRow={selectedRow} setSelectedRow={setSelectedRow} endpoint="biro" />
                </TableCell>
             </TableRow>
-            {row?.biro?.sub_unit?.map((item) => {
+            {row?.biro_master?.sub_unit?.map((item) => {
                const paguSubUnitRow = paguSubUnit?.find((e) => e.id_sub_unit === item.id);
                if (!paguSubUnitRow) return null;
 

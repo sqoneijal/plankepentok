@@ -25,7 +25,7 @@ export default function RowPaguLembaga({
             <React.Fragment key={`lembaga-${row.id}`}>
                <TableRow>
                   <TableCell colSpan={2} className={tableCellClass}>
-                     {row?.lembaga?.nama}
+                     {row?.lembaga_master?.nama}
                   </TableCell>
                   <TableCell className={tableCellClass}>{toRupiah(row?.realisasi)}</TableCell>
                   <TableCell className={tableCellClass}>
@@ -39,7 +39,7 @@ export default function RowPaguLembaga({
                      <ActionButton row={row} selectedRow={selectedRow} setSelectedRow={setSelectedRow} endpoint="lembaga" />
                   </TableCell>
                </TableRow>
-               {row?.lembaga?.sub_unit?.map((item) => {
+               {row?.lembaga_master?.sub_unit?.map((item) => {
                   const paguSubUnitRow = paguSubUnit?.find((e) => e.id_sub_unit === item.id);
                   if (!paguSubUnitRow) return null;
 

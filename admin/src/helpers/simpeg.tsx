@@ -90,6 +90,40 @@ export const usePegawai = (pegawaiId: string | undefined) => {
    });
 };
 
+export const useCariPegawai = (query: string | undefined) => {
+   return useQuery({
+      queryKey: ["pegawai", query],
+      queryFn: async () => {
+         const headers = await getAuthHeaders();
+         const response = await axios.post(
+            import.meta.env.VITE_API_SIMPEG,
+            {
+               query: `query Pegawai($filter: PegawaiFilterInput) {
+                     daftarPegawai(filter: $filter) {
+                        pegawai {
+                           nama
+                           id
+                           statusAktif {
+                              isActive
+                           }
+                        }
+                     }
+                  }`,
+               variables: {
+                  filter: {
+                     searchString: query,
+                  },
+               },
+            },
+            { headers }
+         );
+
+         return response?.data?.data?.daftarPegawai?.pegawai || [];
+      },
+      enabled: !!query,
+   });
+};
+
 export const useUnitKerja = (id_unit_kerja: string | undefined) => {
    return useQuery({
       queryKey: ["unit-kerja", id_unit_kerja],
