@@ -1,9 +1,60 @@
 const express = require("express");
 const { PrismaClient } = require("@prisma/client");
+const errorHandler = require("../handle-error.js");
+const { logAudit } = require("../helpers.js");
 const { z } = require("zod");
+
+const cleanRupiah = (val, fallback = 0) => {
+   if (val == null) return fallback;
+   const cleaned = val.toString().replaceAll(".", "");
+   const num = Number(cleaned);
+   return Number.isNaN(num) ? fallback : num;
+};
+
+const validation = z.object({
+   new_qty: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Qty wajib diisi")),
+   new_harga_satuan: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Harga satuan wajib diisi")),
+});
 
 const router = express.Router();
 const prisma = new PrismaClient();
+
+router.post("/:id_usulan", async (req, res) => {
+   try {
+      const { id_usulan } = req.params;
+      const { id, new_harga_satuan, harga_satuan, new_qty, qty } = req.body;
+
+      const parsed = validation.safeParse(req.body);
+
+      if (!parsed.success) {
+         return errorHandler(parsed, res);
+      }
+
+      if (Number.parseFloat(cleanRupiah(new_harga_satuan)) > Number.parseFloat(cleanRupiah(harga_satuan))) {
+         return res.json({
+            status: false,
+            message: "Periksa kembali inputan anda",
+            errors: {
+               new_harga_satuan: "Harga satuan lebih besar dari yang disetujui",
+            },
+         });
+      }
+
+      if (Number.parseInt(new_qty) > Number.parseInt(qty)) {
+         return res.json({
+            status: false,
+            message: "Periksa kembali inputan anda",
+            errors: {
+               new_qty: "Jumlah Qty lebih besar dari yang disetujui",
+            },
+         });
+      }
+
+      return res.json({ status: true, message: "Realisasi berhasil disimpan" });
+   } catch (error) {
+      return res.json({ error: error.message });
+   }
+});
 
 router.get("/", async (req, res) => {
    try {
@@ -40,6 +91,43 @@ router.get("/", async (req, res) => {
       res.json({ results, total });
    } catch (error) {
       res.status(500).json({ error: error.message });
+   }
+});
+
+router.get("/:id_usulan/ref-rab", async (req, res) => {
+   try {
+      const { id_usulan } = req.params;
+
+      const results = await prisma.tb_rab_detail.findMany({
+         where: { id_usulan: Number.parseInt(id_usulan), approve: "valid" },
+         select: {
+            id: true,
+            uraian_biaya: true,
+            qty: true,
+            id_satuan: true,
+            harga_satuan: true,
+            total_biaya: true,
+            unit_satuan: {
+               select: {
+                  id: true,
+                  nama: true,
+                  deskripsi: true,
+               },
+            },
+            rab_detail_perubahan: {
+               select: {
+                  id: true,
+                  qty: true,
+                  harga_satuan: true,
+                  total_biaya: true,
+               },
+            },
+         },
+      });
+
+      return res.json({ results });
+   } catch (error) {
+      return res.json({ error: error.message });
    }
 });
 

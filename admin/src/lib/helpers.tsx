@@ -90,7 +90,7 @@ export function FormInput({
    type = "text",
    divClassName,
    className,
-   errors,
+   errors = {},
    onChange,
    value,
    name,

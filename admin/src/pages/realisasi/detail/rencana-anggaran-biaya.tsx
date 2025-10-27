@@ -6,7 +6,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 
 type ApproveStatus = "valid" | "tidak_valid" | "perbaiki" | null;
 
-interface UnitSatuan {
+export interface UnitSatuan {
    id: number;
    nama: string;
    deskripsi: string;
@@ -16,14 +16,14 @@ interface UnitSatuan {
    user_modified: string | null;
 }
 
-interface RabDetailPerubahan {
+export interface RabDetailPerubahan {
    harga_satuan: string;
    id: number;
    qty: string;
    total_biaya: string;
 }
 
-interface RencanaAnggaranBiayaItem {
+export interface RencanaAnggaranBiayaItem {
    id: number;
    id_usulan: number;
    uraian_biaya: string;
