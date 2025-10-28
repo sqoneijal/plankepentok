@@ -25,9 +25,11 @@ export function useApiQuery({
                Authorization: `Bearer ${token}`,
             },
          });
+
          if (!response.ok) {
             toast.error(response?.statusText || "Failed to fetch data");
          }
+
          return response.json();
       },
       ...options,

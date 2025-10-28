@@ -1,8 +1,9 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { covertToSTring, getValue, objectLength } from "@/helpers/init";
 import { useHeaderButton } from "@/hooks/store";
+import { useGetQueryDetail } from "@/hooks/useGetQueryDetail";
 import { FormInput, LinkButton, SubmitButton } from "@/lib/helpers";
-import { useGetQueryDetail, useSubmitData } from "@/lib/utils";
+import { useSubmitData } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 

@@ -190,7 +190,7 @@ const upload = multer({
 
 const usulanSchema = z.object({
    kode: z.string().min(1, "Kode wajib diisi"),
-   nama: z.string().min(1, "Nama wajib diisi"),
+   id_jenis_usulan: z.string().min(1, "Jenis usulan wajib diisi"),
    waktu_mulai: z.string().min(1, "Waktu mulai wajib diisi"),
    waktu_selesai: z.string().min(1, "Waktu selesai wajib diisi"),
    tempat_pelaksanaan: z.string().min(1, "Tempat pelaksanaan wajib diisi"),
@@ -227,6 +227,22 @@ const cleanRupiah = (val, fallback = 0) => {
    return Number.isNaN(num) ? fallback : num;
 };
 
+router.get("/daftar-jenis-usulan", async (req, res) => {
+   try {
+      const results = await prisma.tb_jenis_usulan.findMany({
+         where: { is_aktif: true },
+         select: {
+            id: true,
+            nama: true,
+         },
+      });
+
+      return res.json({ results });
+   } catch (error) {
+      return res.status(500).json({ status: false, message: error.message });
+   }
+});
+
 router.get("/referensi-sbm", async (req, res) => {
    try {
       const limit = Number.parseInt(req.query.limit) || 25;
@@ -258,9 +274,6 @@ router.get("/referensi-sbm", async (req, res) => {
             tanggal_mulai_efektif: true,
             tanggal_akhir_efektif: true,
             status_validasi: true,
-            uploaded: true,
-            modified: true,
-            user_modified: true,
             standar_biaya_master: {
                select: {
                   id: true,
@@ -287,23 +300,33 @@ router.get("/referensi-sbm", async (req, res) => {
 
 router.get("/", async (req, res) => {
    try {
+      const limit = Number.parseInt(req.query.limit) || 25;
+      const offset = Number.parseInt(req.query.offset) || 0;
+
       const total = await prisma.tb_usulan_kegiatan.count();
       const results = await prisma.tb_usulan_kegiatan.findMany({
+         take: limit,
+         skip: offset,
          orderBy: { id: "desc" },
          select: {
             id: true,
             kode: true,
-            nama: true,
             waktu_mulai: true,
             waktu_selesai: true,
             total_anggaran: true,
             status_usulan: true,
             rencana_total_anggaran: true,
+            jenis_usulan: {
+               select: {
+                  id: true,
+                  nama: true,
+               },
+            },
          },
       });
       return res.json({ results, total });
    } catch (error) {
-      return res.json({ status: false, message: error.message });
+      return res.status(500).json({ status: false, message: error.message });
    }
 });
 
@@ -317,6 +340,19 @@ router.put("/usul", async (req, res) => {
 
       if (!oldData) {
          return res.json({ status: false, message: "Usulan kegiatan tidak ditemukan" });
+      }
+
+      const checkStatusUsulan = await prisma.tb_usulan_kegiatan.findFirst({
+         where: {
+            id: Number.parseInt(id_usulan),
+            status_usulan: {
+               in: ["diterima"],
+            },
+         },
+      });
+
+      if (checkStatusUsulan) {
+         return res.json({ status: false, message: "Tidak dapat melakukan pengajuan" });
       }
 
       const newData = await prisma.tb_usulan_kegiatan.update({
@@ -338,21 +374,56 @@ router.put("/usul", async (req, res) => {
 
 router.post("/", async (req, res) => {
    try {
-      const { kode, id_unit_pengusul, tempat_pelaksanaan, user_modified } = req.body;
+      const { kode, tempat_pelaksanaan, user_modified } = req.body;
 
-      const created = await prisma.tb_usulan_kegiatan.create({
-         data: {
-            kode,
-            id_unit_pengusul,
-            tempat_pelaksanaan,
-            uploaded: new Date(),
-            user_modified,
+      const pengguna = await prisma.tb_pengguna.findUnique({
+         where: { username: user_modified },
+         select: {
+            id: true,
+            username: true,
+            level_unit: true,
+            roles: true,
+            pengguna_role: {
+               select: {
+                  id_biro: true,
+                  id_lembaga: true,
+                  id_upt: true,
+                  id_fakultas: true,
+                  id_sub_unit: true,
+               },
+            },
          },
       });
 
-      logAudit(user_modified, "CREATE", "tb_usulan_kegiatan", req.ip, null, { ...created });
+      if (!pengguna) {
+         return res.json({ status: false, message: "Anda tidak mempunyai akses untuk melakukan penambahan usulan kegiatan" });
+      }
 
-      return res.status(201).json({ status: true, id_usulan_kegiatan: created.id });
+      const newData = await prisma.tb_usulan_kegiatan.create({
+         data: {
+            kode,
+            uploaded: new Date(),
+            user_modified,
+            tempat_pelaksanaan,
+            operator_input: pengguna?.id,
+         },
+      });
+
+      const newDataUnit = await prisma.tb_unit_pengusul.create({
+         data: {
+            id_usulan_kegiatan: newData.id,
+            id_biro: pengguna.pengguna_role.id_biro,
+            id_lembaga: pengguna.pengguna_role.id_lembaga,
+            id_upt: pengguna.pengguna_role.id_upt,
+            id_fakultas: pengguna.pengguna_role.id_fakultas,
+            id_sub_unit: pengguna.pengguna_role.id_sub_unit,
+         },
+      });
+
+      logAudit(user_modified, "CREATE", "tb_usulan_kegiatan", req.ip, null, { ...newData });
+      logAudit(user_modified, "CREATE", "tb_unit_pengusul", req.ip, null, { ...newDataUnit });
+
+      return res.status(201).json({ status: true, id_usulan_kegiatan: newData.id });
    } catch (error) {
       return res.json({ status: false, message: error.message });
    }
@@ -364,6 +435,69 @@ router.get("/:id", async (req, res) => {
 
       const results = await prisma.tb_usulan_kegiatan.findUnique({
          where: { id: Number.parseInt(id) },
+         select: {
+            id: true,
+            kode: true,
+            latar_belakang: true,
+            tujuan: true,
+            sasaran: true,
+            waktu_mulai: true,
+            waktu_selesai: true,
+            tempat_pelaksanaan: true,
+            operator_input: true,
+            total_anggaran: true,
+            status_usulan: true,
+            tanggal_submit: true,
+            rencana_total_anggaran: true,
+            catatan_perbaikan: true,
+            id_jenis_usulan: true,
+            unit_pengusul: {
+               select: {
+                  biro_master: {
+                     select: {
+                        id: true,
+                        nama: true,
+                     },
+                  },
+                  fakultas_master: {
+                     select: {
+                        id: true,
+                        nama: true,
+                     },
+                  },
+                  lembaga_master: {
+                     select: {
+                        id: true,
+                        nama: true,
+                     },
+                  },
+                  sub_unit: {
+                     select: {
+                        id: true,
+                        nama: true,
+                     },
+                  },
+                  upt_master: {
+                     select: {
+                        id: true,
+                        nama: true,
+                     },
+                  },
+               },
+            },
+            jenis_usulan: {
+               select: {
+                  id: true,
+                  nama: true,
+               },
+            },
+            pengguna: {
+               select: {
+                  id: true,
+                  fullname: true,
+               },
+            },
+         },
       });
       return res.json({ results });
    } catch (error) {
@@ -375,16 +509,15 @@ router.put("/:id", async (req, res) => {
    try {
       const { id } = req.params;
       const {
-         nama,
          latar_belakang,
          tujuan,
          sasaran,
          waktu_mulai,
          waktu_selesai,
          tempat_pelaksanaan,
-         rencana_total_anggaran,
          user_modified,
-         operator_input,
+         rencana_total_anggaran,
+         id_jenis_usulan,
       } = req.body;
 
       const parsed = usulanSchema.safeParse(req.body);
@@ -411,10 +544,23 @@ router.put("/:id", async (req, res) => {
          return res.json({ status: false, message: "Usulan kegiatan tidak ditemukan" });
       }
 
+      const checkStatusUsulan = await prisma.tb_usulan_kegiatan.findFirst({
+         where: {
+            id: Number.parseInt(id_usulan),
+            status_usulan: {
+               in: ["diterima", "pengajuan"],
+            },
+         },
+      });
+
+      if (checkStatusUsulan) {
+         return res.json({ status: false, message: "Tidak dapat melakukan perubahan usulan" });
+      }
+
       const newData = await prisma.tb_usulan_kegiatan.update({
          where: { id: Number.parseInt(id) },
          data: {
-            nama,
+            id_jenis_usulan: Number.parseInt(id_jenis_usulan),
             latar_belakang,
             tujuan,
             sasaran,
@@ -425,7 +571,6 @@ router.put("/:id", async (req, res) => {
             modified: new Date(),
             user_modified,
             rencana_total_anggaran: cleanRupiah(rencana_total_anggaran),
-            operator_input,
          },
       });
 
@@ -448,6 +593,19 @@ router.delete("/:id", async (req, res) => {
 
       if (!oldData) {
          return res.json({ status: false, message: "Usulan kegiatan tidak ditemukan" });
+      }
+
+      const checkStatusUsulan = await prisma.tb_usulan_kegiatan.findFirst({
+         where: {
+            id: Number.parseInt(id_usulan),
+            status_usulan: {
+               in: ["diterima", "pengajuan"],
+            },
+         },
+      });
+
+      if (checkStatusUsulan) {
+         return res.json({ status: false, message: "Tidak dapat melakukan penghapusan pengajuan" });
       }
 
       await prisma.tb_usulan_kegiatan.delete({
@@ -517,6 +675,19 @@ router.post("/:id_usulan_kegiatan/relasi-iku", async (req, res) => {
          return res.json({ status: false, message: "Relasi IKU sudah ada." });
       }
 
+      const checkStatusUsulan = await prisma.tb_usulan_kegiatan.findFirst({
+         where: {
+            id: Number.parseInt(id_usulan_kegiatan),
+            status_usulan: {
+               in: ["pengajuan", "diterima"],
+            },
+         },
+      });
+
+      if (checkStatusUsulan) {
+         return res.json({ status: false, message: "Tidak dapat memperbaharui atau menambahkan IKU baru" });
+      }
+
       const newData = await prisma.tb_relasi_usulan_iku.create({
          data: {
             id_usulan: Number.parseInt(id_usulan_kegiatan),
@@ -545,6 +716,19 @@ router.delete("/relasi-iku/:id", async (req, res) => {
 
       if (!oldData) {
          return res.json({ status: false, message: "Relasi IKU tidak ditemukan" });
+      }
+
+      const checkStatusUsulan = await prisma.tb_usulan_kegiatan.findFirst({
+         where: {
+            id: Number.parseInt(id_usulan),
+            status_usulan: {
+               in: ["diterima", "pengajuan"],
+            },
+         },
+      });
+
+      if (checkStatusUsulan) {
+         return res.json({ status: false, message: "Tidak dapat menghapus relasi IKU" });
       }
 
       await prisma.tb_relasi_usulan_iku.delete({
@@ -651,6 +835,19 @@ router.post("/rab", async (req, res) => {
          });
       }
 
+      const checkStatusUsulan = await prisma.tb_usulan_kegiatan.findFirst({
+         where: {
+            id: Number.parseInt(id_usulan),
+            status_usulan: {
+               in: ["pengajuan", "diterima"],
+            },
+         },
+      });
+
+      if (checkStatusUsulan) {
+         return res.json({ status: false, message: "Tidak dapat memperbaharui atau menambahkan rencana anggaran baru" });
+      }
+
       const newData = await prisma.tb_rab_detail.create({
          data: {
             id_usulan: Number.parseInt(id_usulan),
@@ -702,6 +899,19 @@ router.put("/rab/:id_usulan/:id", async (req, res) => {
          return res.json({ status: false, message: "Rencana anggaran biaya tidak ditemukan" });
       }
 
+      const checkStatusUsulan = await prisma.tb_usulan_kegiatan.findFirst({
+         where: {
+            id: Number.parseInt(id_usulan),
+            status_usulan: {
+               in: ["diterima", "pengajuan"],
+            },
+         },
+      });
+
+      if (checkStatusUsulan) {
+         return res.json({ status: false, message: "Tidak dapat melakukan penambahan atau perubahan rencana anggaran biaya" });
+      }
+
       const newData = await prisma.tb_rab_detail.update({
          where: { id_usulan: Number.parseInt(id_usulan), id: Number.parseInt(id) },
          data: {
@@ -735,6 +945,19 @@ router.delete("/rab/:id", async (req, res) => {
 
       if (!oldData) {
          return res.json({ status: false, message: "Rencana anggaran biaya tidak ditemukan" });
+      }
+
+      const checkStatusUsulan = await prisma.tb_usulan_kegiatan.findFirst({
+         where: {
+            id: Number.parseInt(id_usulan),
+            status_usulan: {
+               in: ["diterima", "pengajuan"],
+            },
+         },
+      });
+
+      if (checkStatusUsulan) {
+         return res.json({ status: false, message: "Tidak dapat melakukan penghapusan rencana anggaran biaya" });
       }
 
       await prisma.tb_rab_detail.delete({
@@ -808,6 +1031,19 @@ router.post("/:id_usulan_kegiatan/dokumen", upload.single("file_dokumen"), async
          });
       }
 
+      const checkStatusUsulan = await prisma.tb_usulan_kegiatan.findFirst({
+         where: {
+            id: Number.parseInt(id_usulan),
+            status_usulan: {
+               in: ["pengajuan", "diterima"],
+            },
+         },
+      });
+
+      if (checkStatusUsulan) {
+         return res.json({ status: false, message: "Tidak dapat memperbaharui atau menambahkan dokumen baru" });
+      }
+
       const tipe_dokumen = getTipeDokumen(req.file.mimetype);
       const file_dokumen = req.file.filename;
 
@@ -867,6 +1103,19 @@ router.put("/:id_usulan_kegiatan/dokumen/:id", upload.single("file_dokumen"), as
          return res.json({ status: false, message: "Dokumen tidak ditemukan" });
       }
 
+      const checkStatusUsulan = await prisma.tb_usulan_kegiatan.findFirst({
+         where: {
+            id: Number.parseInt(id_usulan),
+            status_usulan: {
+               in: ["pengajuan", "diterima"],
+            },
+         },
+      });
+
+      if (checkStatusUsulan) {
+         return res.json({ status: false, message: "Tidak dapat memperbaharui atau menambahkan dokumen baru" });
+      }
+
       const fileUpdate = await updateDocumentFile(req, oldData);
 
       // Update database
@@ -890,7 +1139,7 @@ router.put("/:id_usulan_kegiatan/dokumen/:id", upload.single("file_dokumen"), as
          id_dokumen: newData.id,
       });
    } catch (error) {
-      return res.json({ status: false, message: error.message });
+      return res.status(500).json({ status: false, message: error.message });
    }
 });
 
@@ -907,6 +1156,19 @@ router.delete("/dokumen/:id", async (req, res) => {
 
       if (!oldData) {
          return res.json({ status: false, message: "Dokumen pendukung tidak ditemukan" });
+      }
+
+      const checkStatusUsulan = await prisma.tb_usulan_kegiatan.findFirst({
+         where: {
+            id: Number.parseInt(id_usulan),
+            status_usulan: {
+               in: ["diterima", "pengajuan"],
+            },
+         },
+      });
+
+      if (checkStatusUsulan) {
+         return res.json({ status: false, message: "Tidak dapat melakukan penghapusan dokumen" });
       }
 
       await prisma.tb_dokumen_pendukung.delete({

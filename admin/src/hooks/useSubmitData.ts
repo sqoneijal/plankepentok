@@ -1,9 +1,7 @@
-import { usePostMutation } from "@/hooks/usePostMutation";
-import { usePutMutation } from "@/hooks/usePutMutation";
-import { clsx, type ClassValue } from "clsx";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
-import { twMerge } from "tailwind-merge";
+import { usePostMutation } from "./usePostMutation";
+import { usePutMutation } from "./usePutMutation";
 
 type ResponseType = {
    status?: boolean;
@@ -12,10 +10,6 @@ type ResponseType = {
 };
 
 type FormData = Record<string, string>;
-
-export function cn(...inputs: Array<ClassValue>) {
-   return twMerge(clsx(inputs));
-}
 
 export const handleMutationSuccess = (response: ResponseType, setErrors?: (errors: FormData) => void) => {
    if (setErrors) setErrors(response?.errors || {});

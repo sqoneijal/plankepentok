@@ -1,7 +1,7 @@
 import Table from "@/components/table";
 import { useHeaderButton } from "@/hooks/store";
+import { useGetQuery } from "@/hooks/useGetQuery";
 import { FormInput, LinkButton } from "@/lib/helpers";
-import { useGetQuery } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { getColumns } from "./column";
 

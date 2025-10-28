@@ -39,8 +39,8 @@ const columnConfigs: Array<ColumnConfig> = [
       header: "kode",
    },
    {
-      key: "nama",
-      header: "nama usulan",
+      key: "jenis_usulan.nama",
+      header: "jenis usulan",
    },
    {
       key: "waktu_mulai",

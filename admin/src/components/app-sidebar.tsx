@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/sidebar";
 import { loadingSpinner } from "@/helpers/init";
 import {
+   BarChart3,
    BookOpen,
    Building2,
    CheckCircle,
@@ -22,7 +23,7 @@ import {
    FileText,
    LayoutDashboard,
    Settings,
-   Target,
+   ShieldCheck,
    TicketsPlane,
    TrendingUp,
    Users,
@@ -47,12 +48,14 @@ const data: Array<MenuItem> = [
       icon: <BookOpen />,
       url: "#",
       child: [
+         { label: "Jenis Usulan", url: "/referensi/jenis-usulan" },
          { label: "Unit Satuan", url: "/referensi/unit-satuan" },
          { label: "Kategori SBM", url: "/referensi/kategori-sbm" },
          { label: "Standar Biaya", url: "/referensi/standar-biaya" },
          { label: "Detail Harga SBM", url: "/referensi/detail-harga-sbm" },
       ],
    },
+   { label: "Verifikator", icon: <ShieldCheck />, url: "/verifikator" },
    {
       label: "Unit Kerja",
       icon: <Building2 />,
@@ -70,7 +73,7 @@ const data: Array<MenuItem> = [
       icon: <DollarSign />,
       url: "/pagu-anggaran",
    },
-   { label: "Master IKU", icon: <Target />, url: "/master-iku" },
+   { label: "Master IKU", icon: <BarChart3 />, url: "/master-iku" },
    { label: "Usulan Kegiatan", icon: <FileText />, url: "/usulan-kegiatan" },
    {
       label: "Verifikasi Usulan",

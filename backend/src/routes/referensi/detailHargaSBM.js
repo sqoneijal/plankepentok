@@ -38,19 +38,29 @@ router.get("/", async (req, res) => {
          orderBy: { id: "desc" },
          take: limit,
          skip: offset,
-         include: {
-            standar_biaya: {
+         select: {
+            id: true,
+            standar_biaya_master: {
                select: {
+                  id: true,
                   kode: true,
                   nama: true,
+                  deskripsi: true,
                },
             },
+            tahun_anggaran: true,
+            harga_satuan: true,
             unit_satuan: {
                select: {
-                  deskripsi: true,
+                  id: true,
                   nama: true,
+                  deskripsi: true,
+                  aktif: true,
                },
             },
+            tanggal_mulai_efektif: true,
+            tanggal_akhir_efektif: true,
+            status_validasi: true,
          },
       });
       res.json({ results, total });
@@ -64,9 +74,31 @@ router.get("/:id", async (req, res) => {
       const { id } = req.params;
       const results = await prisma.tb_detail_harga_sbm.findUnique({
          where: { id: Number.parseInt(id) },
-         include: {
-            standar_biaya: true,
-            unit_satuan: true,
+         select: {
+            id: true,
+            id_standar_biaya: true,
+            standar_biaya_master: {
+               select: {
+                  id: true,
+                  kode: true,
+                  nama: true,
+                  deskripsi: true,
+               },
+            },
+            tahun_anggaran: true,
+            harga_satuan: true,
+            id_satuan: true,
+            unit_satuan: {
+               select: {
+                  id: true,
+                  nama: true,
+                  deskripsi: true,
+                  aktif: true,
+               },
+            },
+            tanggal_mulai_efektif: true,
+            tanggal_akhir_efektif: true,
+            status_validasi: true,
          },
       });
 
@@ -190,15 +222,9 @@ router.put("/:id", async (req, res) => {
 
       logAudit(user_modified, "UPDATE", "tb_detail_harga_sbm", req.ip, { ...oldData }, { ...newData });
 
-      res.json({ status: true, message: "Detail harga SBM berhasil diperbaharui" });
+      return res.json({ status: true, message: "Detail harga SBM berhasil diperbaharui" });
    } catch (error) {
-      if (error.code === "P2025") {
-         return res.status(404).json({ error: "Detail harga SBM tidak ditemukan" });
-      }
-      if (error.code === "P2002") {
-         return res.status(400).json({ status: false, error: "Kombinasi ID SBM, tahun anggaran, dan ID satuan sudah ada" });
-      }
-      res.status(500).json({ error: error.message });
+      return res.json({ error: error.message });
    }
 });
 

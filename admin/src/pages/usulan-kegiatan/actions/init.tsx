@@ -1,22 +1,36 @@
 import { covertToSTring } from "@/helpers/init";
 import { UseAuth } from "@/hooks/auth-context";
 import { useApiQuery } from "@/hooks/useApiQuery";
+import { useGetQueryDetail } from "@/hooks/useGetQueryDetail";
 import { usePutMutation } from "@/hooks/usePutMutation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-export type FormData = Record<string, string | null>;
+export type Unit = {
+   id: number;
+   nama: string;
+};
+
+export type UnitPengusul = {
+   biro_master?: Unit | null;
+   fakultas_master?: Unit | null;
+   lembaga_master?: Unit | null;
+   sub_unit?: Unit | null;
+   upt_master?: Unit | null;
+};
+
+export type FormData = Record<string, string | null | UnitPengusul>;
 
 type ResponseType = {
    status?: boolean;
    message?: string;
-   errors?: FormData;
+   errors?: Record<string, string | null>;
 };
 
 const handleSubmit = (
    mutate: (data: FormData, options: { onSuccess: (response: ResponseType) => void; onError: (error: Error) => void }) => void,
    formData: FormData,
-   setErrors?: (errors: FormData) => void
+   setErrors?: (errors: Record<string, string | null>) => void
 ) => {
    mutate(formData, {
       onSuccess: (response: ResponseType) => {
@@ -35,31 +49,22 @@ const handleSubmit = (
 
 export function useInitPage(id?: string) {
    const [formData, setFormData] = useState<FormData>({});
-   const [errors, setErrors] = useState<FormData>({});
+   const [errors, setErrors] = useState<Record<string, string | null>>({});
 
-   const { data, isLoading, error } = useApiQuery({
-      url: `/usulan-kegiatan/${id}`,
-      options: { enabled: !!id },
-   });
-
-   if (error) {
-      toast.error(error?.message);
-   }
-
-   const content = data?.results ?? {};
+   const { results: data, isLoading } = useGetQueryDetail("/usulan-kegiatan", id);
 
    useEffect(() => {
       if (!isLoading && Object.keys(data).length > 0) {
-         setFormData({ ...content });
+         const converted = covertToSTring(data);
+         setFormData({ ...(converted as Record<string, string>) });
       }
       return () => {};
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-   }, [isLoading, content]);
+   }, [isLoading, data]);
 
    return { formData, setFormData, errors, setErrors };
 }
 
-export function useUpdateInformasiUsulan(id: string | undefined, formData: FormData, setErrors: (errors: FormData) => void) {
+export function useUpdateInformasiUsulan(id: string | undefined, formData: FormData, setErrors: (errors: Record<string, string | null>) => void) {
    const { user } = UseAuth();
 
    const { mutate, isPending } = usePutMutation<FormData, unknown>(

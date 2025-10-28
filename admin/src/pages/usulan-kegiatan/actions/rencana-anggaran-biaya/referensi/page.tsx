@@ -1,8 +1,9 @@
 import Table from "@/components/table";
 import { cleanRupiah } from "@/helpers/init";
+import { useGetQuery } from "@/hooks/useGetQuery";
 import { FormInput } from "@/lib/helpers";
+import { useState } from "react";
 import { getColumns, type Row } from "./column";
-import { useInitPage } from "./init";
 
 type FormData = Record<string, string>;
 
@@ -11,7 +12,9 @@ export default function Page({
    setFormData,
    formData,
 }: Readonly<{ setOpenSheet: (open: boolean) => void; formData: FormData; setFormData?: (data: FormData) => void }>) {
-   const { results, total, isLoading, setSearch, search } = useInitPage();
+   const [search, setSearch] = useState("");
+
+   const { results, total, isLoading } = useGetQuery("/usulan-kegiatan/referensi-sbm", { search });
 
    return (
       <>
@@ -30,7 +33,7 @@ export default function Page({
                if (setFormData) {
                   setFormData({
                      ...formData,
-                     uraian_biaya: row.standar_biaya.nama,
+                     uraian_biaya: row.standar_biaya_master.nama,
                      id_satuan: String(row.id_satuan),
                      harga_satuan: String(row.harga_satuan),
                      total_biaya: String(cleanRupiah(row.harga_satuan) * 1),

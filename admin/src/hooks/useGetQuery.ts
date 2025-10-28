@@ -4,15 +4,17 @@ import { useApiQuery } from "./useApiQuery";
 
 type FormData = Record<string, string>;
 
-export function useGetQuery(enpoint: string, params?: FormData) {
+export function useGetQuery(enpoint: string, params?: FormData, usePagination: boolean = true) {
    const { pagination } = useTablePagination();
 
    const limit = pagination?.pageSize;
    const offset = pagination?.pageIndex * pagination.pageSize;
 
+   const paginationParams = params ? { limit: String(limit), offset: String(offset), ...params } : { limit: String(limit), offset: String(offset) };
+
    const { data, isLoading, error } = useApiQuery({
       url: enpoint,
-      params: { limit: String(limit), offset: String(offset), ...params },
+      params: usePagination ? paginationParams : params,
    });
 
    if (error) {

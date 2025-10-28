@@ -5,9 +5,9 @@ import { buatAlias, objectLength } from "@/helpers/init";
 import { usePegawai } from "@/helpers/simpeg";
 import { UseAuth } from "@/hooks/auth-context";
 import { useHeaderButton } from "@/hooks/store";
+import { useGetQuery } from "@/hooks/useGetQuery";
 import { usePostMutation } from "@/hooks/usePostMutation";
 import { FormInput } from "@/lib/helpers";
-import { useGetQuery } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
@@ -24,10 +24,9 @@ export default function Page() {
 
    const navigate = useNavigate();
 
-   const { mutate, isPending } = usePostMutation<
-      { kode: string; unit_pengusul: string; id_unit_pengusul: string; tempat_pelaksanaan: string },
-      unknown
-   >(endpoint, (data) => ({ ...data }), [[endpoint]]);
+   const { mutate, isPending } = usePostMutation<{ kode: string; tempat_pelaksanaan: string }, unknown>(endpoint, (data) => ({ ...data }), [
+      [endpoint],
+   ]);
 
    useEffect(() => {
       if (!isLoadingPegawai && objectLength(dataPegawai)) {
@@ -48,8 +47,6 @@ export default function Page() {
                   mutate(
                      {
                         kode: `${buatAlias(dataPegawai?.unitKerjaSaatIni?.[0]?.bagian?.nama)}${formatted}`,
-                        unit_pengusul: dataPegawai?.unitKerjaSaatIni?.[0]?.bagian?.nama,
-                        id_unit_pengusul: dataPegawai?.unitKerjaSaatIni?.[0]?.bagian?.id,
                         tempat_pelaksanaan: dataPegawai?.unitKerjaSaatIni?.[0]?.bagian?.nama,
                      },
                      {

@@ -6,7 +6,7 @@ import moment from "moment";
 type RowData = Record<string, unknown>;
 
 export type Row = {
-   standar_biaya: { nama: string; kode: string };
+   standar_biaya_master: { nama: string; kode: string };
    id_satuan: string | number;
    harga_satuan: string | number;
    unit_satuan: { nama: string; deskripsi: string };
@@ -25,7 +25,7 @@ type ColumnConfig = {
 
 const columnConfigs: Array<ColumnConfig> = [
    {
-      key: "standar_biaya",
+      key: "standar_biaya_master",
       header: "standar biaya",
       cell: (value: unknown) => {
          const data = value as RowData;

@@ -1,7 +1,7 @@
 import { InfoPaguUniversitasSkeleton, PaguTableSkeleton } from "@/components/loading-skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useGetQueryDetail } from "@/lib/utils";
+import { useGetQueryDetail } from "@/hooks/useGetQueryDetail";
 import { lazy, Suspense } from "react";
 import { useParams } from "react-router";
 import { tableHeadClass, usePaguBiro, usePaguFakultas, usePaguLembaga, usePaguSubUnit, usePaguUPT } from "./init";

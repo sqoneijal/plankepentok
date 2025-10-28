@@ -47,7 +47,15 @@ const getBadgeText = (approve: ApproveStatus) => {
    return "Draft";
 };
 
-const columns: ColumnDef<RencanaAnggaranBiayaItem>[] = [
+const columns: Array<ColumnDef<RencanaAnggaranBiayaItem>> = [
+   {
+      accessorKey: "approve",
+      header: "Status",
+      cell: ({ getValue }) => {
+         const approve = getValue() as ApproveStatus;
+         return <Badge className={getBadgeClass(approve)}>{getBadgeText(approve)}</Badge>;
+      },
+   },
    {
       accessorKey: "uraian_biaya",
       header: "Uraian Biaya",
@@ -70,14 +78,7 @@ const columns: ColumnDef<RencanaAnggaranBiayaItem>[] = [
       header: "Total Biaya",
       cell: ({ getValue }) => toRupiah(getValue() as string),
    },
-   {
-      accessorKey: "approve",
-      header: "Status Validasi",
-      cell: ({ getValue }) => {
-         const approve = getValue() as ApproveStatus;
-         return <Badge className={getBadgeClass(approve)}>{getBadgeText(approve)}</Badge>;
-      },
-   },
+
    {
       accessorKey: "catatan",
       header: "Catatan",

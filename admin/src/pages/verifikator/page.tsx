@@ -5,7 +5,7 @@ import { LinkButton } from "@/lib/helpers";
 import { useEffect } from "react";
 import { getColumns } from "./column";
 
-const endpoint = "/pengaturan";
+const endpoint = "/verifikator";
 
 export default function Page() {
    const { setButton } = useHeaderButton();

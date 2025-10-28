@@ -61,6 +61,11 @@ export default function Iku({ endpoint, id }: Readonly<{ endpoint: string; id: s
 
    const columns: Array<ColumnDef<IkuItem>> = [
       {
+         accessorKey: "approve",
+         header: "status",
+         cell: ApproveTableCell,
+      },
+      {
          accessorKey: "iku_master.kode",
          header: "Kode",
       },
@@ -73,11 +78,7 @@ export default function Iku({ endpoint, id }: Readonly<{ endpoint: string; id: s
          accessorKey: "iku_master.tahun_berlaku",
          header: "Tahun Berlaku",
       },
-      {
-         accessorKey: "approve",
-         header: "Approve",
-         cell: ApproveTableCell,
-      },
+
       {
          accessorKey: "iku_master.deskripsi",
          header: "Deskripsi",

@@ -31,7 +31,7 @@ function LoadingSkeleton() {
 
          {/* Content grid skeleton */}
          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-4">
-            {Array.from({ length: 8 }).map((_, i) => (
+            {Array.from({ length: 4 }).map((_, i) => (
                <div key={i} className="space-y-2 p-4 border rounded-lg">
                   <Skeleton className="h-4 w-3/4" />
                   <Skeleton className="h-6 w-1/2" />
@@ -374,13 +374,69 @@ function DetailUsulanKegiatanSkeleton() {
             <Skeleton className="h-6 w-48" />
          </CardHeader>
          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-               {Array.from({ length: 15 }).map((_, i) => (
-                  <div key={i} className={i >= 3 && i < 12 ? "md:col-span-3" : ""}>
-                     <Skeleton className="h-4 w-24 mb-2" />
-                     <Skeleton className="h-6 w-full" />
-                  </div>
-               ))}
+            <div className="row">
+               <div className="col-12 col-md-2">
+                  <Skeleton className="h-4 w-24 mb-2" />
+                  <Skeleton className="h-6 w-full" />
+               </div>
+               <div className="col-12 col-md-2">
+                  <Skeleton className="h-4 w-24 mb-2" />
+                  <Skeleton className="h-6 w-full" />
+               </div>
+               <div className="col-12 col-md-2">
+                  <Skeleton className="h-4 w-24 mb-2" />
+                  <Skeleton className="h-6 w-full" />
+               </div>
+               <div className="col-12 col-md-2">
+                  <Skeleton className="h-4 w-24 mb-2" />
+                  <Skeleton className="h-6 w-full" />
+               </div>
+               <div className="col-12 col-md-2">
+                  <Skeleton className="h-4 w-24 mb-2" />
+                  <Skeleton className="h-6 w-full" />
+               </div>
+               <div className="col-12 col-md-2">
+                  <Skeleton className="h-4 w-24 mb-2" />
+                  <Skeleton className="h-6 w-full" />
+               </div>
+            </div>
+            <div className="row">
+               <div className="col-12 col-md-5">
+                  <Skeleton className="h-4 w-24 mb-2" />
+                  <Skeleton className="h-6 w-full" />
+               </div>
+               <div className="col-12 col-md-5">
+                  <Skeleton className="h-4 w-24 mb-2" />
+                  <Skeleton className="h-6 w-full" />
+               </div>
+               <div className="col-12 col-md-2">
+                  <Skeleton className="h-4 w-24 mb-2" />
+                  <Skeleton className="h-6 w-full" />
+               </div>
+            </div>
+            <div className="row">
+               <div className="col-12 col-md-2">
+                  <Skeleton className="h-4 w-24 mb-2" />
+                  <Skeleton className="h-6 w-full" />
+               </div>
+               <div className="col-12 col-md-2">
+                  <Skeleton className="h-4 w-24 mb-2" />
+                  <Skeleton className="h-6 w-full" />
+               </div>
+            </div>
+            <div className="row">
+               <div className="col-12 col-md-4">
+                  <Skeleton className="h-4 w-24 mb-2" />
+                  <Skeleton className="h-6 w-full" />
+               </div>
+               <div className="col-12 col-md-4">
+                  <Skeleton className="h-4 w-24 mb-2" />
+                  <Skeleton className="h-6 w-full" />
+               </div>
+               <div className="col-12 col-md-4">
+                  <Skeleton className="h-4 w-24 mb-2" />
+                  <Skeleton className="h-6 w-full" />
+               </div>
             </div>
          </CardContent>
       </Card>
@@ -580,6 +636,32 @@ function DialogValidasiSkeleton() {
    );
 }
 
+function FormJenisUsulanSkeleton() {
+   return (
+      <div className="p-0">
+         <div className="border rounded-lg p-6 shadow-sm bg-white">
+            <form className="space-y-4">
+               <div className="row">
+                  <div className="col-12 col-md-3">
+                     <Skeleton className="h-10 w-full" />
+                  </div>
+                  <div className="col-12 col-md-2">
+                     <Skeleton className="h-10 w-full" />
+                  </div>
+                  <div className="col-12 col-md-4">
+                     <Skeleton className="h-10 w-full" />
+                  </div>
+                  <div className="col-12 col-md-1">
+                     <Skeleton className="h-10 w-full" />
+                  </div>
+               </div>
+               <Skeleton className="h-10 w-32" />
+            </form>
+         </div>
+      </div>
+   );
+}
+
 export {
    AppHeaderSkeleton,
    AppSidebarSkeleton,
@@ -588,6 +670,7 @@ export {
    DokumenSkeleton,
    FormDetailHargaSBMSkeleton,
    FormInformasiUsulanSkeleton,
+   FormJenisUsulanSkeleton,
    FormKategoriSBMSkeleton,
    FormPengaturanSkeleton,
    FormPenggunaSkeleton,

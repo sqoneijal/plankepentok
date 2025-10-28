@@ -1,5 +1,5 @@
 import Table from "@/components/table";
-import { useGetQuery } from "@/lib/utils";
+import { useGetQuery } from "@/hooks/useGetQuery";
 import { getColumns } from "./column";
 
 const endpoint = "/realisasi";

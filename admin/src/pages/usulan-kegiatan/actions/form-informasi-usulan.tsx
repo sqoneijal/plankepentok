@@ -2,22 +2,49 @@ import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { getValue } from "@/helpers/init";
-import { useUnitKerja } from "@/helpers/simpeg";
-import { FormDatePicker, FormInput, FormTextarea } from "@/lib/helpers";
+import { useGetQuery } from "@/hooks/useGetQuery";
+import { FormDatePicker, FormInput, FormSelect, FormTextarea } from "@/lib/helpers";
 import moment from "moment";
-import { useUpdateInformasiUsulan, type FormData } from "./init";
+import { useUpdateInformasiUsulan, type FormData, type Unit, type UnitPengusul } from "./init";
 
 interface FormInformasiUsulanProps {
    formData: FormData;
    setFormData: React.Dispatch<React.SetStateAction<FormData>>;
-   setErrors: React.Dispatch<React.SetStateAction<FormData>>;
-   errors: FormData;
+   setErrors: React.Dispatch<React.SetStateAction<Record<string, string | null>>>;
+   errors: Record<string, string | null>;
    id_usulan_kegiatan?: string;
+   endpoint?: string;
 }
 
-export default function FormInformasiUsulan({ formData, setFormData, errors, setErrors, id_usulan_kegiatan }: Readonly<FormInformasiUsulanProps>) {
+type Data = {
+   unit_pengusul?: UnitPengusul;
+};
+
+const getActiveUnit = (data: Data): Unit | null => {
+   const unit = data.unit_pengusul;
+   if (!unit) return null;
+   const keys = Object.keys(unit) as Array<keyof UnitPengusul>;
+
+   for (const key of keys) {
+      const value = unit[key];
+      if (value != null) {
+         return value;
+      }
+   }
+
+   return null;
+};
+
+export default function FormInformasiUsulan({
+   formData,
+   setFormData,
+   errors,
+   setErrors,
+   id_usulan_kegiatan,
+   endpoint,
+}: Readonly<FormInformasiUsulanProps>) {
    const { onSubmit, isPending } = useUpdateInformasiUsulan(id_usulan_kegiatan, formData, setErrors);
-   const { data: unitPengusul, isLoading } = useUnitKerja(getValue(formData, "id_unit_pengusul"));
+   const { results: daftarJenisUsulan } = useGetQuery(`${endpoint}/daftar-jenis-usulan`, {}, false);
 
    return (
       <Card>
@@ -42,14 +69,15 @@ export default function FormInformasiUsulan({ formData, setFormData, errors, set
                   errors={errors}
                   disabled={true}
                />
-               <FormInput
+               <FormSelect
                   divClassName="col-12 col-md-3"
-                  label="Nama Usulan Kegiatan"
-                  name="nama"
-                  value={getValue(formData, "nama")}
-                  onChange={(value) => setFormData({ ...formData, nama: value })}
+                  label="Jenis Usulan Kegiatan"
+                  name="id_jenis_usulan"
+                  value={getValue(formData, "id_jenis_usulan")}
+                  onChange={(value) => setFormData({ ...formData, id_jenis_usulan: value })}
                   errors={errors}
                   disabled={!["", "draft", "perbaiki", "ditolak"].includes(formData?.status_usulan as string)}
+                  options={daftarJenisUsulan?.map((row: { id: string; nama: string }) => ({ value: String(row.id), label: row.nama }))}
                />
                <FormDatePicker
                   divClassName="col-12 col-md-2"
@@ -69,24 +97,6 @@ export default function FormInformasiUsulan({ formData, setFormData, errors, set
                   errors={errors}
                   disabled={!["", "draft", "perbaiki", "ditolak"].includes(formData?.status_usulan as string)}
                />
-            </div>
-            <div className="row">
-               <FormInput
-                  divClassName="col-12 col-md-3"
-                  label="Unit Pengusul"
-                  name="nama"
-                  value={isLoading ? "Loading..." : unitPengusul}
-                  disabled={true}
-               />
-               <FormInput
-                  divClassName="col-12 col-md-3"
-                  label="Tempat Pelaksanaan"
-                  name="tempat_pelaksanaan"
-                  value={getValue(formData, "tempat_pelaksanaan")}
-                  onChange={(value) => setFormData({ ...formData, tempat_pelaksanaan: value })}
-                  errors={errors}
-                  disabled={!["", "draft", "perbaiki", "ditolak"].includes(formData?.status_usulan as string)}
-               />
                <FormInput
                   divClassName="col-12 col-md-2"
                   label="Rencana Total Anggaran"
@@ -95,6 +105,18 @@ export default function FormInformasiUsulan({ formData, setFormData, errors, set
                   onChange={(value) => setFormData({ ...formData, rencana_total_anggaran: value })}
                   errors={errors}
                   apakahFormatRupiah={true}
+                  disabled={!["", "draft", "perbaiki", "ditolak"].includes(formData?.status_usulan as string)}
+               />
+            </div>
+            <div className="row">
+               <FormInput divClassName="col-12 col-md-3" label="Unit Pengusul" name="nama" value={getActiveUnit(formData)?.nama} disabled={true} />
+               <FormInput
+                  divClassName="col-12 col-md-3"
+                  label="Tempat Pelaksanaan"
+                  name="tempat_pelaksanaan"
+                  value={getValue(formData, "tempat_pelaksanaan")}
+                  onChange={(value) => setFormData({ ...formData, tempat_pelaksanaan: value })}
+                  errors={errors}
                   disabled={!["", "draft", "perbaiki", "ditolak"].includes(formData?.status_usulan as string)}
                />
             </div>

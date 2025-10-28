@@ -1,8 +1,7 @@
 import { Badge } from "@/components/ui/badge";
-import type { Lists } from "@/types/init";
 import { Loader2Icon } from "lucide-react";
 
-export const getValue = (original: Lists, field: string) => {
+export const getValue = (original: Record<string, unknown>, field: string) => {
    const val = original?.[field];
    if (val == null) return "";
    if (typeof val === "boolean") return val ? "true" : "false";

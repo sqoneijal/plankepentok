@@ -14,8 +14,6 @@ RUN npm install
 # Copy seluruh project ke /app
 COPY . .
 
-RUN npx prisma generate
-
 # Expose port yang dipakai Node.js
 EXPOSE 3000
 

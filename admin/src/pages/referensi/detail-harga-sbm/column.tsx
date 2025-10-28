@@ -28,7 +28,7 @@ const status = (text: string) => {
 
 const columnConfigs: Array<ColumnConfig> = [
    {
-      key: "standar_biaya",
+      key: "standar_biaya_master",
       header: "Standar Biaya",
       cell: (info) => `${(info.getValue() as { kode: string; nama: string }).kode} - ${(info.getValue() as { kode: string; nama: string }).nama}`,
    },

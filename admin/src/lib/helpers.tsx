@@ -199,6 +199,7 @@ export function FormSelect({
    useCommand = false,
    useHeaderAsValue = false,
    onValueChange,
+   disabled = false,
 }: Readonly<{
    onChange?: (value: string) => void;
    divClassName?: string;
@@ -210,6 +211,7 @@ export function FormSelect({
    withLabel?: boolean;
    useCommand?: boolean;
    useHeaderAsValue?: boolean;
+   disabled?: boolean;
    onValueChange?: (value: string) => void;
 }>) {
    const id = v4();
@@ -227,6 +229,7 @@ export function FormSelect({
             <Popover open={open} onOpenChange={setOpen}>
                <PopoverTrigger asChild>
                   <Button
+                     disabled={disabled}
                      variant="outline"
                      role="combobox"
                      aria-expanded={open}
@@ -303,7 +306,7 @@ export function FormSelect({
             </Label>
          )}
          <Select key={value || ""} onValueChange={(value) => onChange?.(value)} value={value || ""}>
-            <SelectTrigger className={cn("w-full", errorMessage && "border-red-500")}>
+            <SelectTrigger className={cn("w-full", errorMessage && "border-red-500")} disabled={disabled}>
                <SelectValue placeholder={label} />
             </SelectTrigger>
             <SelectContent>

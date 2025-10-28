@@ -13,11 +13,14 @@ app.use(express.json());
 app.use("/uploads", express.static("uploads"));
 
 // Routes
+app.use("/api/user-validate", require("./routes/user-validate"));
 app.use("/api/options", require("./routes/options"));
+app.use("/api/verifikator", require("./routes/verifikator"));
 app.use("/api/referensi/unit-satuan", require("./routes/referensi/unitSatuan"));
 app.use("/api/referensi/kategori-sbm", require("./routes/referensi/kategoriSBM"));
 app.use("/api/referensi/standar-biaya", require("./routes/referensi/standarBiaya"));
 app.use("/api/referensi/detail-harga-sbm", require("./routes/referensi/detailHargaSBM"));
+app.use("/api/referensi/jenis-usulan", require("./routes/referensi/jenis-usulan"));
 app.use("/api/unit-kerja/biro", require("./routes/unit-kerja/biro"));
 app.use("/api/unit-kerja/lembaga", require("./routes/unit-kerja/lembaga"));
 app.use("/api/unit-kerja/upt", require("./routes/unit-kerja/upt"));

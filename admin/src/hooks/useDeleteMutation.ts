@@ -30,7 +30,12 @@ export const useDeleteMutation = (url: string, queryKey?: Array<Array<string>>) 
                queryClient.invalidateQueries({ queryKey: qk, exact: false });
             }
          }
-         toast.success("Data berhasil dihapus.");
+
+         if (response?.status) {
+            toast.success("Data berhasil dihapus.");
+         } else {
+            toast.error(response?.message);
+         }
       },
    });
 };

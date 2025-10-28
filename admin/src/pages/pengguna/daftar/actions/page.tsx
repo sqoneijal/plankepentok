@@ -39,7 +39,7 @@ export default function Page() {
    const { setButton } = useHeaderButton();
 
    useEffect(() => {
-      setButton(<LinkButton label="Batal" url={`${endpoint}`} type="actions" />);
+      setButton(<LinkButton label="Batal" url={endpoint} type="actions" />);
       return () => {
          setButton(<div />);
       };

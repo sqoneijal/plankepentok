@@ -1,4 +1,5 @@
 import Table from "@/components/table";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useGetQueryDetail } from "@/hooks/useGetQueryDetail";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -17,13 +18,19 @@ interface DokumenItem {
    approve: null;
 }
 
-const UploadedCell: React.FC<{ value: string }> = ({ value }) => new Date(value).toLocaleString();
+type ApproveStatus = "sesuai" | "tidak_sesuai" | null;
 
-const UploadedTableCell = ({ getValue }: { getValue: () => unknown }) => <UploadedCell value={getValue() as string} />;
+const getBadgeClass = (approve: ApproveStatus) => {
+   if (approve === "sesuai") return "bg-green-400";
+   if (approve === "tidak_sesuai") return "bg-red-400";
+   return "bg-orange-400";
+};
 
-const ModifiedCell: React.FC<{ value: string | null }> = ({ value }) => (value ? new Date(value).toLocaleString() : "-");
-
-const ModifiedTableCell = ({ getValue }: { getValue: () => unknown }) => <ModifiedCell value={getValue() as string | null} />;
+const getBadgeText = (approve: ApproveStatus) => {
+   if (approve === "sesuai") return "Sesuai";
+   if (approve === "tidak_sesuai") return "Tidak Sesuai";
+   return "Draft";
+};
 
 const AksiCell: React.FC<{ value: string }> = ({ value }) => (
    <a href={value} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
@@ -33,10 +40,20 @@ const AksiCell: React.FC<{ value: string }> = ({ value }) => (
 
 const AksiTableCell = ({ getValue }: { getValue: () => unknown }) => <AksiCell value={getValue() as string} />;
 
+const StatusCell = ({ getValue }: { getValue: () => unknown }) => {
+   const approve = getValue() as ApproveStatus;
+   return <Badge className={getBadgeClass(approve)}>{getBadgeText(approve)}</Badge>;
+};
+
 export default function Dokumen({ endpoint, id }: Readonly<{ endpoint: string; id: string | undefined }>) {
    const { results, isLoading } = useGetQueryDetail(endpoint, `${id}/dokumen`);
 
    const columns: Array<ColumnDef<DokumenItem>> = [
+      {
+         accessorKey: "approve",
+         header: "Status",
+         cell: StatusCell,
+      },
       {
          accessorKey: "nama_dokumen",
          header: "Nama Dokumen",
@@ -48,20 +65,6 @@ export default function Dokumen({ endpoint, id }: Readonly<{ endpoint: string; i
       {
          accessorKey: "file_dokumen",
          header: "File",
-      },
-      {
-         accessorKey: "uploaded",
-         header: "Uploaded",
-         cell: UploadedTableCell,
-      },
-      {
-         accessorKey: "modified",
-         header: "Modified",
-         cell: ModifiedTableCell,
-      },
-      {
-         accessorKey: "user_modified",
-         header: "User Modified",
       },
       {
          accessorKey: "path_file",

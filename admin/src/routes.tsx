@@ -12,6 +12,7 @@ import { route_referensi } from "./routes/referensi";
 import { route_unit_kerja } from "./routes/unit-kerja";
 import { route_usulan_kegiatan } from "./routes/usulan-kegiatan";
 import { route_verifikasi_usulan } from "./routes/verifikasi-usulan";
+import { route_verifikator } from "./routes/verifikator";
 
 export default function Routes() {
    const allRoutes = [
@@ -25,6 +26,7 @@ export default function Routes() {
       route_pengaturan,
       route_realisasi,
       route_pengguna,
+      route_verifikator,
    ];
 
    return (

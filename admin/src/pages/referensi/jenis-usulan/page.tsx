@@ -5,9 +5,11 @@ import { LinkButton } from "@/lib/helpers";
 import { useEffect } from "react";
 import { getColumns } from "./column";
 
-const endpoint = "/pengaturan";
+const endpoint = "/referensi/jenis-usulan";
 
 export default function Page() {
+   const { results, total, isLoading } = useGetQuery(endpoint);
+
    const { setButton } = useHeaderButton();
 
    useEffect(() => {
@@ -16,8 +18,6 @@ export default function Page() {
          setButton(<div />);
       };
    }, [setButton]);
-
-   const { results, total, isLoading } = useGetQuery(endpoint);
 
    return <Table columns={getColumns(endpoint)} data={results} total={total} isLoading={isLoading} />;
 }

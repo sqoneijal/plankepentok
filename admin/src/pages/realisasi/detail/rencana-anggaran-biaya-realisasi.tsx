@@ -108,7 +108,7 @@ export default function RencanaAnggaranBiaya({
          <CardHeader>
             <CardTitle>Realisasi Rencana Anggaran Biaya</CardTitle>
             <CardAction>
-               <LinkButton label="Tambah Realisasi" url={`${endpoint}/${id}/actions`} type="actions" className="-mt-2" />
+               <LinkButton label="Tambah Realisasi" url={`${endpoint}/${id}/actions`} type="actions" />
             </CardAction>
          </CardHeader>
          <CardContent>

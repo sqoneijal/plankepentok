@@ -4,9 +4,9 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Spinner } from "@/components/ui/spinner";
 import { toNumber } from "@/helpers/init";
 import { useHeaderButton } from "@/hooks/store";
+import { useGetQueryDetail } from "@/hooks/useGetQueryDetail";
 import { usePostMutation } from "@/hooks/usePostMutation";
 import { FormDatePicker, FormInput, FormTextarea, LinkButton } from "@/lib/helpers";
-import { useGetQueryDetail } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import { toast } from "sonner";

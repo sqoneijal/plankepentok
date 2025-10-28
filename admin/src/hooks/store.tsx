@@ -2,6 +2,14 @@ import type { FormData, Lists } from "@/types/init";
 import React from "react";
 import { create } from "zustand";
 
+export const usePengguna = create<{
+   pengguna: FormData;
+   setPengguna: (status: FormData) => void;
+}>((set) => ({
+   pengguna: {},
+   setPengguna: (pengguna) => set({ pengguna }),
+}));
+
 export const useDetailRow = create<{
    detailRow: FormData;
    setDetailRow: (status: FormData) => void;

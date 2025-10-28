@@ -1,10 +1,29 @@
 import { DetailUsulanKegiatanSkeleton } from "@/components/loading-skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { objectLength, toRupiah } from "@/helpers/init";
+import { detailLabel, objectLength, toRupiah } from "@/helpers/init";
 import { useGetQueryDetail } from "@/hooks/useGetQueryDetail";
 import { useEffect } from "react";
+import type { Unit, UnitPengusul } from "../actions/init";
+
+type Data = {
+   unit_pengusul?: UnitPengusul;
+};
+
+const getActiveUnit = (data: Data): Unit | null => {
+   const unit = data.unit_pengusul;
+   if (!unit) return null;
+   const keys = Object.keys(unit) as Array<keyof UnitPengusul>;
+
+   for (const key of keys) {
+      const value = unit[key];
+      if (value != null) {
+         return value;
+      }
+   }
+
+   return null;
+};
 
 export default function UsulanKegiatan({
    endpoint,
@@ -57,73 +76,32 @@ export default function UsulanKegiatan({
             <CardTitle>Detail Usulan Kegiatan</CardTitle>
          </CardHeader>
          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-               <div>
-                  <Label className="font-semibold">ID</Label>
-                  <p>{results.id}</p>
+            <div className="row">
+               <div className="col-12 col-md-2">{detailLabel({ label: "Kode Usulan", value: results?.kode })}</div>
+               <div className="col-12 col-md-2">{detailLabel({ label: "Jenis Usulan", value: results?.jenis_usulan?.nama })}</div>
+               <div className="col-12 col-md-2">{detailLabel({ label: "Rencana Anggaran", value: toRupiah(results?.rencana_total_anggaran) })}</div>
+               <div className="col-12 col-md-2">{detailLabel({ label: "Total Anggaran", value: toRupiah(results?.total_anggaran) })}</div>
+               <div className="col-12 col-md-2">{detailLabel({ label: "Tanggal Mulai", value: formatDate(results?.waktu_mulai) })}</div>
+               <div className="col-12 col-md-2">{detailLabel({ label: "Tanggal Selesai", value: formatDate(results?.waktu_selesai) })}</div>
+            </div>
+            <div className="row">
+               <div className="col-12 col-md-5">{detailLabel({ label: "Tempat Pelaksanaan", value: results?.tempat_pelaksanaan })}</div>
+               <div className="col-12 col-md-5">{detailLabel({ label: "Unit Pengusul", value: getActiveUnit(results)?.nama })}</div>
+               <div className="col-12 col-md-2">{detailLabel({ label: "Tanggal Pengajuan", value: formatDate(results?.tanggal_submit) })}</div>
+            </div>
+            <div className="row">
+               <div className="col-12 col-md-2">{detailLabel({ label: "Operator Pengusul", value: results?.pengguna?.fullname })}</div>
+               <div className="col-12 col-md-2">
+                  {detailLabel({
+                     label: "Status Usulan",
+                     value: <Badge className={getStatusStyles(results.status_usulan)}>{formatStatus(results.status_usulan)}</Badge>,
+                  })}
                </div>
-               <div>
-                  <Label className="font-semibold">Kode</Label>
-                  <p>{results.kode}</p>
-               </div>
-               <div className="md:col-span-3">
-                  <Label className="font-semibold">Nama</Label>
-                  <p>{results.nama}</p>
-               </div>
-               <div className="md:col-span-3">
-                  <Label className="font-semibold">Latar Belakang</Label>
-                  <p className="text-sm leading-relaxed">{results.latar_belakang}</p>
-               </div>
-               <div className="md:col-span-3">
-                  <Label className="font-semibold">Tujuan</Label>
-                  <p className="text-sm leading-relaxed">{results.tujuan}</p>
-               </div>
-               <div className="md:col-span-3">
-                  <Label className="font-semibold">Sasaran</Label>
-                  <p className="text-sm leading-relaxed">{results.sasaran}</p>
-               </div>
-               <div>
-                  <Label className="font-semibold">Waktu Mulai</Label>
-                  <p>{formatDate(results.waktu_mulai)}</p>
-               </div>
-               <div>
-                  <Label className="font-semibold">Waktu Selesai</Label>
-                  <p>{formatDate(results.waktu_selesai)}</p>
-               </div>
-               <div className="md:col-span-3">
-                  <Label className="font-semibold">Tempat Pelaksanaan</Label>
-                  <p>{results.tempat_pelaksanaan}</p>
-               </div>
-               <div>
-                  <Label className="font-semibold">ID Unit Pengusul</Label>
-                  <p>{results.id_unit_pengusul}</p>
-               </div>
-               <div>
-                  <Label className="font-semibold">Operator Input</Label>
-                  <p>{results.operator_input || "N/A"}</p>
-               </div>
-               <div>
-                  <Label className="font-semibold">Total Anggaran</Label>
-                  <p>{toRupiah(results.total_anggaran)}</p>
-               </div>
-               <div>
-                  <Label className="font-semibold">Status Usulan</Label>
-                  <p>
-                     <Badge className={getStatusStyles(results.status_usulan)}>{formatStatus(results.status_usulan)}</Badge>
-                  </p>
-               </div>
-               <div>
-                  <Label className="font-semibold">Tanggal Submit</Label>
-                  <p>{formatDate(results.tanggal_submit)}</p>
-               </div>
-               <div>
-                  <Label className="font-semibold">Rencana Total Anggaran</Label>
-                  <p>{toRupiah(results.rencana_total_anggaran)}</p>
-               </div>
-               <div className="md:col-span-3">
-                  <Label className="font-semibold">Catatan Perbaikan</Label>
-                  <p>{results.catatan_perbaikan || "N/A"}</p>
-               </div>
+            </div>
+            <div className="row">
+               <div className="col-12 col-md-4">{detailLabel({ label: "Latar Belakang", value: results?.latar_belakang })}</div>
+               <div className="col-12 col-md-4">{detailLabel({ label: "Tujuan", value: results?.tujuan })}</div>
+               <div className="col-12 col-md-4">{detailLabel({ label: "Sasaran", value: results?.sasaran })}</div>
             </div>
          </CardContent>
       </Card>
