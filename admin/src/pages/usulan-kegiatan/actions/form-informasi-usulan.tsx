@@ -16,23 +16,20 @@ interface FormInformasiUsulanProps {
    endpoint?: string;
 }
 
-type Data = {
-   unit_pengusul?: UnitPengusul;
-};
+const getActiveUnit = (unit_pengusul: UnitPengusul) => {
+   if (!unit_pengusul) return null;
+   const keys = Object.keys(unit_pengusul) as Array<keyof UnitPengusul>;
 
-const getActiveUnit = (data: Data): Unit | null => {
-   const unit = data.unit_pengusul;
-   if (!unit) return null;
-   const keys = Object.keys(unit) as Array<keyof UnitPengusul>;
+   let unit;
 
    for (const key of keys) {
-      const value = unit[key];
+      const value: Unit | null | undefined = unit_pengusul[key];
       if (value != null) {
-         return value;
+         unit = value?.nama;
       }
    }
 
-   return null;
+   return unit;
 };
 
 export default function FormInformasiUsulan({
@@ -109,7 +106,13 @@ export default function FormInformasiUsulan({
                />
             </div>
             <div className="row">
-               <FormInput divClassName="col-12 col-md-3" label="Unit Pengusul" name="nama" value={getActiveUnit(formData)?.nama} disabled={true} />
+               <FormInput
+                  divClassName="col-12 col-md-3"
+                  label="Unit Pengusul"
+                  name="nama"
+                  value={getActiveUnit(formData?.unit_pengusul as UnitPengusul)}
+                  disabled={true}
+               />
                <FormInput
                   divClassName="col-12 col-md-3"
                   label="Tempat Pelaksanaan"

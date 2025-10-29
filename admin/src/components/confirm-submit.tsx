@@ -22,9 +22,10 @@ interface ConfirmSubmitProps {
    formData: FormData;
    actionButton: React.ReactNode;
    message: string;
+   onSuccess?: (status: boolean) => void;
 }
 
-export default function ConfirmDialog({ url, refetchKey, formData, actionButton, message }: Readonly<ConfirmSubmitProps>) {
+export default function ConfirmDialog({ url, refetchKey, formData, actionButton, message, onSuccess }: Readonly<ConfirmSubmitProps>) {
    const [open, setOpen] = useState(false);
 
    const submit = usePutMutation<FormData>(url);
@@ -48,6 +49,7 @@ export default function ConfirmDialog({ url, refetchKey, formData, actionButton,
                }
                toast.success(data?.message);
                setOpen(false);
+               onSuccess?.(data?.status);
                return;
             }
 

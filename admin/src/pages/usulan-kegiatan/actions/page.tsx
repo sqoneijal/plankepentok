@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useHeaderButton } from "@/hooks/store";
 import { LinkButton } from "@/lib/helpers";
 import { lazy, Suspense, useEffect } from "react";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { useInitPage } from "./init";
 
 const InformasiUsulan = lazy(() => import("./form-informasi-usulan"));
@@ -17,8 +17,8 @@ const endpoint = "/usulan-kegiatan";
 export default function Page() {
    const { id, id_rab } = useParams();
    const { formData, setFormData, errors, setErrors } = useInitPage(id);
-
    const { setButton } = useHeaderButton();
+   const navigate = useNavigate();
 
    useEffect(() => {
       setButton(
@@ -30,13 +30,16 @@ export default function Page() {
                formData={{ id_usulan: String(id) }}
                actionButton={<Button className="text-dark bg-green-200 hover:text-white">Usul Kegiatan</Button>}
                message="Apakah Anda yakin ingin mengajukan usulan kegiatan ini?"
+               onSuccess={(status) => {
+                  if (status) navigate(endpoint);
+               }}
             />
          </>
       );
       return () => {
          setButton(<div />);
       };
-   }, [setButton, id]);
+   }, [setButton, id, navigate]);
 
    return (
       <>

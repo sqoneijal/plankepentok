@@ -15,6 +15,7 @@ app.use("/uploads", express.static("uploads"));
 // Routes
 app.use("/api/user-validate", require("./routes/user-validate"));
 app.use("/api/options", require("./routes/options"));
+app.use("/api/dashboard", require("./routes/dashboard"));
 app.use("/api/verifikator", require("./routes/verifikator"));
 app.use("/api/referensi/unit-satuan", require("./routes/referensi/unitSatuan"));
 app.use("/api/referensi/kategori-sbm", require("./routes/referensi/kategoriSBM"));

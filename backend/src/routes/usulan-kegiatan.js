@@ -346,13 +346,31 @@ router.put("/usul", async (req, res) => {
          where: {
             id: Number.parseInt(id_usulan),
             status_usulan: {
-               in: ["diterima"],
+               in: ["diterima", "pengajuan"],
             },
          },
       });
 
       if (checkStatusUsulan) {
          return res.json({ status: false, message: "Tidak dapat melakukan pengajuan" });
+      }
+
+      const checkVerifikator = await prisma.tb_verikator_usulan.findFirst({
+         where: {
+            id_jenis_usulan: oldData.id_jenis_usulan,
+            tahap: 1,
+         },
+         select: {
+            id: true,
+         },
+      });
+
+      if (!checkVerifikator) {
+         return res.json({
+            status: false,
+            message:
+               "Anda belum dapat mengajukan usulan ini. Tim verifikator belum ditentukan, silahkan hubungi admin atau pihak terkait untuk info lebih lanjut",
+         });
       }
 
       const newData = await prisma.tb_usulan_kegiatan.update({
@@ -366,7 +384,17 @@ router.put("/usul", async (req, res) => {
 
       logAudit(user_modified, "UPDATE", "tb_usulan_kegiatan", req.ip, { ...oldData }, { ...newData });
 
-      return res.json({ status: true, message: "Usulan kegiatan berhasil diperbaharui" });
+      const newDataKlaim = await prisma.tb_klaim_verifikasi.create({
+         data: {
+            id_usulan_kegiatan: oldData.id,
+            id_verikator_usulan: checkVerifikator.id,
+            status_klaim: "pending",
+         },
+      });
+
+      logAudit("system", "CREATE", "tb_klaim_verifikasi", req.ip, null, { ...newDataKlaim });
+
+      return res.json({ status: true, message: "Usulan kegiatan berhasil diperbaharui", checkVerifikator });
    } catch (error) {
       return res.json({ status: false, message: error.message });
    }
@@ -546,7 +574,7 @@ router.put("/:id", async (req, res) => {
 
       const checkStatusUsulan = await prisma.tb_usulan_kegiatan.findFirst({
          where: {
-            id: Number.parseInt(id_usulan),
+            id: Number.parseInt(id),
             status_usulan: {
                in: ["diterima", "pengajuan"],
             },
@@ -597,7 +625,7 @@ router.delete("/:id", async (req, res) => {
 
       const checkStatusUsulan = await prisma.tb_usulan_kegiatan.findFirst({
          where: {
-            id: Number.parseInt(id_usulan),
+            id: Number.parseInt(id),
             status_usulan: {
                in: ["diterima", "pengajuan"],
             },

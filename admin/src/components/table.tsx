@@ -18,6 +18,7 @@ type Props<T> = {
    trCursor?: boolean;
    onRowClick?: (row: T) => void;
    usePagination?: boolean;
+   className?: string;
 };
 
 export default function Table<T>({
@@ -29,6 +30,7 @@ export default function Table<T>({
    onRowClick,
    isLoadingRow = false,
    usePagination = true,
+   className,
 }: Readonly<Props<T>>) {
    const { pagination, setPagination } = useTablePagination();
 
@@ -119,7 +121,7 @@ export default function Table<T>({
       : noDataOrLoading;
 
    return (
-      <div className="overflow-hidden rounded-lg border shadow-sm">
+      <div className={cn("overflow-hidden rounded-lg border shadow-sm", className)}>
          <ShadcnTable className="w-full">
             <TableHeader className="bg-muted sticky top-0 z-10">
                {table.getHeaderGroups().map((headerGroup) => (

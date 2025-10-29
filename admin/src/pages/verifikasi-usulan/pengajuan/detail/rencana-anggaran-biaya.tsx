@@ -61,7 +61,7 @@ interface ReferensiSbmItem {
    harga_satuan: string;
    tanggal_mulai_efektif: string;
    tanggal_akhir_efektif: string;
-   standar_biaya: {
+   standar_biaya_master: {
       kode: string;
       nama: string;
    };
@@ -307,7 +307,7 @@ function DialogValidasi({
                            name="ref_sbm"
                            options={data?.results?.map((row: ReferensiSbmItem) => ({
                               value: String(row?.id),
-                              label: `${row?.standar_biaya?.kode} - ${row?.standar_biaya?.nama} - ${row?.unit_satuan?.nama}`,
+                              label: `${row?.standar_biaya_master?.kode} - ${row?.standar_biaya_master?.nama} - ${row?.unit_satuan?.nama}`,
                            }))}
                            onChange={(value) => {
                               const getData = getSelectedRef(data?.results, value);
@@ -321,7 +321,7 @@ function DialogValidasi({
                            <div className="col-12">
                               {detailLabel({
                                  label: "Standar Biaya",
-                                 value: `${selectedReferensi?.standar_biaya?.kode} - ${selectedReferensi?.standar_biaya?.nama}`,
+                                 value: `${selectedReferensi?.standar_biaya_master?.kode} - ${selectedReferensi?.standar_biaya_master?.nama}`,
                               })}
                               {detailLabel({
                                  label: "Satuan",

@@ -1,7 +1,29 @@
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TableCell, TableRow } from "@/components/ui/table";
+
+export function DashboardSectionCardsSkeleton() {
+   return (
+      <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
+         {Array.from({ length: 4 }).map((_, index) => (
+            <Card key={index} className="@container/card">
+               <CardHeader>
+                  <CardDescription>
+                     <Skeleton className="h-4 w-24" />
+                  </CardDescription>
+                  <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+                     <Skeleton className="h-8 w-32 @[250px]/card:h-10 @[250px]/card:w-40" />
+                  </CardTitle>
+                  <CardAction>
+                     <Skeleton className="h-5 w-16" />
+                  </CardAction>
+               </CardHeader>
+            </Card>
+         ))}
+      </div>
+   );
+}
 
 function LoadingSkeletonEditContent() {
    return (

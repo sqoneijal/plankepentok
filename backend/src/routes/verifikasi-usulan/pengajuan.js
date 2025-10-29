@@ -115,24 +115,135 @@ const validationRAB = z
 const router = express.Router();
 const prisma = new PrismaClient();
 
-router.get("/", async (req, res) => {
+router.put("/klaim", async (req, res) => {
    try {
-      const where = { status_usulan: "pengajuan" };
+      const { id_usulan_kegiatan, id_verikator_usulan, user_modified } = req.body;
 
-      const total = await prisma.tb_usulan_kegiatan.count({ where });
-      const results = await prisma.tb_usulan_kegiatan.findMany({
-         where,
-         select: {
-            id: true,
-            kode: true,
-            nama: true,
-            waktu_mulai: true,
-            waktu_selesai: true,
-            rencana_total_anggaran: true,
-            total_anggaran: true,
-            status_usulan: true,
+      const oldData = await prisma.tb_klaim_verifikasi.findUnique({
+         where: {
+            id_usulan_kegiatan_id_verikator_usulan: {
+               id_usulan_kegiatan: Number.parseInt(id_usulan_kegiatan),
+               id_verikator_usulan: Number.parseInt(id_verikator_usulan),
+            },
          },
       });
+
+      if (!oldData) {
+         return res.json({ status: false, message: "Lagi tidak bisa meng-klaim verifikasi" });
+      }
+
+      const newData = await prisma.tb_klaim_verifikasi.update({
+         where: {
+            id_usulan_kegiatan_id_verikator_usulan: {
+               id_usulan_kegiatan: Number.parseInt(id_usulan_kegiatan),
+               id_verikator_usulan: Number.parseInt(id_verikator_usulan),
+            },
+         },
+         data: {
+            waktu_klaim: new Date(),
+            status_klaim: "aktif",
+         },
+      });
+
+      logAudit(user_modified, "UPDATE", "tb_klaim_verifikasi", req.ip, { ...oldData }, { ...newData });
+
+      return res.json({ status: true });
+   } catch (error) {
+      return res.status(500).json({ status: false, message: error.message });
+   }
+});
+
+router.get("/", async (req, res) => {
+   try {
+      const { username, limit, offset } = req.query;
+
+      const where = {
+         verikator_usulan: {
+            pengguna: {
+               username,
+            },
+         },
+         usulan_kegiatan: {
+            status_usulan: "pengajuan",
+         },
+      };
+
+      const total = await prisma.tb_klaim_verifikasi.count({ where });
+      const results = await prisma.tb_klaim_verifikasi.findMany({
+         where,
+         take: Number.parseInt(limit),
+         skip: Number.parseInt(offset),
+         orderBy: {
+            usulan_kegiatan: {
+               tanggal_submit: "asc",
+            },
+         },
+         select: {
+            usulan_kegiatan: {
+               select: {
+                  id: true,
+                  kode: true,
+                  jenis_usulan: {
+                     select: {
+                        id: true,
+                        nama: true,
+                     },
+                  },
+                  tanggal_submit: true,
+                  rencana_total_anggaran: true,
+                  total_anggaran: true,
+                  pengguna: {
+                     select: {
+                        id: true,
+                        fullname: true,
+                     },
+                  },
+                  unit_pengusul: {
+                     select: {
+                        biro_master: {
+                           select: {
+                              id: true,
+                              nama: true,
+                           },
+                        },
+                        fakultas_master: {
+                           select: {
+                              id: true,
+                              nama: true,
+                           },
+                        },
+                        lembaga_master: {
+                           select: {
+                              id: true,
+                              nama: true,
+                           },
+                        },
+                        sub_unit: {
+                           select: {
+                              id: true,
+                              nama: true,
+                           },
+                        },
+                        upt_master: {
+                           select: {
+                              id: true,
+                              nama: true,
+                           },
+                        },
+                     },
+                  },
+               },
+            },
+            verikator_usulan: {
+               select: {
+                  id: true,
+                  id_pengguna: true,
+                  tahap: true,
+               },
+            },
+         },
+      });
+
       res.json({ results, total });
    } catch (error) {
       res.status(500).json({ error: error.message });
@@ -145,23 +256,25 @@ router.get("/referensi-sbm", async (req, res) => {
          where: { status_validasi: "valid" },
          select: {
             id: true,
-            harga_satuan: true,
-            tanggal_mulai_efektif: true,
-            tanggal_akhir_efektif: true,
-            status_validasi: true,
-            standar_biaya: {
+            standar_biaya_master: {
                select: {
+                  id: true,
                   kode: true,
                   nama: true,
+                  deskripsi: true,
                },
             },
+            tahun_anggaran: true,
+            harga_satuan: true,
             unit_satuan: {
                select: {
+                  id: true,
                   nama: true,
                   deskripsi: true,
-                  aktif: true,
                },
             },
+            tanggal_mulai_efektif: true,
+            tanggal_akhir_efektif: true,
          },
       });
 
@@ -182,20 +295,29 @@ router.get("/:id", async (req, res) => {
          select: {
             id: true,
             kode: true,
-            nama: true,
             latar_belakang: true,
             tujuan: true,
             sasaran: true,
             waktu_mulai: true,
             waktu_selesai: true,
             tempat_pelaksanaan: true,
-            id_unit_pengusul: true,
-            operator_input: true,
+            pengguna: {
+               select: {
+                  id: true,
+                  fullname: true,
+               },
+            },
             total_anggaran: true,
             status_usulan: true,
             tanggal_submit: true,
             rencana_total_anggaran: true,
             catatan_perbaikan: true,
+            jenis_usulan: {
+               select: {
+                  id: true,
+                  nama: true,
+               },
+            },
             dokumen_pendukung: {
                orderBy: { uploaded: "asc" },
                select: {
@@ -256,8 +378,59 @@ router.get("/:id", async (req, res) => {
                   },
                },
             },
+            unit_pengusul: {
+               select: {
+                  biro_master: {
+                     select: {
+                        id: true,
+                        nama: true,
+                     },
+                  },
+                  lembaga_master: {
+                     select: {
+                        id: true,
+                        nama: true,
+                     },
+                  },
+                  upt_master: {
+                     select: {
+                        id: true,
+                        nama: true,
+                     },
+                  },
+                  fakultas_master: {
+                     select: {
+                        id: true,
+                        nama: true,
+                     },
+                  },
+                  sub_unit: {
+                     select: {
+                        id: true,
+                        nama: true,
+                     },
+                  },
+               },
+            },
          },
       });
+
+      results.klaim_verifikasi = await prisma.tb_klaim_verifikasi.findFirst({
+         where: { id_usulan_kegiatan: Number.parseInt(id) },
+         select: {
+            id: true,
+            status_klaim: true,
+            waktu_klaim: true,
+            verikator_usulan: {
+               select: {
+                  id: true,
+                  id_pengguna: true,
+                  tahap: true,
+               },
+            },
+         },
+      });
+
       res.json({ results });
    } catch (error) {
       res.status(500).json({ status: false, message: error.message });
@@ -412,7 +585,7 @@ router.put("/dokumen/:id", async (req, res) => {
 router.post("/:id_usulan/tolak", async (req, res) => {
    try {
       const { id_usulan } = req.params;
-      const { user_modified, catatan } = req.body;
+      const { user_modified, catatan, verikator_usulan } = req.body;
 
       const parsed = validationPenolakan.safeParse(req.body);
 
@@ -421,12 +594,30 @@ router.post("/:id_usulan/tolak", async (req, res) => {
       }
 
       const oldData = await prisma.tb_usulan_kegiatan.findUnique({
-         where: { id: Number.parseInt(id_usulan) },
+         where: {
+            id: Number.parseInt(id_usulan),
+            status_usulan: {
+               in: ["pengajuan", "ditolak", "perbaiki"],
+            },
+         },
       });
 
       if (!oldData) {
          return res.json({ status: false, message: "Usulan kegiatan tidak ditemukan" });
       }
+
+      const newDataLog = await prisma.tb_log_verifikasi.create({
+         data: {
+            id_usulan_kegiatan: Number.parseInt(id_usulan),
+            tahap: Number.parseInt(verikator_usulan.tahap),
+            verifikator_id: Number.parseInt(verikator_usulan.id_pengguna),
+            aksi: "ditolak",
+            catatan,
+            waktu: new Date(),
+         },
+      });
+
+      logAudit(user_modified, "CREATE", "tb_log_verifikasi", req.ip, null, { ...newDataLog });
 
       const newDataPenolakan = await prisma.tb_penolakan_usulan.create({
          data: {
@@ -437,6 +628,8 @@ router.post("/:id_usulan/tolak", async (req, res) => {
          },
       });
 
+      logAudit(user_modified, "CREATE", "tb_penolakan_usulan", req.ip, null, { ...newDataPenolakan });
+
       const newData = await prisma.tb_usulan_kegiatan.update({
          where: { id: Number.parseInt(id_usulan) },
          data: {
@@ -446,7 +639,6 @@ router.post("/:id_usulan/tolak", async (req, res) => {
          },
       });
 
-      logAudit(user_modified, "CREATE", "tb_penolakan_usulan", req.ip, null, { ...newDataPenolakan });
       logAudit(user_modified, "UPDATE", "tb_usulan_kegiatan", req.ip, { ...oldData }, { ...newData });
 
       return res.json({ status: true, message: "Data berhasil disimpan" });
@@ -458,7 +650,7 @@ router.post("/:id_usulan/tolak", async (req, res) => {
 router.post("/:id_usulan/perbaiki", async (req, res) => {
    try {
       const { id_usulan } = req.params;
-      const { user_modified, catatan } = req.body;
+      const { user_modified, catatan, verikator_usulan } = req.body;
 
       const parsed = validationPerbaikan.safeParse(req.body);
 
@@ -467,12 +659,30 @@ router.post("/:id_usulan/perbaiki", async (req, res) => {
       }
 
       const oldData = await prisma.tb_usulan_kegiatan.findUnique({
-         where: { id: Number.parseInt(id_usulan) },
+         where: {
+            id: Number.parseInt(id_usulan),
+            status_usulan: {
+               in: ["pengajuan", "ditolak", "perbaiki"],
+            },
+         },
       });
 
       if (!oldData) {
          return res.json({ status: false, message: "Usulan kegiatan tidak ditemukan" });
       }
+
+      const newDataLog = await prisma.tb_log_verifikasi.create({
+         data: {
+            id_usulan_kegiatan: Number.parseInt(id_usulan),
+            tahap: Number.parseInt(verikator_usulan.tahap),
+            verifikator_id: Number.parseInt(verikator_usulan.id_pengguna),
+            aksi: "perbaiki",
+            catatan,
+            waktu: new Date(),
+         },
+      });
+
+      logAudit(user_modified, "CREATE", "tb_log_verifikasi", req.ip, null, { ...newDataLog });
 
       const newDataPerbaikan = await prisma.tb_perbaikan_usulan.create({
          data: {
@@ -483,6 +693,8 @@ router.post("/:id_usulan/perbaiki", async (req, res) => {
          },
       });
 
+      logAudit(user_modified, "CREATE", "tb_perbaikan_usulan", req.ip, null, { ...newDataPerbaikan });
+
       const newData = await prisma.tb_usulan_kegiatan.update({
          where: { id: Number.parseInt(id_usulan) },
          data: {
@@ -492,7 +704,6 @@ router.post("/:id_usulan/perbaiki", async (req, res) => {
          },
       });
 
-      logAudit(user_modified, "CREATE", "tb_perbaikan_usulan", req.ip, null, { ...newDataPerbaikan });
       logAudit(user_modified, "UPDATE", "tb_usulan_kegiatan", req.ip, { ...oldData }, { ...newData });
 
       return res.json({ status: true, message: "Data berhasil disimpan" });
@@ -533,15 +744,32 @@ router.get("/:id_usulan/histori-perbaikan", async (req, res) => {
 
 router.put("/setujui", async (req, res) => {
    try {
-      const { id_usulan, user_modified } = req.body;
+      const { id_usulan, user_modified, verikator_usulan } = req.body;
 
       const oldData = await prisma.tb_usulan_kegiatan.findUnique({
-         where: { id: Number.parseInt(id_usulan) },
+         where: {
+            id: Number.parseInt(id_usulan),
+            status_usulan: {
+               in: ["pengajuan", "ditolak", "perbaiki"],
+            },
+         },
       });
 
       if (!oldData) {
          return res.json({ status: false, message: "Usulan kegiatan tidak ditemukan" });
       }
+
+      const newDataLog = await prisma.tb_log_verifikasi.create({
+         data: {
+            id_usulan_kegiatan: Number.parseInt(id_usulan),
+            tahap: Number.parseInt(verikator_usulan.tahap),
+            verifikator_id: Number.parseInt(verikator_usulan.id_pengguna),
+            aksi: "diterima",
+            waktu: new Date(),
+         },
+      });
+
+      logAudit(user_modified, "CREATE", "tb_log_verifikasi", req.ip, null, { ...newDataLog });
 
       const newData = await prisma.tb_usulan_kegiatan.update({
          where: { id: Number.parseInt(id_usulan) },
