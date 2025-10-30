@@ -8,7 +8,7 @@ router.get("/:username", async (req, res) => {
    try {
       const { username } = req.params;
 
-      const results = await prisma.tb_pengguna.findUnique({
+      const results = await prisma.tb_pengguna.findMany({
          where: { username },
          select: {
             id: true,
@@ -27,9 +27,9 @@ router.get("/:username", async (req, res) => {
          },
       });
 
-      res.json({ results });
+      return res.json({ results });
    } catch (error) {
-      res.status(500).json({ error: error.message });
+      return res.status(500).json({ error: error.message });
    }
 });
 

@@ -27,7 +27,7 @@ export const useDeleteMutation = (url: string, queryKey?: Array<Array<string>>) 
       onSuccess: (response) => {
          if (queryKey && response.status) {
             for (const qk of queryKey) {
-               queryClient.invalidateQueries({ queryKey: qk, exact: false });
+               queryClient.invalidateQueries({ queryKey: qk, exact: false, refetchType: "active" });
             }
          }
 

@@ -6,6 +6,7 @@ import { usePegawai } from "@/helpers/simpeg";
 import { UseAuth } from "@/hooks/auth-context";
 import { useHeaderButton } from "@/hooks/store";
 import { useGetQuery } from "@/hooks/useGetQuery";
+import { useGetQueryDetail } from "@/hooks/useGetQueryDetail";
 import { usePostMutation } from "@/hooks/usePostMutation";
 import { FormInput } from "@/lib/helpers";
 import { useEffect, useState } from "react";
@@ -19,14 +20,16 @@ export default function Page() {
    const { setButton } = useHeaderButton();
    const { user } = UseAuth();
    const { data: dataPegawai, isLoading: isLoadingPegawai } = usePegawai(user?.preferred_username);
+   const { mutate, isPending } = usePostMutation<{ kode: string; tempat_pelaksanaan: string; pengguna: Record<string, string> }, unknown>(
+      endpoint,
+      (data) => ({ ...data }),
+      [[endpoint]]
+   );
+   const { results: detailPengguna } = useGetQueryDetail("/user-validate", user?.preferred_username);
 
    const [search, setSearch] = useState("");
 
    const navigate = useNavigate();
-
-   const { mutate, isPending } = usePostMutation<{ kode: string; tempat_pelaksanaan: string }, unknown>(endpoint, (data) => ({ ...data }), [
-      [endpoint],
-   ]);
 
    useEffect(() => {
       if (!isLoadingPegawai && objectLength(dataPegawai)) {
@@ -43,26 +46,30 @@ export default function Page() {
             <Button
                variant="outline"
                disabled={isPending}
-               onClick={() =>
-                  mutate(
-                     {
-                        kode: `${buatAlias(dataPegawai?.unitKerjaSaatIni?.[0]?.bagian?.nama)}${formatted}`,
-                        tempat_pelaksanaan: dataPegawai?.unitKerjaSaatIni?.[0]?.bagian?.nama,
-                     },
-                     {
-                        onSuccess: (response: { status?: boolean; message?: string; id_usulan_kegiatan?: number }) => {
-                           if (response?.status) {
-                              navigate(`${endpoint}/actions/${response?.id_usulan_kegiatan}`);
-                              return;
-                           }
-                           toast.error(response?.message);
+               onClick={() => {
+                  const operator = detailPengguna.find((e: { roles: { id: number } }) => e.roles.id === 3);
+                  if (objectLength(operator)) {
+                     mutate(
+                        {
+                           kode: `${buatAlias(dataPegawai?.unitKerjaSaatIni?.[0]?.bagian?.nama)}${formatted}`,
+                           tempat_pelaksanaan: dataPegawai?.unitKerjaSaatIni?.[0]?.bagian?.nama,
+                           pengguna: operator,
                         },
-                        onError: (error: Error) => {
-                           toast.error(`Gagal: ${error?.message}`);
-                        },
-                     }
-                  )
-               }>
+                        {
+                           onSuccess: (response: { status?: boolean; message?: string; id_usulan_kegiatan?: number }) => {
+                              if (response?.status) {
+                                 navigate(`${endpoint}/actions/${response?.id_usulan_kegiatan}`);
+                                 return;
+                              }
+                              toast.error(response?.message);
+                           },
+                           onError: (error: Error) => {
+                              toast.error(`Gagal: ${error?.message}`);
+                           },
+                        }
+                     );
+                  }
+               }}>
                {isPending && <Spinner />}Tambah
             </Button>
          );
@@ -70,7 +77,7 @@ export default function Page() {
       return () => {
          setButton(<div />);
       };
-   }, [setButton, isPending, isLoadingPegawai, dataPegawai, navigate, mutate]);
+   }, [setButton, isPending, isLoadingPegawai, dataPegawai, navigate, mutate, detailPengguna]);
 
    const { results, total, isLoading } = useGetQuery(endpoint);
 

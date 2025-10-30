@@ -113,7 +113,13 @@ export default function Page() {
          </Dialog>
          <UsulanKegiatan results={results} endpoint={endpoint} id_usulan={id as string} />
          <Iku results={results?.relasi_usulan_iku} isLoading={isLoading} endpoint={endpoint} id_usulan={id as string} />
-         <RencanaAnggaranBiaya results={results?.rab_detail} isLoading={isLoading} endpoint={endpoint} id_usulan={id as string} />
+         <RencanaAnggaranBiaya
+            results={results?.rab_detail}
+            isLoading={isLoading}
+            endpoint={endpoint}
+            id_usulan={id as string}
+            anggaran_disetujui={results?.anggaran_disetujui}
+         />
          <Dokumen results={results?.dokumen_pendukung} isLoading={isLoading} endpoint={endpoint} id_usulan={id as string} />
       </Suspense>
    );

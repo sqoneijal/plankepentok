@@ -25,6 +25,10 @@ const columnConfigs: Array<ColumnConfig> = [
       header: "username",
    },
    {
+      key: "fullname",
+      header: "nama lengkap",
+   },
+   {
       key: "roles.nama",
       header: "role",
    },

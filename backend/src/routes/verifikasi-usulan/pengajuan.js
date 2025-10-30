@@ -288,7 +288,25 @@ router.get("/:id", async (req, res) => {
    try {
       const { id } = req.params;
 
-      const where = { id: Number.parseInt(id) };
+      const checkAnggaranDisetujui = await prisma.tb_anggaran_disetujui.findUnique({
+         where: { id_usulan: Number.parseInt(id) },
+      });
+
+      if (!checkAnggaranDisetujui) {
+         const newDataAnggaran = await prisma.tb_anggaran_disetujui.create({
+            data: {
+               id_usulan: Number.parseInt(id),
+               jumlah: 0,
+            },
+         });
+
+         logAudit("system", "CREATE", "tb_anggaran_disetujui", req.ip, null, { ...newDataAnggaran });
+      }
+
+      const where = {
+         id: Number.parseInt(id),
+         status_usulan: { in: ["pengajuan", "perbaiki", "ditolak"] },
+      };
 
       const results = await prisma.tb_usulan_kegiatan.findUnique({
          where,
@@ -412,6 +430,9 @@ router.get("/:id", async (req, res) => {
                   },
                },
             },
+            anggaran_disetujui: {
+               select: { jumlah: true },
+            },
          },
       });
 
@@ -505,19 +526,43 @@ router.put("/rab/:id", async (req, res) => {
 
       logAudit(user_modified, "UPDATE", "tb_rab_detail", req.ip, { ...oldData }, { ...newData });
 
-      if (approve === "ubah") {
-         const oldDataPerubahan = await prisma.tb_rab_detail_perubahan.findUnique({
-            where: { id_rab_detail: Number.parseInt(id) },
+      const anggaranDisetujui = await prisma.tb_anggaran_disetujui.findUnique({
+         where: { id_usulan: oldData.id_usulan },
+      });
+
+      if (approve === "valid" && oldData.approve !== "valid") {
+         const updateAnggaran = await prisma.tb_anggaran_disetujui.update({
+            where: { id_usulan: oldData.id_usulan },
+            data: {
+               jumlah: Number.parseFloat(anggaranDisetujui.jumlah) + Number.parseFloat(oldData.total_biaya),
+            },
          });
 
+         logAudit(user_modified, "UPDATE", "tb_anggaran_disetujui", req.ip, { ...anggaranDisetujui }, { ...updateAnggaran });
+      }
+
+      const oldDataPerubahan = await prisma.tb_rab_detail_perubahan.findFirst({
+         where: { id_rab_detail: Number.parseInt(id) },
+      });
+
+      if (approve === "ubah") {
          if (oldDataPerubahan) {
+            const updateAnggaran = await prisma.tb_anggaran_disetujui.update({
+               where: { id_usulan: oldData.id_usulan },
+               data: {
+                  jumlah: Number.parseFloat(anggaranDisetujui.jumlah) - oldDataPerubahan.total_biaya + cleanRupiah(new_total_biaya),
+               },
+            });
+
+            logAudit(user_modified, "UPDATE", "tb_anggaran_disetujui", req.ip, { ...anggaranDisetujui }, { ...updateAnggaran });
+
             const newDataPerubahan = await prisma.tb_rab_detail_perubahan.update({
                where: { id_rab_detail: Number.parseInt(id) },
                data: {
                   qty: new_qty,
                   harga_satuan: cleanRupiah(new_harga_satuan),
                   total_biaya: cleanRupiah(new_total_biaya),
-                  uploaded: new Date(),
+                  modified: new Date(),
                   user_modified,
                },
             });
@@ -530,13 +575,39 @@ router.put("/rab/:id", async (req, res) => {
                   qty: new_qty,
                   harga_satuan: cleanRupiah(new_harga_satuan),
                   total_biaya: cleanRupiah(new_total_biaya),
-                  modified: new Date(),
+                  uploaded: new Date(),
                   user_modified,
                },
             });
 
             logAudit(user_modified, "CREATE", "tb_rab_detail_perubahan", req.ip, null, { ...newDataPerubahan });
+
+            const updateAnggaran = await prisma.tb_anggaran_disetujui.update({
+               where: { id_usulan: oldData.id_usulan },
+               data: {
+                  jumlah: Number.parseFloat(anggaranDisetujui.jumlah) + cleanRupiah(new_total_biaya),
+               },
+            });
+
+            logAudit(user_modified, "UPDATE", "tb_anggaran_disetujui", req.ip, { ...anggaranDisetujui }, { ...updateAnggaran });
          }
+      } else if (["perbaiki", "tidak_valid"].includes(approve) && oldData.approve === "valid") {
+         const jumlah = oldDataPerubahan ? oldDataPerubahan.total_biaya : Number.parseFloat(oldData.total_biaya);
+
+         const updateAnggaran = await prisma.tb_anggaran_disetujui.update({
+            where: { id_usulan: oldData.id_usulan },
+            data: {
+               jumlah: Number.parseFloat(anggaranDisetujui.jumlah) - jumlah,
+            },
+         });
+
+         logAudit(user_modified, "UPDATE", "tb_anggaran_disetujui", req.ip, { ...anggaranDisetujui }, { ...updateAnggaran });
+
+         await prisma.tb_rab_detail_perubahan.delete({
+            where: { id_rab_detail: Number.parseInt(id) },
+         });
+
+         logAudit(user_modified, "DELETE", "tb_rab_detail_perubahan", req.ip, { ...oldDataPerubahan }, null);
       }
 
       res.status(201).json({ status: true, message: "Rencana anggaran biaya berhasil diperbaharui" });

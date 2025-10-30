@@ -74,7 +74,12 @@ router.post("/", async (req, res) => {
       }
 
       const pengguna = await prisma.tb_pengguna.findUnique({
-         where: { username: verifikator },
+         where: {
+            username_id_roles: {
+               username: verifikator,
+               id_roles: 4,
+            },
+         },
       });
 
       let IdPengguna;
@@ -86,6 +91,7 @@ router.post("/", async (req, res) => {
             data: {
                username: verifikator,
                fullname: detail_verifikator?.nama,
+               id_roles: 4,
             },
          });
 

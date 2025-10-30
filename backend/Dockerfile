@@ -9,7 +9,7 @@ COPY package*.json ./
 
 # Install dependencies
 # --production hanya untuk prod, untuk dev kita butuh nodemon juga
-RUN npm install
+RUN npm install -g npm@latest && npm install
 
 # Copy seluruh project ke /app
 COPY . .

@@ -17,7 +17,7 @@ export const queryClient = new QueryClient({
 
 // ✅ Global error handling untuk query
 queryClient.getQueryCache().subscribe((event) => {
-   if (event.query && event.query.state.status === "error") {
+   if (event.query?.state.status === "error") {
       const error = event.query.state.error;
       if (error instanceof Error) {
          toast.error(error.message);
@@ -27,7 +27,7 @@ queryClient.getQueryCache().subscribe((event) => {
 
 // ✅ Global error handling untuk mutation
 queryClient.getMutationCache().subscribe((event) => {
-   if (event.mutation && event.mutation.state.status === "error") {
+   if (event.mutation?.state.status === "error") {
       const error = event.mutation.state.error;
       if (error instanceof Error) {
          toast.error(error.message);
@@ -36,9 +36,7 @@ queryClient.getMutationCache().subscribe((event) => {
 });
 
 declare global {
-   interface Window {
-      __TANSTACK_QUERY_CLIENT__: import("@tanstack/query-core").QueryClient;
-   }
+   var __TANSTACK_QUERY_CLIENT__: import("@tanstack/query-core").QueryClient;
 }
 
-window.__TANSTACK_QUERY_CLIENT__ = queryClient;
+globalThis.__TANSTACK_QUERY_CLIENT__ = queryClient;

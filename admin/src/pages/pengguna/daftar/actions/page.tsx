@@ -81,7 +81,9 @@ export default function Page() {
                         }
                         name="id_roles"
                         errors={errors}
-                        options={daftarRoles.map((row: FormData) => ({ value: String(row.id), label: row.nama }))}
+                        options={daftarRoles
+                           .filter((e: { id: number }) => e.id !== 4)
+                           .map((row: FormData) => ({ value: String(row.id), label: row.nama }))}
                      />
                   </div>
                   <div className="col-12 col-md-5">
@@ -89,7 +91,13 @@ export default function Page() {
                         useCommand={true}
                         label="Operator"
                         value={getValue(formData, "username")}
-                        onChange={(value) => setFormData({ ...formData, username: value })}
+                        onChange={(value) => {
+                           setFormData({
+                              ...formData,
+                              username: value,
+                              fullname: value ? pegawaiList.find((e: { id: string }) => e.id === value)?.nama : "",
+                           });
+                        }}
                         name="username"
                         errors={errors}
                         options={

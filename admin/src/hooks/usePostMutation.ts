@@ -32,7 +32,7 @@ export const usePostMutation = <TData, TTransformed = TData>(
       onSuccess: (response) => {
          if (queryKeys && response.status) {
             for (const queryKey of queryKeys) {
-               queryClient.invalidateQueries({ queryKey, exact: false });
+               queryClient.invalidateQueries({ queryKey, exact: false, refetchType: "active" });
             }
          }
       },

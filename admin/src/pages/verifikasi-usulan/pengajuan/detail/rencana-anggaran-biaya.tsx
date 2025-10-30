@@ -99,12 +99,14 @@ const columns = ({
             className="size-6"
             variant="outline"
             onClick={() => {
+               const rab_detail_perubahan = original?.rab_detail_perubahan;
+
                setOpenDialog(true);
                setFormData({
                   ...Object.fromEntries(Object.entries(original).map(([k, v]) => [k, k === "unit_satuan" ? v : v?.toString() ?? ""])),
-                  new_qty: original.qty,
-                  new_harga_satuan: original.harga_satuan,
-                  new_total_biaya: original.total_biaya,
+                  new_qty: objectLength(rab_detail_perubahan) ? rab_detail_perubahan?.qty : original.qty,
+                  new_harga_satuan: objectLength(rab_detail_perubahan) ? rab_detail_perubahan?.harga_satuan : original.harga_satuan,
+                  new_total_biaya: objectLength(rab_detail_perubahan) ? rab_detail_perubahan?.total_biaya : original.total_biaya,
                });
             }}>
             <PackageCheck />
@@ -377,13 +379,15 @@ export default function RencanaAnggaranBiaya({
    isLoading,
    endpoint,
    id_usulan,
-}: Readonly<{ results: Array<RencanaAnggaranBiayaItem>; isLoading: boolean; endpoint: string; id_usulan: string }>) {
+   anggaran_disetujui,
+}: Readonly<{
+   results: Array<RencanaAnggaranBiayaItem>;
+   isLoading: boolean;
+   endpoint: string;
+   id_usulan: string;
+   anggaran_disetujui: Record<string, string>;
+}>) {
    const totalBiaya = results.reduce((sum: number, item: RencanaAnggaranBiayaItem) => sum + Number.parseFloat(item.total_biaya || "0"), 0);
-   const totalBiayaDisetujui = results.reduce(
-      (sum: number, item: RencanaAnggaranBiayaItem) =>
-         item.approve === "valid" ? sum + Number.parseFloat(item.rab_detail_perubahan?.total_biaya || item.total_biaya || "0") : sum,
-      0
-   );
 
    const [formData, setFormData] = useState<FormData>({});
    const [errors, setErrors] = useState<FormData>({});
@@ -412,7 +416,7 @@ export default function RencanaAnggaranBiaya({
                      </Badge>
                      <Badge variant="outline" className="bg-green-100">
                         <Label className="text-sm font-medium text-gray-600">Total Anggaran Disetujui:</Label>
-                        <div className="font-semibold text-lg">{toRupiah(totalBiayaDisetujui)}</div>
+                        <div className="font-semibold text-lg">{toRupiah(anggaran_disetujui.jumlah)}</div>
                      </Badge>
                   </div>
                </CardAction>

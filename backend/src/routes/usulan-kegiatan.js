@@ -198,7 +198,6 @@ const usulanSchema = z.object({
 });
 
 const rabSchema = z.object({
-   id_usulan: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Uraian wajib diisi")),
    uraian_biaya: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Uraian wajib diisi")),
    qty: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Jumlah wajib diisi")),
    id_satuan: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Unit satuan wajib dipilih")),
@@ -402,26 +401,7 @@ router.put("/usul", async (req, res) => {
 
 router.post("/", async (req, res) => {
    try {
-      const { kode, tempat_pelaksanaan, user_modified } = req.body;
-
-      const pengguna = await prisma.tb_pengguna.findUnique({
-         where: { username: user_modified },
-         select: {
-            id: true,
-            username: true,
-            level_unit: true,
-            roles: true,
-            pengguna_role: {
-               select: {
-                  id_biro: true,
-                  id_lembaga: true,
-                  id_upt: true,
-                  id_fakultas: true,
-                  id_sub_unit: true,
-               },
-            },
-         },
-      });
+      const { kode, tempat_pelaksanaan, user_modified, pengguna } = req.body;
 
       if (!pengguna) {
          return res.json({ status: false, message: "Anda tidak mempunyai akses untuk melakukan penambahan usulan kegiatan" });
@@ -748,7 +728,7 @@ router.delete("/relasi-iku/:id", async (req, res) => {
 
       const checkStatusUsulan = await prisma.tb_usulan_kegiatan.findFirst({
          where: {
-            id: Number.parseInt(id_usulan),
+            id: Number.parseInt(oldData.id_usulan),
             status_usulan: {
                in: ["diterima", "pengajuan"],
             },
@@ -774,6 +754,7 @@ router.delete("/relasi-iku/:id", async (req, res) => {
 router.get("/rab/:id_usulan/:id", async (req, res) => {
    try {
       const { id_usulan, id } = req.params;
+
       const results = await prisma.tb_rab_detail.findUnique({
          where: { id_usulan: Number.parseInt(id_usulan), id: Number.parseInt(id) },
          select: {
@@ -977,7 +958,7 @@ router.delete("/rab/:id", async (req, res) => {
 
       const checkStatusUsulan = await prisma.tb_usulan_kegiatan.findFirst({
          where: {
-            id: Number.parseInt(id_usulan),
+            id: Number.parseInt(oldData.id_usulan),
             status_usulan: {
                in: ["diterima", "pengajuan"],
             },
@@ -1061,7 +1042,7 @@ router.post("/:id_usulan_kegiatan/dokumen", upload.single("file_dokumen"), async
 
       const checkStatusUsulan = await prisma.tb_usulan_kegiatan.findFirst({
          where: {
-            id: Number.parseInt(id_usulan),
+            id: Number.parseInt(id_usulan_kegiatan),
             status_usulan: {
                in: ["pengajuan", "diterima"],
             },
@@ -1104,7 +1085,7 @@ router.post("/:id_usulan_kegiatan/dokumen", upload.single("file_dokumen"), async
 
 router.put("/:id_usulan_kegiatan/dokumen/:id", upload.single("file_dokumen"), async (req, res) => {
    try {
-      const { id } = req.params;
+      const { id, id_usulan_kegiatan } = req.params;
       const { nama_dokumen, user_modified } = req.body;
 
       const parsed = validasiDokumen.safeParse(req.body);
@@ -1133,7 +1114,7 @@ router.put("/:id_usulan_kegiatan/dokumen/:id", upload.single("file_dokumen"), as
 
       const checkStatusUsulan = await prisma.tb_usulan_kegiatan.findFirst({
          where: {
-            id: Number.parseInt(id_usulan),
+            id: Number.parseInt(id_usulan_kegiatan),
             status_usulan: {
                in: ["pengajuan", "diterima"],
             },
@@ -1188,7 +1169,7 @@ router.delete("/dokumen/:id", async (req, res) => {
 
       const checkStatusUsulan = await prisma.tb_usulan_kegiatan.findFirst({
          where: {
-            id: Number.parseInt(id_usulan),
+            id: Number.parseInt(oldData.id_usulan),
             status_usulan: {
                in: ["diterima", "pengajuan"],
             },

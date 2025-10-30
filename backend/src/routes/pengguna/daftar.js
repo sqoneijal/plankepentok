@@ -39,6 +39,7 @@ router.get("/", async (req, res) => {
          select: {
             id: true,
             username: true,
+            fullname: true,
             level_unit: true,
             roles: true,
             pengguna_role: {
@@ -137,7 +138,7 @@ router.get("/unit-kerja", async (req, res) => {
 
 router.post("/", async (req, res) => {
    try {
-      const { username, id_parent, id_roles, user_modified } = req.body;
+      const { username, fullname, id_parent, id_roles, user_modified } = req.body;
 
       const parsed = validation.safeParse(req.body);
 
@@ -146,7 +147,12 @@ router.post("/", async (req, res) => {
       }
 
       const checkDuplicate = await prisma.tb_pengguna.findUnique({
-         where: { username },
+         where: {
+            username_id_roles: {
+               username,
+               id_roles: Number.parseInt(id_roles),
+            },
+         },
       });
 
       if (checkDuplicate) {
@@ -222,6 +228,7 @@ router.post("/", async (req, res) => {
             username,
             level_unit: levelUnit,
             id_roles: Number.parseInt(id_roles),
+            fullname,
          },
       });
 
