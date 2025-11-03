@@ -2,7 +2,7 @@ import Table from "@/components/table";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useGetQueryDetail } from "@/hooks/useGetQueryDetail";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef, Row } from "@tanstack/react-table";
 import React from "react";
 
 interface DokumenItem {
@@ -15,7 +15,13 @@ interface DokumenItem {
    modified: string | null;
    user_modified: string;
    file_dokumen: string;
-   approve: null;
+   usulan_kegiatan: {
+      verifikasi: Array<{
+         id_referensi: number;
+         status: string | null;
+         catatan: string | null;
+      }>;
+   };
 }
 
 type ApproveStatus = "sesuai" | "tidak_sesuai" | null;
@@ -40,9 +46,13 @@ const AksiCell: React.FC<{ value: string }> = ({ value }) => (
 
 const AksiTableCell = ({ getValue }: { getValue: () => unknown }) => <AksiCell value={getValue() as string} />;
 
-const StatusCell = ({ getValue }: { getValue: () => unknown }) => {
-   const approve = getValue() as ApproveStatus;
-   return <Badge className={getBadgeClass(approve)}>{getBadgeText(approve)}</Badge>;
+const StatusCell: React.FC<{ row: Row<DokumenItem> }> = ({ row }) => {
+   const original = row.original;
+   const verifikasi = original?.usulan_kegiatan?.verifikasi;
+   const status =
+      verifikasi?.find((e: { id_referensi: number; status: string | null; catatan: string | null }) => e.id_referensi === original.id)?.status ||
+      null;
+   return <Badge className={getBadgeClass(status as ApproveStatus)}>{getBadgeText(status as ApproveStatus)}</Badge>;
 };
 
 export default function Dokumen({ endpoint, id }: Readonly<{ endpoint: string; id: string | undefined }>) {
@@ -50,7 +60,7 @@ export default function Dokumen({ endpoint, id }: Readonly<{ endpoint: string; i
 
    const columns: Array<ColumnDef<DokumenItem>> = [
       {
-         accessorKey: "approve",
+         accessorKey: "id",
          header: "Status",
          cell: StatusCell,
       },
@@ -70,6 +80,21 @@ export default function Dokumen({ endpoint, id }: Readonly<{ endpoint: string; i
          accessorKey: "path_file",
          header: "Aksi",
          cell: AksiTableCell,
+      },
+      {
+         accessorKey: "id",
+         header: "catatan perbaikan",
+         cell: ({ row }) => {
+            const original = row.original;
+            const verifikasi = original?.usulan_kegiatan?.verifikasi;
+            const status =
+               verifikasi?.find((e: { id_referensi: number; status: string | null; catatan: string | null }) => e.id_referensi === original.id) ||
+               null;
+
+            if (status?.status !== "sesuai") {
+               return status?.catatan;
+            }
+         },
       },
    ];
 

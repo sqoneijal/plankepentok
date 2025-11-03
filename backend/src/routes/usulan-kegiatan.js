@@ -641,8 +641,6 @@ router.get("/:id/relasi-iku", async (req, res) => {
          orderBy: { iku_master: { kode: "asc" } },
          select: {
             id: true,
-            approve: true,
-            catatan_perbaikan: true,
             iku_master: {
                select: {
                   id: true,
@@ -655,6 +653,16 @@ router.get("/:id/relasi-iku", async (req, res) => {
             usulan_kegiatan: {
                select: {
                   status_usulan: true,
+                  verifikasi: {
+                     where: {
+                        table_referensi: "tb_relasi_usulan_iku",
+                     },
+                     select: {
+                        id_referensi: true,
+                        status: true,
+                        catatan: true,
+                     },
+                  },
                },
             },
          },
@@ -707,15 +715,20 @@ router.post("/:id_usulan_kegiatan/relasi-iku", async (req, res) => {
 
       logAudit(user_modified, "CREATE", "tb_relasi_usulan_iku", req.ip, null, { ...newData });
 
-      return res.status(201).json({ status: true, message: "Relasi IKU berhasil ditambahkan." });
+      return res.json({
+         status: true,
+         message: "Relasi IKU berhasil ditambahkan.",
+         refetchQuery: [[`/usulan-kegiatan/${id_usulan_kegiatan}/relasi-iku`, {}]],
+      });
    } catch (error) {
-      return res.json({ status: false, message: error.message });
+      return res.status(500).json({ status: false, message: error.message });
    }
 });
 
 router.delete("/relasi-iku/:id", async (req, res) => {
    try {
       const { id } = req.params;
+      const { id_usulan_kegiatan } = req.query;
       const { user_modified } = req.body;
 
       const oldData = await prisma.tb_relasi_usulan_iku.findUnique({
@@ -745,9 +758,13 @@ router.delete("/relasi-iku/:id", async (req, res) => {
 
       logAudit(user_modified, "DELETE", "tb_relasi_usulan_iku", req.ip, { ...oldData }, null);
 
-      return res.json({ status: true, message: "Relasi IKU berhasil dihapus." });
+      return res.json({
+         status: true,
+         message: "Relasi IKU berhasil dihapus.",
+         refetchQuery: [[`/usulan-kegiatan/${id_usulan_kegiatan}/relasi-iku`, {}]],
+      });
    } catch (error) {
-      return res.json({ status: false, message: error.message });
+      return res.status(500).json({ status: false, message: error.message });
    }
 });
 
@@ -797,22 +814,28 @@ router.get("/:id/rab", async (req, res) => {
             id: true,
             uraian_biaya: true,
             qty: true,
+            id_satuan: true,
             harga_satuan: true,
             total_biaya: true,
             catatan: true,
-            approve: true,
-            catatan_perbaikan: true,
             unit_satuan: {
                select: {
                   id: true,
                   nama: true,
-                  deskripsi: true,
-                  aktif: true,
                },
             },
             usulan_kegiatan: {
                select: {
-                  status_usulan: true,
+                  verifikasi: {
+                     where: {
+                        table_referensi: "tb_rab_detail",
+                     },
+                     select: {
+                        id_referensi: true,
+                        status: true,
+                        catatan: true,
+                     },
+                  },
                },
             },
          },
@@ -995,11 +1018,18 @@ router.get("/:id/dokumen", async (req, res) => {
             tipe_dokumen: true,
             path_file: true,
             file_dokumen: true,
-            approve: true,
-            catatan_perbaikan: true,
             usulan_kegiatan: {
                select: {
-                  status_usulan: true,
+                  verifikasi: {
+                     where: {
+                        table_referensi: "tb_dokumen_pendukung",
+                     },
+                     select: {
+                        id_referensi: true,
+                        status: true,
+                        catatan: true,
+                     },
+                  },
                },
             },
          },

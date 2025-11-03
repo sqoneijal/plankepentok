@@ -16,12 +16,12 @@ import { Spinner } from "./ui/spinner";
 
 interface ConfirmDialogProps {
    url: string;
-   refetchKey?: Array<Array<string>>;
    id: string | number;
+   params?: Record<string, string>;
 }
 
-export default function ConfirmDialog({ url, refetchKey, id }: Readonly<ConfirmDialogProps>) {
-   const _delete = useDeleteMutation(url, refetchKey);
+export default function ConfirmDialog({ url, id, params }: Readonly<ConfirmDialogProps>) {
+   const _delete = useDeleteMutation(url, params);
 
    return (
       <AlertDialog>

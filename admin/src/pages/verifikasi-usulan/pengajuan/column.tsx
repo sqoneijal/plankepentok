@@ -25,6 +25,7 @@ export type UsulanKegiatan = {
    id: number;
    kode: string;
    jenis_usulan: { nama: string };
+   id_jenis_usulan?: number;
    tanggal_submit: string;
    rencana_total_anggaran: number;
    total_anggaran: number;
@@ -32,7 +33,9 @@ export type UsulanKegiatan = {
    unit_pengusul: UnitPengusul;
 };
 
-type RowData = { usulan_kegiatan: UsulanKegiatan; verikator_usulan: Record<string, string> };
+type RowData = UsulanKegiatan & {
+   verikator_usulan: { id: number };
+};
 
 const columnHelper = createColumnHelper<RowData>();
 
@@ -66,34 +69,34 @@ const getNestedValue = (obj: RowData, path: string): unknown => {
 
 const columnConfigs: Array<ColumnConfig> = [
    {
-      key: "usulan_kegiatan.kode",
+      key: "kode",
       header: "kode",
    },
    {
-      key: "usulan_kegiatan.jenis_usulan.nama",
+      key: "jenis_usulan.nama",
       header: "jenis usulan",
    },
    {
-      key: "usulan_kegiatan.tanggal_submit",
+      key: "tanggal_submit",
       header: "tanggal pengajuan",
       cell: (value: unknown) => moment(value as string).format("DD-MM-YYYY"),
    },
    {
-      key: "usulan_kegiatan.rencana_total_anggaran",
+      key: "rencana_total_anggaran",
       header: "rencana",
       cell: (value: unknown) => toRupiah(value),
    },
    {
-      key: "usulan_kegiatan.total_anggaran",
+      key: "total_anggaran",
       header: "rencana rab",
       cell: (value: unknown) => toRupiah(value),
    },
    {
-      key: "usulan_kegiatan.pengguna.fullname",
+      key: "pengguna.fullname",
       header: "operator",
    },
    {
-      key: "usulan_kegiatan.unit_pengusul",
+      key: "unit_pengusul",
       header: "unit pengusul",
       cell: (value: unknown) => getActiveUnit(value as UnitPengusul),
    },
@@ -101,7 +104,7 @@ const columnConfigs: Array<ColumnConfig> = [
 
 export const getColumns = (endpoint: string, navigate: (path: string) => void): Array<ColumnDef<RowData, unknown>> => {
    const mutationHook = usePutMutation<Record<string, string>, unknown>;
-   const { mutate, isPending } = mutationHook(`${endpoint}/klaim`, (data) => ({ ...data }), [[endpoint]]);
+   const { mutate, isPending } = mutationHook(`${endpoint}/klaim`, (data) => ({ ...data }));
 
    return [
       columnHelper.display({
@@ -115,14 +118,14 @@ export const getColumns = (endpoint: string, navigate: (path: string) => void): 
                   onClick={() =>
                      mutate(
                         {
-                           id_usulan_kegiatan: String(original.usulan_kegiatan.id),
+                           id_usulan_kegiatan: String(original.id),
                            id_verikator_usulan: String(original.verikator_usulan.id),
                         },
                         {
                            onSuccess: (response) => {
                               const { status, message } = response;
                               if (status) {
-                                 navigate(`${endpoint}/${original.usulan_kegiatan.id}`);
+                                 navigate(`${endpoint}/${original.id}/${original?.id_jenis_usulan}`);
                               } else {
                                  toast.error(message);
                               }

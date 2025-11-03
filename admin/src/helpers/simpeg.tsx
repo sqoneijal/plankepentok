@@ -73,6 +73,10 @@ export const usePegawai = (pegawaiId: string | undefined) => {
                            id
                            nama
                         }
+                        unitKerja {
+                           nama
+                           id
+                        }
                      }
                   }
                }

@@ -34,10 +34,17 @@ interface IkuItem {
    iku_master: IkuMaster;
 }
 
+interface VerifikasiItem {
+   id_referensi: number;
+   table_referensi: string;
+   status: string | null;
+   catatan?: string;
+}
+
 const getApproveStatus = (approve: string | null) => {
    if (approve === null) return "Draft";
-   if (approve === "sesuai") return "Approved";
-   if (approve === "tidak_sesuai") return "Rejected";
+   if (approve === "sesuai") return "Sesuai";
+   if (approve === "tidak_sesuai") return "Tidak Sesuai";
    return "Draft";
 };
 
@@ -58,8 +65,6 @@ const ApproveCell: React.FC<{ approve: string | null }> = ({ approve = null }) =
    <Badge className={getApproveBadgeClass(approve)}>{getApproveStatus(approve)}</Badge>
 );
 
-const ApproveTableCell = ({ getValue }: { getValue: () => unknown }) => <ApproveCell approve={getValue() as string | null} />;
-
 const DeskripsiCell: React.FC<{ value: string }> = ({ value }) => <span>{formatJenis(value)}</span>;
 
 const DeskripsiTableCell = ({ getValue }: { getValue: () => unknown }) => <DeskripsiCell value={getValue() as string} />;
@@ -71,9 +76,15 @@ const JenisTableCell = ({ getValue }: { getValue: () => unknown }) => <JenisCell
 const columns = ({
    setOpenDialog,
    setFormData,
+   id_jenis_usulan,
+   id_usulan_kegiatan,
+   verifikasi,
 }: {
    setOpenDialog: (status: boolean) => void;
    setFormData: (data: FormData) => void;
+   id_jenis_usulan: string;
+   id_usulan_kegiatan: string;
+   verifikasi: Array<VerifikasiItem>;
 }): Array<ColumnDef<IkuItem>> => [
    {
       accessorKey: "id",
@@ -84,7 +95,7 @@ const columns = ({
             variant="outline"
             onClick={() => {
                setOpenDialog(true);
-               setFormData({ id: String(getValue()) });
+               setFormData({ id: String(getValue()), id_jenis_usulan, id_usulan_kegiatan });
             }}>
             <PackageCheck />
          </Button>
@@ -92,9 +103,15 @@ const columns = ({
       meta: { className: "w-[10px]" },
    },
    {
-      accessorKey: "approve",
+      accessorKey: "id",
       header: "Status",
-      cell: ApproveTableCell,
+      cell: ({ getValue }) => {
+         const value = verifikasi.find(
+            (e: { id_referensi: number; table_referensi: string }) => e.id_referensi === getValue() && e.table_referensi === "tb_relasi_usulan_iku"
+         );
+
+         return <ApproveCell approve={value?.status ?? null} />;
+      },
       meta: { className: "w-[10px]" },
    },
    {
@@ -116,8 +133,14 @@ const columns = ({
       cell: DeskripsiTableCell,
    },
    {
-      accessorKey: "catatan_perbaikan",
+      accessorKey: "id",
       header: "Catatan Perbaikan",
+      cell: ({ getValue }) => {
+         const value = verifikasi.find(
+            (e: { id_referensi: number; table_referensi: string }) => e.id_referensi === getValue() && e.table_referensi === "tb_relasi_usulan_iku"
+         );
+         if (value && value?.status === "tidak_sesuai") return value?.catatan;
+      },
    },
 ];
 
@@ -129,7 +152,8 @@ function DialogIku({
    openDialog,
    setOpenDialog,
    endpoint,
-   id_usulan,
+   id_jenis_usulan,
+   id_usulan_kegiatan,
 }: Readonly<{
    formData: FormData;
    setFormData: (data: FormData) => void;
@@ -139,8 +163,10 @@ function DialogIku({
    setOpenDialog: (open: boolean) => void;
    endpoint: string;
    id_usulan: string;
+   id_jenis_usulan: string;
+   id_usulan_kegiatan: string;
 }>) {
-   const submit = usePutMutation<FormData, unknown>(`${endpoint}/iku/${formData?.id}`, (data) => ({ ...data }), [[`${endpoint}/${id_usulan}`]]);
+   const submit = usePutMutation<FormData, unknown>(`${endpoint}/iku/${formData?.id}`, (data) => ({ ...data, id_jenis_usulan, id_usulan_kegiatan }));
 
    return (
       <Dialog open={openDialog}>
@@ -213,7 +239,18 @@ export default function Iku({
    isLoading,
    endpoint,
    id_usulan,
-}: Readonly<{ results: Array<IkuItem>; isLoading: boolean; endpoint: string; id_usulan: string }>) {
+   id_jenis_usulan,
+   id_usulan_kegiatan,
+   verifikasi,
+}: Readonly<{
+   results: Array<IkuItem>;
+   isLoading: boolean;
+   endpoint: string;
+   id_usulan: string;
+   id_jenis_usulan: string;
+   id_usulan_kegiatan: string;
+   verifikasi: Array<VerifikasiItem>;
+}>) {
    const [formData, setFormData] = useState<FormData>({});
    const [errors, setErrors] = useState<FormData>({});
    const [openDialog, setOpenDialog] = useState(false);
@@ -229,6 +266,8 @@ export default function Iku({
             setOpenDialog={setOpenDialog}
             endpoint={endpoint}
             id_usulan={id_usulan}
+            id_jenis_usulan={id_jenis_usulan}
+            id_usulan_kegiatan={id_usulan_kegiatan}
          />
          <Card className="mt-4">
             <CardHeader>
@@ -236,7 +275,7 @@ export default function Iku({
             </CardHeader>
             <CardContent>
                <Table
-                  columns={columns({ setOpenDialog, setFormData })}
+                  columns={columns({ setOpenDialog, setFormData, id_jenis_usulan, id_usulan_kegiatan, verifikasi })}
                   data={results}
                   isLoading={isLoading}
                   usePagination={false}

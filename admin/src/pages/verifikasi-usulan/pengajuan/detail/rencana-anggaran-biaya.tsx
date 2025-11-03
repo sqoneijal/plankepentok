@@ -21,6 +21,13 @@ import { toast } from "sonner";
 
 type ApproveStatus = "valid" | "tidak_valid" | "perbaiki" | null;
 
+interface VerifikasiItem {
+   id_referensi: string;
+   table_referensi: string;
+   status: ApproveStatus;
+   catatan: string;
+}
+
 interface UnitSatuan {
    id: number;
    nama: string;
@@ -87,9 +94,11 @@ const getBadgeText = (approve: ApproveStatus) => {
 const columns = ({
    setOpenDialog,
    setFormData,
+   verifikasi,
 }: {
    setOpenDialog: (open: boolean) => void;
    setFormData: (data: FormData) => void;
+   verifikasi: Array<VerifikasiItem>;
 }): Array<ColumnDef<RencanaAnggaranBiayaItem>> => [
    {
       accessorKey: "*",
@@ -115,10 +124,12 @@ const columns = ({
       meta: { className: "w-[10px]" },
    },
    {
-      accessorKey: "approve",
+      accessorKey: "id",
       header: "Status",
       cell: ({ getValue }) => {
-         const approve = getValue() as ApproveStatus;
+         const value = verifikasi.find((e: VerifikasiItem) => e.id_referensi === getValue() && e.table_referensi === "tb_rab_detail");
+         const approve = value?.status as ApproveStatus;
+
          return <Badge className={getBadgeClass(approve)}>{getBadgeText(approve)}</Badge>;
       },
       meta: { className: "w-[10px]" },
@@ -168,8 +179,16 @@ const columns = ({
       header: "Catatan",
    },
    {
-      accessorKey: "catatan_perbaikan",
+      accessorKey: "id",
       header: "Catatan Perbaikan",
+      cell: ({ getValue }) => {
+         const value = verifikasi.find((e: VerifikasiItem) => e.id_referensi === getValue() && e.table_referensi === "tb_rab_detail");
+         const approve = value?.status as ApproveStatus;
+
+         if (approve !== "valid") {
+            return value?.catatan;
+         }
+      },
    },
 ];
 
@@ -186,6 +205,7 @@ function DialogValidasi({
    setOpenDialog,
    endpoint,
    id_usulan,
+   id_jenis_usulan,
 }: Readonly<{
    formData: FormData;
    setFormData: (data: FormData) => void;
@@ -195,10 +215,15 @@ function DialogValidasi({
    setOpenDialog: (open: boolean) => void;
    endpoint: string;
    id_usulan: string;
+   id_jenis_usulan: string;
 }>) {
    const [selectedReferensi, setSelectedReferensi] = useState<ReferensiSbmItem>();
 
-   const submit = usePutMutation<FormData, unknown>(`${endpoint}/rab/${formData?.id}`, (data) => ({ ...data }), [[`${endpoint}/${id_usulan}`]]);
+   const submit = usePutMutation<FormData, unknown>(`${endpoint}/rab/${formData?.id}`, (data) => ({
+      ...data,
+      id_usulan_kegiatan: id_usulan,
+      id_jenis_usulan,
+   }));
 
    const { data, isLoading } = useApiQuery({
       url: `${endpoint}/referensi-sbm`,
@@ -380,12 +405,16 @@ export default function RencanaAnggaranBiaya({
    endpoint,
    id_usulan,
    anggaran_disetujui,
+   id_jenis_usulan,
+   verifikasi,
 }: Readonly<{
    results: Array<RencanaAnggaranBiayaItem>;
    isLoading: boolean;
    endpoint: string;
    id_usulan: string;
    anggaran_disetujui: Record<string, string>;
+   verifikasi: Array<VerifikasiItem>;
+   id_jenis_usulan: string;
 }>) {
    const totalBiaya = results.reduce((sum: number, item: RencanaAnggaranBiayaItem) => sum + Number.parseFloat(item.total_biaya || "0"), 0);
 
@@ -404,6 +433,7 @@ export default function RencanaAnggaranBiaya({
             setOpenDialog={setOpenDialog}
             endpoint={endpoint}
             id_usulan={id_usulan}
+            id_jenis_usulan={id_jenis_usulan}
          />
          <Card className="mt-4">
             <CardHeader>
@@ -423,7 +453,7 @@ export default function RencanaAnggaranBiaya({
             </CardHeader>
             <CardContent>
                <Table
-                  columns={columns({ setOpenDialog, setFormData })}
+                  columns={columns({ setOpenDialog, setFormData, verifikasi })}
                   data={results}
                   total={results.length}
                   isLoading={isLoading}

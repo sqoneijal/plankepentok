@@ -6,5 +6,5 @@ const VerifikasiUsulanPengajuanDetail = lazy(() => import("@/pages/verifikasi-us
 
 export const route_verifikasi_usulan = [
    { key: v4(), path: "/verifikasi-usulan/pengajuan", element: <VerifikasiUsulanPengajuan /> },
-   { key: v4(), path: "/verifikasi-usulan/pengajuan/:id", element: <VerifikasiUsulanPengajuanDetail /> },
+   { key: v4(), path: "/verifikasi-usulan/pengajuan/:id/:id_jenis_usulan", element: <VerifikasiUsulanPengajuanDetail /> },
 ];

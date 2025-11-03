@@ -12,7 +12,7 @@ const ReferensiIku = lazy(() => import("./referensi/page"));
 export default function Page({ id_usulan_kegiatan }: Readonly<{ id_usulan_kegiatan?: string }>) {
    const [openSheet, setOpenSheet] = useState(false);
 
-   const { results, total, isLoading } = useGetQuery(`/usulan-kegiatan/${id_usulan_kegiatan}/relasi-iku`);
+   const { results, total, isLoading } = useGetQuery(`/usulan-kegiatan/${id_usulan_kegiatan}/relasi-iku`, {}, false);
 
    return (
       <Card className="mt-4">
@@ -24,7 +24,7 @@ export default function Page({ id_usulan_kegiatan }: Readonly<{ id_usulan_kegiat
                <CardAction>
                   <Sheet open={openSheet} onOpenChange={setOpenSheet}>
                      <SheetTrigger asChild>
-                        <Button variant="outline" className="-mt-1">
+                        <Button variant="outline" className="-mt-2">
                            Tambah IKU
                         </Button>
                      </SheetTrigger>

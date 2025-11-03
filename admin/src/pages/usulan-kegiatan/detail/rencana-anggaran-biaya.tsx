@@ -32,6 +32,13 @@ interface RencanaAnggaranBiayaItem {
    user_modified: string;
    approve: ApproveStatus;
    unit_satuan: UnitSatuan;
+   usulan_kegiatan: {
+      verifikasi: Array<{
+         id_referensi: number;
+         status: string | null;
+         catatan: string | null;
+      }>;
+   };
 }
 
 const getBadgeClass = (approve: ApproveStatus) => {
@@ -49,11 +56,15 @@ const getBadgeText = (approve: ApproveStatus) => {
 
 const columns: Array<ColumnDef<RencanaAnggaranBiayaItem>> = [
    {
-      accessorKey: "approve",
+      accessorKey: "id",
       header: "Status",
-      cell: ({ getValue }) => {
-         const approve = getValue() as ApproveStatus;
-         return <Badge className={getBadgeClass(approve)}>{getBadgeText(approve)}</Badge>;
+      cell: ({ row }) => {
+         const original = row.original;
+         const verifikasi = original?.usulan_kegiatan?.verifikasi;
+         const status =
+            verifikasi?.find((e: { id_referensi: number; status: string | null; catatan: string | null }) => e.id_referensi === original.id)
+               ?.status || null;
+         return <Badge className={getBadgeClass(status as ApproveStatus)}>{getBadgeText(status as ApproveStatus)}</Badge>;
       },
    },
    {
@@ -78,13 +89,22 @@ const columns: Array<ColumnDef<RencanaAnggaranBiayaItem>> = [
       header: "Total Biaya",
       cell: ({ getValue }) => toRupiah(getValue() as string),
    },
-
    {
       accessorKey: "catatan",
       header: "Catatan",
-      cell: ({ getValue }) => {
-         const catatan = getValue() as string | null;
-         return catatan || "-";
+   },
+   {
+      accessorKey: "id",
+      header: "catatan perbaikan",
+      cell: ({ row }) => {
+         const original = row.original;
+         const verifikasi = original?.usulan_kegiatan?.verifikasi;
+         const status =
+            verifikasi?.find((e: { id_referensi: number; status: string | null; catatan: string | null }) => e.id_referensi === original.id) || null;
+
+         if (status?.status !== "valid") {
+            return status?.catatan;
+         }
       },
    },
 ];

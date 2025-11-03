@@ -3,11 +3,7 @@ import { toast } from "sonner";
 import { UseAuth } from "./auth-context";
 import { queryClient } from "./queryClient";
 
-export const usePutMutation = <TData, TTransformed = TData>(
-   url: string,
-   transformData?: (data: TData) => TTransformed,
-   queryKeys?: Array<Array<string>>
-) => {
+export const usePutMutation = <TData, TTransformed = TData>(url: string, transformData?: (data: TData) => TTransformed) => {
    const { token, user } = UseAuth();
 
    return useMutation({
@@ -30,9 +26,10 @@ export const usePutMutation = <TData, TTransformed = TData>(
          return response.json();
       },
       onSuccess: (response) => {
-         if (queryKeys && response.status) {
-            for (const queryKey of queryKeys) {
-               queryClient.invalidateQueries({ queryKey, exact: false, refetchType: "active" });
+         const { status, refetchQuery } = response;
+         if (status && Array.isArray(refetchQuery)) {
+            for (const queryKey of refetchQuery) {
+               queryClient.invalidateQueries({ queryKey, exact: false });
             }
          }
       },

@@ -48,27 +48,32 @@ export default function Page() {
                disabled={isPending}
                onClick={() => {
                   const operator = detailPengguna.find((e: { roles: { id: number } }) => e.roles.id === 3);
-                  if (objectLength(operator)) {
-                     mutate(
-                        {
-                           kode: `${buatAlias(dataPegawai?.unitKerjaSaatIni?.[0]?.bagian?.nama)}${formatted}`,
-                           tempat_pelaksanaan: dataPegawai?.unitKerjaSaatIni?.[0]?.bagian?.nama,
-                           pengguna: operator,
-                        },
-                        {
-                           onSuccess: (response: { status?: boolean; message?: string; id_usulan_kegiatan?: number }) => {
-                              if (response?.status) {
-                                 navigate(`${endpoint}/actions/${response?.id_usulan_kegiatan}`);
-                                 return;
-                              }
-                              toast.error(response?.message);
-                           },
-                           onError: (error: Error) => {
-                              toast.error(`Gagal: ${error?.message}`);
-                           },
-                        }
-                     );
+                  if (!objectLength(operator)) {
+                     return;
                   }
+
+                  const bagian = dataPegawai?.unitKerjaSaatIni?.[0]?.bagian;
+                  const unitKerja = dataPegawai?.unitKerjaSaatIni?.[0]?.unitKerja;
+
+                  mutate(
+                     {
+                        kode: `${buatAlias(bagian ? bagian?.nama : unitKerja?.nama)}${formatted}`,
+                        tempat_pelaksanaan: bagian ? bagian?.nama : unitKerja?.nama,
+                        pengguna: operator,
+                     },
+                     {
+                        onSuccess: (response: { status?: boolean; message?: string; id_usulan_kegiatan?: number }) => {
+                           if (response?.status) {
+                              navigate(`${endpoint}/actions/${response?.id_usulan_kegiatan}`);
+                              return;
+                           }
+                           toast.error(response?.message);
+                        },
+                        onError: (error: Error) => {
+                           toast.error(`Gagal: ${error?.message}`);
+                        },
+                     }
+                  );
                }}>
                {isPending && <Spinner />}Tambah
             </Button>

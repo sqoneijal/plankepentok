@@ -3,12 +3,16 @@ import { toast } from "sonner";
 import { UseAuth } from "./auth-context";
 import { queryClient } from "./queryClient";
 
-export const useDeleteMutation = (url: string, queryKey?: Array<Array<string>>) => {
+export const useDeleteMutation = (url: string, params?: Record<string, string>) => {
    const { token, user } = UseAuth();
 
    return useMutation({
       mutationFn: async (id: number | string) => {
-         const response = await fetch(`${import.meta.env.VITE_API_URL}${url}/${id}`, {
+         let queryString = "";
+         if (params) {
+            queryString = "?" + new URLSearchParams(params).toString();
+         }
+         const response = await fetch(`${import.meta.env.VITE_API_URL}${url}/${id}${queryString}`, {
             method: "DELETE",
             headers: {
                Authorization: `Bearer ${token}`,
@@ -25,9 +29,10 @@ export const useDeleteMutation = (url: string, queryKey?: Array<Array<string>>) 
          return response.json();
       },
       onSuccess: (response) => {
-         if (queryKey && response.status) {
-            for (const qk of queryKey) {
-               queryClient.invalidateQueries({ queryKey: qk, exact: false, refetchType: "active" });
+         const { status, refetchQuery } = response;
+         if (status && Array.isArray(refetchQuery)) {
+            for (const queryKey of refetchQuery) {
+               queryClient.invalidateQueries({ queryKey, exact: false });
             }
          }
 

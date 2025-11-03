@@ -4,6 +4,7 @@ import { ButtonGroup } from "@/components/ui/button-group";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { UseAuth } from "@/hooks/auth-context";
 import { useHeaderButton } from "@/hooks/store";
 import { useGetQueryDetail } from "@/hooks/useGetQueryDetail";
 import { LinkButton } from "@/lib/helpers";
@@ -46,8 +47,9 @@ const renderDaftarHistori = (content: HistoriItem[]) => {
 };
 
 export default function Page() {
-   const { id } = useParams();
+   const { id, id_jenis_usulan } = useParams();
    const { setButton } = useHeaderButton();
+   const { user } = UseAuth();
 
    const [openDialag, setOpenDialag] = useState(false);
    const [jenisHistori, setJenisHistori] = useState("");
@@ -55,7 +57,11 @@ export default function Page() {
    const { results: daftarHistoriPenolakan } = useGetQueryDetail(endpoint, `${id}/histori-penolakan`);
    const { results: daftarHistoriPerbaikan } = useGetQueryDetail(endpoint, `${id}/histori-perbaikan`);
 
-   const { results, isLoading } = useGetQueryDetail(endpoint, id);
+   const { results, isLoading } = useGetQueryDetail(
+      endpoint,
+      `${id}/${id_jenis_usulan}`,
+      user?.preferred_username ? { username: user.preferred_username } : {}
+   );
 
    useEffect(() => {
       setButton(
@@ -112,13 +118,23 @@ export default function Page() {
             </DialogContent>
          </Dialog>
          <UsulanKegiatan results={results} endpoint={endpoint} id_usulan={id as string} />
-         <Iku results={results?.relasi_usulan_iku} isLoading={isLoading} endpoint={endpoint} id_usulan={id as string} />
+         <Iku
+            results={results?.relasi_usulan_iku}
+            isLoading={isLoading}
+            endpoint={endpoint}
+            id_usulan={id as string}
+            id_jenis_usulan={results?.jenis_usulan?.id}
+            id_usulan_kegiatan={results?.id}
+            verifikasi={results?.verifikasi}
+         />
          <RencanaAnggaranBiaya
             results={results?.rab_detail}
             isLoading={isLoading}
             endpoint={endpoint}
             id_usulan={id as string}
             anggaran_disetujui={results?.anggaran_disetujui}
+            id_jenis_usulan={results?.jenis_usulan?.id}
+            verifikasi={results?.verifikasi}
          />
          <Dokumen results={results?.dokumen_pendukung} isLoading={isLoading} endpoint={endpoint} id_usulan={id as string} />
       </Suspense>

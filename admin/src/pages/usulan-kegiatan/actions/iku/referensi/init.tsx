@@ -14,9 +14,7 @@ export function useInitPage() {
 }
 
 export function useCreateRelasiIKU(id_usulan_kegiatan: string | undefined) {
-   const { mutate, isPending } = usePostMutation<FormData, unknown>(`/usulan-kegiatan/${id_usulan_kegiatan}/relasi-iku`, (data) => ({ ...data }), [
-      id_usulan_kegiatan ? [`/usulan-kegiatan/${id_usulan_kegiatan}/relasi-iku`] : [],
-   ]);
+   const { mutate, isPending } = usePostMutation<FormData, unknown>(`/usulan-kegiatan/${id_usulan_kegiatan}/relasi-iku`, (data) => ({ ...data }));
 
    return { mutate, isPending };
 }

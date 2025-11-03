@@ -1,11 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
-import { getValue } from "@/helpers/init";
+import { getValue, objectLength } from "@/helpers/init";
 import { useGetQuery } from "@/hooks/useGetQuery";
 import { FormDatePicker, FormInput, FormSelect, FormTextarea } from "@/lib/helpers";
 import moment from "moment";
-import { useUpdateInformasiUsulan, type FormData, type Unit, type UnitPengusul } from "./init";
+import { useUpdateInformasiUsulan, type FormData, type UnitPengusul } from "./init";
 
 interface FormInformasiUsulanProps {
    formData: FormData;
@@ -23,8 +23,8 @@ const getActiveUnit = (unit_pengusul: UnitPengusul) => {
    let unit;
 
    for (const key of keys) {
-      const value: Unit | null | undefined = unit_pengusul[key];
-      if (value != null) {
+      const value = unit_pengusul[key];
+      if (objectLength(value)) {
          unit = value?.nama;
       }
    }

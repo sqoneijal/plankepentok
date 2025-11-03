@@ -29,7 +29,7 @@ export type UnitPengusul = {
 
 export type DetailUsulan = {
    kode: string;
-   jenis_usulan: { nama: string };
+   jenis_usulan: { id: number; nama: string };
    waktu_mulai: string;
    waktu_selesai: string;
    pengguna: { fullname: string };
@@ -43,7 +43,13 @@ export type DetailUsulan = {
    tujuan: string;
    sasaran: string;
    catatan_perbaikan: string | null;
-   klaim_verifikasi: Record<string, string>;
+   klaim_verifikasi: {
+      verikator_usulan: {
+         id: number;
+         tahap: string;
+      };
+      [key: string]: string | number | boolean | object;
+   };
 };
 
 const getActiveUnit = (unit_pengusul: UnitPengusul) => {
@@ -118,6 +124,7 @@ export default function UsulanKegiatan({ results, endpoint, id_usulan }: Readonl
                   toast.success(message);
                   setDialogType(null);
                   setAlasan("");
+                  navigate(endpoint);
                   return;
                }
 
@@ -144,7 +151,12 @@ export default function UsulanKegiatan({ results, endpoint, id_usulan }: Readonl
                   <ConfirmDialog
                      url={`${endpoint}/setujui`}
                      refetchKey={[`${endpoint}/${id_usulan}`]}
-                     formData={{ id_usulan, ...results?.klaim_verifikasi }}
+                     formData={{
+                        id_usulan,
+                        id_jenis_usulan: results?.jenis_usulan?.id.toString(),
+                        id_verikator_usulan: results?.klaim_verifikasi?.verikator_usulan?.id.toString(),
+                        tahap: results?.klaim_verifikasi?.verikator_usulan?.tahap,
+                     }}
                      actionButton={
                         <Button variant="outline" className="bg-green-300 font-bold">
                            Setujui

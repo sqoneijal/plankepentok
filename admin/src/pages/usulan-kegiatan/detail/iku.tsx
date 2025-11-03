@@ -2,7 +2,8 @@ import Table from "@/components/table";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useGetQueryDetail } from "@/hooks/useGetQueryDetail";
-import type { ColumnDef } from "@tanstack/react-table";
+import { cn } from "@/lib/utils";
+import type { ColumnDef, Row } from "@tanstack/react-table";
 
 interface IkuMaster {
    id: number;
@@ -24,15 +25,26 @@ interface IkuItem {
    approve: boolean | null;
    modified: string | null;
    iku_master: IkuMaster;
+   usulan_kegiatan: {
+      verifikasi: Array<{
+         id_referensi: number;
+         status: string | null;
+         catatan: string | null;
+      }>;
+   };
 }
 
-const getApproveStatus = (approve: boolean | null) => {
+const getApproveStatus = (approve: string | null) => {
    if (approve === null) return "Draft";
-   return "Approved";
+   if (approve === "sesuai") return "Sesuai";
+   if (approve === "tidak_sesuai") return "Tidak Sesuai";
+   return "Draft";
 };
 
-const getApproveBadgeClass = (approve: boolean | null) => {
-   return approve === null ? "bg-yellow-500 text-white hover:bg-yellow-600" : "bg-green-500 text-white hover:bg-green-600";
+const getApproveBadgeClass = (approve: string | null) => {
+   if (approve === null) return "bg-yellow-500 text-white hover:bg-yellow-600";
+   if (approve === "sesuai") return "bg-green-500 text-white hover:bg-green-600";
+   return "bg-red-500 text-white hover:bg-red-600";
 };
 
 const formatJenis = (jenis: string) => {
@@ -42,11 +54,9 @@ const formatJenis = (jenis: string) => {
       .join(" ");
 };
 
-const ApproveCell: React.FC<{ approve: boolean | null }> = ({ approve }) => (
-   <Badge className={getApproveBadgeClass(approve)}>{getApproveStatus(approve)}</Badge>
+const ApproveCell: React.FC<{ approve: string | null }> = ({ approve }) => (
+   <Badge className={cn(getApproveBadgeClass(approve), "text-xs")}>{getApproveStatus(approve)}</Badge>
 );
-
-const ApproveTableCell = ({ getValue }: { getValue: () => unknown }) => <ApproveCell approve={getValue() as boolean | null} />;
 
 const DeskripsiCell: React.FC<{ value: string }> = ({ value }) => <span>{formatJenis(value)}</span>;
 
@@ -56,14 +66,34 @@ const JenisCell: React.FC<{ value: string }> = ({ value }) => <span>{formatJenis
 
 const JenisTableCell = ({ getValue }: { getValue: () => unknown }) => <JenisCell value={getValue() as string} />;
 
+const StatusTableCell = ({ row }: { row: Row<IkuItem> }) => {
+   const original = row.original;
+   const verifikasi = original?.usulan_kegiatan?.verifikasi;
+   const status =
+      verifikasi?.find((e: { id_referensi: number; status: string | null; catatan: string | null }) => e.id_referensi === original.id)?.status ||
+      null;
+   return <ApproveCell approve={status} />;
+};
+
+const CatatanBerpaikanTableCell = ({ row }: { row: Row<IkuItem> }) => {
+   const original = row.original;
+   const verifikasi = original?.usulan_kegiatan?.verifikasi;
+   const status =
+      verifikasi?.find((e: { id_referensi: number; status: string | null; catatan: string | null }) => e.id_referensi === original.id) || null;
+
+   if (status?.status !== "sesuai") {
+      return status?.catatan;
+   }
+};
+
 export default function Iku({ endpoint, id }: Readonly<{ endpoint: string; id: string | undefined }>) {
    const { results, isLoading } = useGetQueryDetail(endpoint, `${id}/relasi-iku`);
 
    const columns: Array<ColumnDef<IkuItem>> = [
       {
-         accessorKey: "approve",
+         accessorKey: "id",
          header: "status",
-         cell: ApproveTableCell,
+         cell: StatusTableCell,
       },
       {
          accessorKey: "iku_master.kode",
@@ -78,11 +108,15 @@ export default function Iku({ endpoint, id }: Readonly<{ endpoint: string; id: s
          accessorKey: "iku_master.tahun_berlaku",
          header: "Tahun Berlaku",
       },
-
       {
          accessorKey: "iku_master.deskripsi",
          header: "Deskripsi",
          cell: DeskripsiTableCell,
+      },
+      {
+         accessorKey: "id",
+         header: "Catatan Perbaikan",
+         cell: CatatanBerpaikanTableCell,
       },
    ];
 
