@@ -1,8 +1,7 @@
 const express = require("express");
-const { PrismaClient } = require("@prisma/client");
 const { z } = require("zod");
-const errorHandler = require("../../handle-error.js");
-const { logAudit } = require("../../helpers.js");
+const errorHandler = require("@/handle-error.js");
+const { logAudit } = require("@/helpers.js");
 
 const validation = z.object({
    nama: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Nama unit satuan wajib diisi")),
@@ -10,7 +9,7 @@ const validation = z.object({
 });
 
 const router = express.Router();
-const prisma = new PrismaClient();
+const prisma = require("@/db.js");
 
 router.get("/", async (req, res) => {
    try {
@@ -71,7 +70,11 @@ router.post("/", async (req, res) => {
 
       logAudit(user_modified, "CREATE", "tb_unit_satuan", req.ip, null, { ...newData });
 
-      res.status(201).json({ status: true, message: "Unit satuan berhasil ditambahkan" });
+      res.status(201).json({
+         status: true,
+         message: "Unit satuan berhasil ditambahkan",
+         refetchQuery: [["/referensi/unit-satuan", { limit: "25", offset: "0", search: "" }]],
+      });
    } catch (error) {
       res.status(500).json({ error: error.message });
    }
@@ -109,7 +112,14 @@ router.put("/:id", async (req, res) => {
 
       logAudit(user_modified, "UPDATE", "tb_unit_satuan", req.ip, { ...oldData }, { ...newData });
 
-      res.json({ status: true, message: "Unit satuan berhasil diperbaharui" });
+      res.json({
+         status: true,
+         message: "Unit satuan berhasil diperbaharui",
+         refetchQuery: [
+            ["/referensi/unit-satuan", { limit: "25", offset: "0", search: "" }],
+            [`/referensi/unit-satuan/${id}`, {}],
+         ],
+      });
    } catch (error) {
       if (error.code === "P2025") {
          return res.status(404).json({ error: "Unit satuan tidak ditemukan" });
@@ -138,7 +148,7 @@ router.delete("/:id", async (req, res) => {
 
       logAudit(user_modified, "DELETE", "tb_unit_satuan", req.ip, { ...oldData }, null);
 
-      res.json({ status: true });
+      res.json({ status: true, refetchQuery: [["/referensi/unit-satuan", { limit: "25", offset: "0", search: "" }]] });
    } catch (error) {
       if (error.code === "P2025") {
          return res.status(404).json({ error: "Unit satuan tidak ditemukan" });

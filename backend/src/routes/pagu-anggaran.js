@@ -1,5 +1,4 @@
 const express = require("express");
-const { PrismaClient } = require("@prisma/client");
 const { logAudit } = require("../helpers.js");
 
 const cleanRupiah = (val, fallback = 0) => {
@@ -10,7 +9,7 @@ const cleanRupiah = (val, fallback = 0) => {
 };
 
 const router = express.Router();
-const prisma = new PrismaClient();
+const prisma = require("@/db.js");
 
 router.get("/", async (req, res) => {
    try {
@@ -143,7 +142,11 @@ router.put("/biro/:id", async (req, res) => {
 
       logAudit(user_modified, "UPDATE", "tb_pagu_anggaran_biro", req.ip, { ...oldData }, { ...newData });
 
-      res.json({ status: true, message: "Pagu biro berhasil diperbaharui" });
+      res.json({
+         status: true,
+         message: "Pagu biro berhasil diperbaharui",
+         refetchQuery: [[`/pagu-anggaran/${oldData.tahun_anggaran}/sub-unit`]],
+      });
    } catch (error) {
       res.status(500).json({ error: error.message });
    }

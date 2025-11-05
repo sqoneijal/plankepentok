@@ -1,5 +1,4 @@
 const express = require("express");
-const { PrismaClient } = require("@prisma/client");
 const errorHandler = require("../handle-error.js");
 const { logAudit } = require("../helpers.js");
 const { z } = require("zod");
@@ -12,7 +11,7 @@ const validation = z.object({
 });
 
 const router = express.Router();
-const prisma = new PrismaClient();
+const prisma = require("@/db.js");
 
 router.get("/", async (req, res) => {
    try {
@@ -92,7 +91,11 @@ router.post("/", async (req, res) => {
 
       logAudit(user_modified, "CREATE", "tb_iku_master", req.ip, null, { ...newData });
 
-      res.status(201).json({ status: true, message: "IKU master berhasil ditambahkan" });
+      res.status(201).json({
+         status: true,
+         message: "IKU master berhasil ditambahkan",
+         refetchQuery: [["/master-iku", { limit: "25", offset: "0" }]],
+      });
    } catch (error) {
       res.status(500).json({ error: error.message });
    }
@@ -139,7 +142,14 @@ router.put("/:id", async (req, res) => {
 
       logAudit(user_modified, "UPDATE", "tb_iku_master", req.ip, { ...oldData }, { ...newData });
 
-      res.status(201).json({ status: true, message: "IKU master berhasil ditambahkan" });
+      res.status(201).json({
+         status: true,
+         message: "IKU master berhasil ditambahkan",
+         refetchQuery: [
+            ["/master-iku", { limit: "25", offset: "0" }],
+            [`/master-iku/${id}`, {}],
+         ],
+      });
    } catch (error) {
       res.status(500).json({ error: error.message });
    }
@@ -164,7 +174,7 @@ router.delete("/:id", async (req, res) => {
 
       logAudit(user_modified, "DELETE", "tb_iku_master", req.ip, { ...oldData }, null);
 
-      res.status(201).json({ status: true });
+      res.status(201).json({ status: true, refetchQuery: [["/master-iku", { limit: "25", offset: "0" }]] });
    } catch (error) {
       res.status(500).json({ error: error.message });
    }

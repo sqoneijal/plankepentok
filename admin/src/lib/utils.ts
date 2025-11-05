@@ -45,9 +45,8 @@ export function useSubmitData({
    const isUpdate = Boolean(id);
 
    const mutationHook = isUpdate ? usePutMutation<FormData, unknown> : usePostMutation<FormData, unknown>;
-   const cacheKeys = isUpdate ? [[endpoint], [`${endpoint}/${id}`]] : [[endpoint]];
 
-   const { mutate, isPending } = mutationHook(isUpdate ? `${endpoint}/${id}` : endpoint, (data) => ({ ...data }), cacheKeys);
+   const { mutate, isPending } = mutationHook(isUpdate ? `${endpoint}/${id}` : endpoint, (data) => ({ ...data }));
 
    const onSubmit = () => {
       mutate(

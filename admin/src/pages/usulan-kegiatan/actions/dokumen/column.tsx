@@ -13,6 +13,17 @@ type IkuData = {
    tahun_berlaku?: string;
 };
 
+type VerifikasiItem = {
+   id_referensi: string | number;
+   status: string;
+   catatan: string;
+};
+
+type UsulanKegiatan = {
+   status_usulan: string;
+   verifikasi: Array<VerifikasiItem>;
+};
+
 const columnHelper = createColumnHelper<RowData>();
 
 type ColumnConfig = {
@@ -54,10 +65,14 @@ export const getColumns = (
       id: "actions",
       header: "",
       cell: ({ row: { original } }) => {
-         const status_usulan = (original?.usulan_kegiatan as RowData)?.status_usulan as string;
+         const usulanKegiatan = original?.usulan_kegiatan as UsulanKegiatan;
+         const status_usulan = usulanKegiatan?.status_usulan;
+         const verifikasi = usulanKegiatan?.verifikasi.find((e: VerifikasiItem) => e.id_referensi === (original.id as string | number));
+         const status_verifikasi = verifikasi?.status;
 
          return (
-            ["", "draft", "ditolak", "perbaiki"].includes(status_usulan) && (
+            ["", "draft", "ditolak", "perbaiki"].includes(status_usulan) &&
+            status_verifikasi !== "sesuai" && (
                <>
                   <LinkButton
                      label={<SquarePen />}
@@ -70,7 +85,7 @@ export const getColumns = (
                   <ConfirmDialog
                      url={`/usulan-kegiatan/dokumen`}
                      id={original.id as string | number}
-                     refetchKey={[[`/usulan-kegiatan/${id_usulan_kegiatan}/dokumen`]]}
+                     params={id_usulan_kegiatan ? { id_usulan_kegiatan } : undefined}
                   />
                </>
             )
@@ -84,4 +99,17 @@ export const getColumns = (
          cell: config.cell ? (info) => config.cell!(info.getValue() as IkuData) : (info) => info.getValue(),
       })
    ),
+   columnHelper.display({
+      id: "actions",
+      header: "catatan perbaikan",
+      cell: ({ row: { original } }) => {
+         const usulanKegiatan = original?.usulan_kegiatan as UsulanKegiatan;
+         const verifikasi = usulanKegiatan?.verifikasi.find((e: VerifikasiItem) => e.id_referensi === (original.id as string | number));
+         const status_verifikasi = verifikasi?.status;
+
+         if (status_verifikasi !== "valid") {
+            return verifikasi?.catatan;
+         }
+      },
+   }),
 ];

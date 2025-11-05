@@ -249,7 +249,13 @@ router.post("/", async (req, res) => {
 
       logAudit(user_modified, "CREATE", "tb_pengguna", req.ip, null, { ...newData });
 
-      return res.json({ status: true, message: "Pengguna berhasil disimpan", split_id_parent, length: split_id_parent.length });
+      return res.json({
+         status: true,
+         message: "Pengguna berhasil disimpan",
+         split_id_parent,
+         length: split_id_parent.length,
+         refetchQuery: [["/pengguna/daftar", { limit: "25", offset: "0" }]],
+      });
    } catch (error) {
       return res.json({ status: false, message: error.message });
    }
@@ -282,7 +288,7 @@ router.delete("/:id", async (req, res) => {
 
       logAudit(user_modified, "DELETE", "tb_pengguna", req.ip, { ...oldData }, null);
 
-      return res.json({ status: true, message: "Pengguna berhasil dihapus" });
+      return res.json({ status: true, message: "Pengguna berhasil dihapus", refetchQuery: [["/pengguna/daftar", { limit: "25", offset: "0" }]] });
    } catch (error) {
       return res.json({ status: false, message: error.message });
    }

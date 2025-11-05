@@ -3,9 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useDetailRow } from "@/hooks/store";
-import { useApiQuery } from "@/hooks/useApiQuery";
+import { useGetQuery } from "@/hooks/useGetQuery";
 import { lazy, Suspense, useState } from "react";
-import { toast } from "sonner";
 import { getColumns } from "./column";
 
 const Forms = lazy(() => import("./forms"));
@@ -14,17 +13,7 @@ export default function Page({ id_usulan_kegiatan }: Readonly<{ id_usulan_kegiat
    const [openSheet, setOpenSheet] = useState(false);
 
    const { setDetailRow } = useDetailRow();
-
-   const { data, isLoading, error } = useApiQuery({
-      url: `/usulan-kegiatan/${id_usulan_kegiatan}/dokumen`,
-   });
-
-   if (error) {
-      toast.error(`Gagal mengambil data dokumen: ${error?.message}`);
-   }
-
-   const results = data?.results ?? [];
-   const total = data?.total || 0;
+   const { results, total, isLoading } = useGetQuery(`/usulan-kegiatan/${id_usulan_kegiatan}/dokumen`, {}, false);
 
    return (
       <Card className="mt-4">

@@ -1,14 +1,13 @@
 const express = require("express");
-const { PrismaClient } = require("@prisma/client");
 const { z } = require("zod");
-const { logAudit } = require("../helpers.js");
+const { logAudit } = require("@/helpers.js");
 const multer = require("multer");
 const path = require("node:path");
 const fs = require("node:fs");
 const { Client } = require("ssh2");
 
 const router = express.Router();
-const prisma = new PrismaClient();
+const prisma = require("@/db.js");
 
 // Helper function to upload file via SFTP
 const uploadFileViaSFTP = (conn, localPath, remotePath) => {
@@ -372,6 +371,26 @@ router.put("/usul", async (req, res) => {
          });
       }
 
+      // Check if klaim already exists to simulate insert ignore
+      const existingKlaim = await prisma.tb_klaim_verifikasi.findFirst({
+         where: {
+            id_usulan_kegiatan: oldData.id,
+            id_verikator_usulan: checkVerifikator.id,
+         },
+      });
+
+      if (!existingKlaim) {
+         const newDataKlaim = await prisma.tb_klaim_verifikasi.create({
+            data: {
+               id_usulan_kegiatan: oldData.id,
+               id_verikator_usulan: checkVerifikator.id,
+               status_klaim: "pending",
+            },
+         });
+
+         logAudit("system", "CREATE", "tb_klaim_verifikasi", req.ip, null, { ...newDataKlaim });
+      }
+
       const newData = await prisma.tb_usulan_kegiatan.update({
          where: { id: Number.parseInt(id_usulan) },
          data: {
@@ -381,17 +400,7 @@ router.put("/usul", async (req, res) => {
          },
       });
 
-      logAudit(user_modified, "UPDATE", "tb_usulan_kegiatan", req.ip, { ...oldData }, { ...newData });
-
-      const newDataKlaim = await prisma.tb_klaim_verifikasi.create({
-         data: {
-            id_usulan_kegiatan: oldData.id,
-            id_verikator_usulan: checkVerifikator.id,
-            status_klaim: "pending",
-         },
-      });
-
-      logAudit("system", "CREATE", "tb_klaim_verifikasi", req.ip, null, { ...newDataKlaim });
+      await logAudit(user_modified, "UPDATE", "tb_usulan_kegiatan", req.ip, { ...oldData }, { ...newData });
 
       return res.json({ status: true, message: "Usulan kegiatan berhasil diperbaharui", checkVerifikator });
    } catch (error) {
@@ -584,7 +593,11 @@ router.put("/:id", async (req, res) => {
 
       logAudit(user_modified, "UPDATE", "tb_usulan_kegiatan", req.ip, { ...oldData }, { ...newData });
 
-      return res.json({ status: true, message: "Usulan kegiatan berhasil diperbaharui." });
+      return res.json({
+         status: true,
+         message: "Usulan kegiatan berhasil diperbaharui.",
+         refetchQuery: [["/usulan-kegiatan", { limit: "25", offset: "0" }]],
+      });
    } catch (error) {
       return res.json({ status: false, message: error.message });
    }
@@ -620,9 +633,13 @@ router.delete("/:id", async (req, res) => {
          where: { id: Number.parseInt(id) },
       });
 
-      logAudit(user_modified, "DELETE", "tb_usulan_kegiatan", req.ip, null, null);
+      await logAudit(user_modified, "DELETE", "tb_usulan_kegiatan", req.ip, null, null);
 
-      return res.json({ status: true, message: "Usulan kegiatan deleted successfully" });
+      return res.json({
+         status: true,
+         message: "Usulan kegiatan berhasil dihapus",
+         refetchQuery: [["/usulan-kegiatan", { limit: "25", offset: "0" }]],
+      });
    } catch (error) {
       return res.json({ status: false, message: error.message });
    }
@@ -774,25 +791,6 @@ router.get("/rab/:id_usulan/:id", async (req, res) => {
 
       const results = await prisma.tb_rab_detail.findUnique({
          where: { id_usulan: Number.parseInt(id_usulan), id: Number.parseInt(id) },
-         select: {
-            id: true,
-            uraian_biaya: true,
-            qty: true,
-            id_satuan: true,
-            harga_satuan: true,
-            total_biaya: true,
-            catatan: true,
-            approve: true,
-            catatan_perbaikan: true,
-            unit_satuan: {
-               select: {
-                  id: true,
-                  nama: true,
-                  deskripsi: true,
-                  aktif: true,
-               },
-            },
-         },
       });
       return res.json({ results });
    } catch (error) {
@@ -822,10 +820,12 @@ router.get("/:id/rab", async (req, res) => {
                select: {
                   id: true,
                   nama: true,
+                  deskripsi: true,
                },
             },
             usulan_kegiatan: {
                select: {
+                  status_usulan: true,
                   verifikasi: {
                      where: {
                         table_referensi: "tb_rab_detail",
@@ -896,7 +896,12 @@ router.post("/rab", async (req, res) => {
 
       logAudit(user_modified, "CREATE", "tb_rab_detail", req.ip, null, { ...newData });
 
-      return res.status(201).json({ status: true, message: "Rencana anggaran biaya berhasil ditambahkan.", id_usulan });
+      return res.status(201).json({
+         status: true,
+         message: "Rencana anggaran biaya berhasil ditambahkan.",
+         id_usulan,
+         refetchQuery: [[`/usulan-kegiatan/${id_usulan}/rab`, {}]],
+      });
    } catch (error) {
       return res.json({ status: false, message: error.message });
    }
@@ -960,7 +965,12 @@ router.put("/rab/:id_usulan/:id", async (req, res) => {
 
       logAudit(user_modified, "UPDATE", "tb_rab_detail", req.ip, null, { ...newData });
 
-      return res.status(201).json({ status: true, message: "Rencana anggaran biaya berhasil diperbaharui", id_usulan });
+      return res.status(201).json({
+         status: true,
+         message: "Rencana anggaran biaya berhasil diperbaharui",
+         id_usulan,
+         refetchQuery: [[`/usulan-kegiatan/${id_usulan}/rab`, {}]],
+      });
    } catch (error) {
       return res.join({ status: false, message: error.message });
    }
@@ -970,6 +980,7 @@ router.delete("/rab/:id", async (req, res) => {
    try {
       const { id } = req.params;
       const { user_modified } = req.body;
+      const { id_usulan_kegiatan } = req.query;
 
       const oldData = await prisma.tb_rab_detail.findUnique({
          where: { id: Number.parseInt(id) },
@@ -998,7 +1009,11 @@ router.delete("/rab/:id", async (req, res) => {
 
       logAudit(user_modified, "DELETE", "tb_rab_detail", req.ip, { ...oldData }, null);
 
-      return res.json({ status: true, message: "Rencana anggaran biaya berhasil dihapus" });
+      return res.json({
+         status: true,
+         message: "Rencana anggaran biaya berhasil dihapus",
+         refetchQuery: [[`/usulan-kegiatan/${id_usulan_kegiatan}/rab`, {}]],
+      });
    } catch (error) {
       return res.json({ status: false, message: error.message });
    }
@@ -1020,6 +1035,7 @@ router.get("/:id/dokumen", async (req, res) => {
             file_dokumen: true,
             usulan_kegiatan: {
                select: {
+                  status_usulan: true,
                   verifikasi: {
                      where: {
                         table_referensi: "tb_dokumen_pendukung",
@@ -1035,7 +1051,11 @@ router.get("/:id/dokumen", async (req, res) => {
          },
       });
 
-      return res.json({ results, total });
+      return res.json({
+         results,
+         total,
+         refetchQuery: [[`/usulan-kegiatan/${id}/dokumen`, {}]],
+      });
    } catch (error) {
       return res.json({ status: false, message: error.message });
    }
@@ -1176,6 +1196,7 @@ router.put("/:id_usulan_kegiatan/dokumen/:id", upload.single("file_dokumen"), as
          status: true,
          message: "Dokumen berhasil diperbarui.",
          id_dokumen: newData.id,
+         refetchQuery: [[`/usulan-kegiatan/${id_usulan_kegiatan}/dokumen`, {}]],
       });
    } catch (error) {
       return res.status(500).json({ status: false, message: error.message });
@@ -1186,6 +1207,7 @@ router.delete("/dokumen/:id", async (req, res) => {
    try {
       const { id } = req.params;
       const { user_modified } = req.body;
+      const { id_usulan_kegiatan } = req.query;
 
       const oldData = await prisma.tb_dokumen_pendukung.findUnique({
          where: {
@@ -1218,7 +1240,7 @@ router.delete("/dokumen/:id", async (req, res) => {
 
       logAudit(user_modified, "DELETE", "tb_dokumen_pendukung", req.ip, { ...oldData }, null);
 
-      return res.json({ status: true });
+      return res.json({ status: true, refetchQuery: [[`/usulan-kegiatan/${id_usulan_kegiatan}/dokumen`, {}]] });
    } catch (error) {
       return res.json({ status: false, message: error.message });
    }

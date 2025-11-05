@@ -92,7 +92,11 @@ router.post("/", async (req, res) => {
 
       logAudit(user_modified, "CREATE", "tb_standar_biaya_master", req.ip, null, { ...newData });
 
-      res.status(201).json({ status: true, message: "Standar biaya berhasil ditambahkan" });
+      res.status(201).json({
+         status: true,
+         message: "Standar biaya berhasil ditambahkan",
+         refetchQuery: [["/referensi/standar-biaya", { limit: "25", offset: "0" }]],
+      });
    } catch (error) {
       res.status(500).json({ error: error.message });
    }
@@ -140,7 +144,14 @@ router.put("/:id", async (req, res) => {
 
       logAudit(user_modified, "UPDATE", "tb_standar_biaya_master", req.ip, { ...oldData }, { ...newData });
 
-      res.json({ status: true, message: "Standar biaya berhasil diperbaharui" });
+      res.json({
+         status: true,
+         message: "Standar biaya berhasil diperbaharui",
+         refetchQuery: [
+            ["/referensi/standar-biaya", { limit: "25", offset: "0" }],
+            [`/referensi/standar-biaya/${id}`, {}],
+         ],
+      });
    } catch (error) {
       res.status(500).json({ error: error.message });
    }
@@ -165,7 +176,7 @@ router.delete("/:id", async (req, res) => {
 
       logAudit(user_modified, "DELETE", "tb_standar_biaya_master", req.ip, { ...oldData }, null);
 
-      res.json({ status: true });
+      res.json({ status: true, refetchQuery: [["/referensi/standar-biaya", { limit: "25", offset: "0" }]] });
    } catch (error) {
       res.status(500).json({ error: error.message });
    }

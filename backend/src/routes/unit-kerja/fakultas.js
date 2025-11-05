@@ -67,7 +67,11 @@ router.post("/", async (req, res) => {
 
       logAudit(user_modified, "CREATE", "tb_fakultas_master", req.ip, null, { ...newData });
 
-      res.status(201).json({ status: true, message: "Fakultas berhasil ditambahkan" });
+      res.status(201).json({
+         status: true,
+         message: "Fakultas berhasil ditambahkan",
+         refetchQuery: [["/unit-kerja/fakultas", { limit: "25", offset: "0" }]],
+      });
    } catch (error) {
       res.status(500).json({ error: error.message });
    }
@@ -103,7 +107,14 @@ router.put("/:id", async (req, res) => {
 
       logAudit(user_modified, "UPDATE", "tb_fakultas_master", req.ip, { ...oldData }, { ...newData });
 
-      res.json({ status: true, message: "Fakultas berhasil diperbaharui" });
+      res.json({
+         status: true,
+         message: "Fakultas berhasil diperbaharui",
+         refetchQuery: [
+            ["/unit-kerja/fakultas", { limit: "25", offset: "0" }],
+            [`/unit-kerja/fakultas/${id}`, {}],
+         ],
+      });
    } catch (error) {
       if (error.code === "P2025") {
          return res.status(404).json({ error: "Fakultas tidak ditemukan" });
@@ -132,7 +143,10 @@ router.delete("/:id", async (req, res) => {
 
       logAudit(user_modified, "DELETE", "tb_fakultas_master", req.ip, { ...oldData }, null);
 
-      res.json({ status: true });
+      res.json({
+         status: true,
+         refetchQuery: [["/unit-kerja/fakultas", { limit: "25", offset: "0" }]],
+      });
    } catch (error) {
       if (error.code === "P2025") {
          return res.status(404).json({ error: "Fakultas tidak ditemukan" });

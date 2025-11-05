@@ -1,11 +1,10 @@
 const express = require("express");
-const { PrismaClient } = require("@prisma/client");
 const { z } = require("zod");
-const errorHandler = require("../../handle-error.js");
-const { logAudit } = require("../../helpers.js");
+const errorHandler = require("@/handle-error.js");
+const { logAudit } = require("@/helpers.js");
 
 const router = express.Router();
-const prisma = new PrismaClient();
+const prisma = require("@/db.js");
 
 const uptSchema = z.object({
    nama: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Nama UPT wajib diisi")),
@@ -27,9 +26,9 @@ router.get("/", async (req, res) => {
          take: limit,
          skip: offset,
       });
-      res.json({ results, total });
+      return res.json({ results, total });
    } catch (error) {
-      res.status(500).json({ error: error.message });
+      return res.status(500).json({ error: error.message });
    }
 });
 
@@ -66,7 +65,7 @@ router.post("/", async (req, res) => {
 
       logAudit(user_modified, "CREATE", "tb_upt_master", req.ip, null, { ...newData });
 
-      res.status(201).json({ status: true, message: "UPT berhasil ditambahkan" });
+      res.status(201).json({ status: true, message: "UPT berhasil ditambahkan", refetchQuery: [["/unit-kerja/upt", { limit: "25", offset: "0" }]] });
    } catch (error) {
       res.status(500).json({ error: error.message });
    }
@@ -102,7 +101,14 @@ router.put("/:id", async (req, res) => {
 
       logAudit(user_modified, "UPDATE", "tb_upt_master", req.ip, { ...oldData }, { ...newData });
 
-      res.json({ status: true, message: "UPT berhasil diperbaharui" });
+      res.json({
+         status: true,
+         message: "UPT berhasil diperbaharui",
+         refetchQuery: [
+            ["/unit-kerja/upt", { limit: "25", offset: "0" }],
+            [`/unit-kerja/upt/${id}`, {}],
+         ],
+      });
    } catch (error) {
       if (error.code === "P2025") {
          return res.status(404).json({ error: "UPT tidak ditemukan" });
@@ -131,7 +137,11 @@ router.delete("/:id", async (req, res) => {
 
       logAudit(user_modified, "DELETE", "tb_upt_master", req.ip, { ...oldData }, null);
 
-      res.json({ status: true, message: "UPT berhasil dihapus" });
+      res.json({
+         status: true,
+         message: "UPT berhasil dihapus",
+         refetchQuery: [["/unit-kerja/upt", { limit: "25", offset: "0" }]],
+      });
    } catch (error) {
       if (error.code === "P2025") {
          return res.status(404).json({ error: "UPT tidak ditemukan" });

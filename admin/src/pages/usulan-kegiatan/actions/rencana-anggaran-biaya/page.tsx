@@ -3,17 +3,17 @@ import Table from "@/components/table";
 import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { useGetQuery } from "@/hooks/useGetQuery";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { getColumns } from "./column";
-import { useInitPage } from "./init";
 
 const Forms = lazy(() => import("./form/page"));
 
 export default function Page({ id_usulan_kegiatan, id_rab_detail }: Readonly<{ id_usulan_kegiatan?: string; id_rab_detail?: string }>) {
    const [openSheet, setOpenSheet] = useState(false);
 
-   const { results, total, isLoading } = useInitPage(id_usulan_kegiatan);
+   const { results, total, isLoading } = useGetQuery(`/usulan-kegiatan/${id_usulan_kegiatan}/rab`, {}, false);
 
    const navigate = useNavigate();
 

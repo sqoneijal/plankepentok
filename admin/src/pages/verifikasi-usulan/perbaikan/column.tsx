@@ -1,12 +1,9 @@
 import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
 import { toRupiah } from "@/helpers/init";
-import { usePutMutation } from "@/hooks/usePutMutation";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 import { Eye } from "lucide-react";
 import moment from "moment";
 import React from "react";
-import { toast } from "sonner";
 
 export type Unit = {
    id: number;
@@ -33,17 +30,8 @@ export type UsulanKegiatan = {
    unit_pengusul: UnitPengusul;
 };
 
-export type KlaimVerifikasi = {
-   id: number;
-   id_usulan_kegiatan: number;
-   id_verikator_usulan: number;
-   waktu_klaim: string;
-   status_klaim: string;
-};
-
 type RowData = UsulanKegiatan & {
    verikator_usulan: { id: number };
-   klaim_verifikasi: Array<KlaimVerifikasi>;
 };
 
 const columnHelper = createColumnHelper<RowData>();
@@ -112,42 +100,13 @@ const columnConfigs: Array<ColumnConfig> = [
 ];
 
 export const getColumns = (endpoint: string, navigate: (path: string) => void): Array<ColumnDef<RowData, unknown>> => {
-   const mutationHook = usePutMutation<Record<string, string>, unknown>;
-   const { mutate, isPending } = mutationHook(`${endpoint}/klaim`, (data) => ({ ...data }));
-
    return [
       columnHelper.display({
          id: "actions",
          header: "",
          cell: ({ row: { original } }) => {
-            const pending_klaim = original.klaim_verifikasi.find((e) => e.status_klaim === "pending");
-
-            return pending_klaim ? (
-               <Button
-                  variant="outline"
-                  className="size-6"
-                  onClick={() =>
-                     mutate(
-                        {
-                           id_usulan_kegiatan: String(original.id),
-                           id_verikator_usulan: String(pending_klaim.id_verikator_usulan),
-                        },
-                        {
-                           onSuccess: (response) => {
-                              const { status, message, redirect } = response;
-                              if (status) {
-                                 navigate(redirect);
-                              } else {
-                                 toast.error(message);
-                              }
-                           },
-                        }
-                     )
-                  }>
-                  {isPending ? <Spinner /> : <Eye />}
-               </Button>
-            ) : (
-               <Button variant="outline" className="size-6" onClick={() => navigate(`/verifikasi-usulan/pengajuan/${original.id}`)}>
+            return (
+               <Button variant="outline" className="size-6" onClick={() => navigate(`${endpoint}/${original.id}`)}>
                   <Eye />
                </Button>
             );

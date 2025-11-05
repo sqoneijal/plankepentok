@@ -44,7 +44,7 @@ export const getColumns = (endpoint: string): Array<ColumnDef<RowData, unknown>>
    columnHelper.display({
       id: "actions",
       header: "",
-      cell: ({ row: { original } }) => <ConfirmDialog url={endpoint} id={original.id as string | number} refetchKey={[[endpoint]]} />,
+      cell: ({ row: { original } }) => <ConfirmDialog url={endpoint} id={original.id as string | number} />,
       meta: { className: "w-[10px]" },
    }),
    ...columnConfigs.map((config) =>

@@ -21,10 +21,7 @@ export default function Page() {
    const { setButton } = useHeaderButton();
    const { results, isLoading } = useGetQueryDetail(endpoint, `${id}/ref-rab`);
 
-   const { mutate, isPending } = usePostMutation<FormData, unknown>(`${endpoint}/${id}`, (data) => ({ ...data }), [
-      [`${endpoint}/${id}`],
-      [`${endpoint}/${id}/ref-rab`],
-   ]);
+   const { mutate, isPending } = usePostMutation<FormData, unknown>(`${endpoint}/${id}`, (data) => ({ ...data }));
 
    useEffect(() => {
       setButton(<LinkButton label="Batal" url={`${endpoint}/${id}`} type="actions" />);

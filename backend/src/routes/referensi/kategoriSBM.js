@@ -83,7 +83,11 @@ router.post("/", async (req, res) => {
 
       logAudit(user_modified, "CREATE", "tb_kategori_sbm", req.ip, null, { ...newData });
 
-      res.status(201).json({ status: true, message: "Kategori SBM berhasil ditambahkan" });
+      res.status(201).json({
+         status: true,
+         message: "Kategori SBM berhasil ditambahkan",
+         refetchQuery: [["/referensi/kategori-sbm", { limit: "25", offset: "0" }]],
+      });
    } catch (error) {
       if (error.code === "P2002") {
          return res.json({ status: false, error: "Kode kategori SBM sudah ada" });
@@ -132,7 +136,14 @@ router.put("/:id", async (req, res) => {
 
       logAudit(user_modified, "UPDATE", "tb_kategori_sbm", req.ip, { ...oldData }, { ...newData });
 
-      res.json({ status: true, message: "Kategori SBM berhasil diperbaharui" });
+      res.json({
+         status: true,
+         message: "Kategori SBM berhasil diperbaharui",
+         refetchQuery: [
+            ["/referensi/kategori-sbm", { limit: "25", offset: "0" }],
+            [`/referensi/kategori-sbm/${id}`, {}],
+         ],
+      });
    } catch (error) {
       if (error.code === "P2025") {
          return res.status(404).json({ error: "Kategori SBM tidak ditemukan" });
@@ -163,7 +174,7 @@ router.delete("/:id", async (req, res) => {
 
       logAudit(user_modified, "DELETE", "tb_kategori_sbm", req.ip, { ...oldData }, null);
 
-      res.json({ status: true });
+      res.json({ status: true, refetchQuery: [["/referensi/kategori-sbm", { limit: "25", offset: "0" }]] });
    } catch (error) {
       if (error.code === "P2025") {
          return res.status(404).json({ error: "Kategori SBM tidak ditemukan" });

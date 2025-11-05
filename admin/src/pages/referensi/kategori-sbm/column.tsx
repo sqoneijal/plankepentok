@@ -35,7 +35,7 @@ export const getColumns = (endpoint: string): Array<ColumnDef<RowData, unknown>>
       cell: ({ row: { original } }) => (
          <>
             <LinkButton label={<SquarePen />} url={`${endpoint}/actions/${original.id}`} type="edit" />
-            <ConfirmDialog url={endpoint} id={original.id as string | number} refetchKey={[[endpoint]]} />
+            <ConfirmDialog url={endpoint} id={original.id as string | number} />
          </>
       ),
       meta: { className: "w-[80px]" },

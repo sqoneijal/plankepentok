@@ -1,5 +1,4 @@
 const express = require("express");
-const { PrismaClient } = require("@prisma/client");
 const errorHandler = require("../../handle-error.js");
 const { logAudit } = require("../../helpers.js");
 const { z } = require("zod");
@@ -15,7 +14,7 @@ const validation = z.object({
 });
 
 const router = express.Router();
-const prisma = new PrismaClient();
+const prisma = require("@/db.js");
 
 router.get("/", async (req, res) => {
    try {
@@ -155,7 +154,11 @@ router.post("/", async (req, res) => {
 
       logAudit(user_modified, "CREATE", "tb_detail_harga_sbm", req.ip, null, { ...newData });
 
-      res.status(201).json({ status: true, message: "Detail harga SBM berhasil ditambahkan" });
+      res.status(201).json({
+         status: true,
+         message: "Detail harga SBM berhasil ditambahkan",
+         refetchQuery: [["/referensi/detail-harga-sbm", { limit: "25", offset: "0" }]],
+      });
    } catch (error) {
       if (error.code === "P2002") {
          return res.status(400).json({ status: false, error: "Kombinasi ID SBM, tahun anggaran, dan ID satuan sudah ada" });
@@ -222,7 +225,14 @@ router.put("/:id", async (req, res) => {
 
       logAudit(user_modified, "UPDATE", "tb_detail_harga_sbm", req.ip, { ...oldData }, { ...newData });
 
-      return res.json({ status: true, message: "Detail harga SBM berhasil diperbaharui" });
+      return res.json({
+         status: true,
+         message: "Detail harga SBM berhasil diperbaharui",
+         refetchQuery: [
+            ["/referensi/detail-harga-sbm", { limit: "25", offset: "0" }],
+            [`/referensi/detail-harga-sbm/${id}`, {}],
+         ],
+      });
    } catch (error) {
       return res.json({ error: error.message });
    }
@@ -247,7 +257,7 @@ router.delete("/:id", async (req, res) => {
 
       logAudit(user_modified, "DELETE", "tb_detail_harga_sbm", req.ip, { ...oldData }, null);
 
-      res.json({ status: true });
+      res.json({ status: true, refetchQuery: [["/referensi/detail-harga-sbm", { limit: "25", offset: "0" }]] });
    } catch (error) {
       res.status(500).json({ error: error.message });
    }

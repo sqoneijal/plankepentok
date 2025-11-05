@@ -1,5 +1,4 @@
 const express = require("express");
-const { PrismaClient } = require("@prisma/client");
 const { z } = require("zod");
 const errorHandler = require("../../handle-error.js");
 const { logAudit } = require("../../helpers.js");
@@ -10,7 +9,7 @@ const validation = z.object({
 });
 
 const router = express.Router();
-const prisma = new PrismaClient();
+const prisma = require("@/db.js");
 
 router.get("/", async (req, res) => {
    try {
@@ -75,7 +74,11 @@ router.post("/", async (req, res) => {
 
       logAudit(user_modified, "CREATE", "tb_jenis_usulan", req.ip, null, { ...newData });
 
-      return res.status(201).json({ status: true, message: "Jenis usulan berhasil ditambahkan" });
+      return res.status(201).json({
+         status: true,
+         message: "Jenis usulan berhasil ditambahkan",
+         refetchQuery: [["/referensi/jenis-usulan", { limit: "25", offset: "0" }]],
+      });
    } catch (error) {
       return res.json({ status: false, message: error.message });
    }
@@ -112,7 +115,14 @@ router.put("/:id", async (req, res) => {
 
       logAudit(user_modified, "UPDATE", "tb_jenis_usulan", req.ip, { ...oldData }, { ...newData });
 
-      return res.json({ status: true, message: "Jenis usulan berhasil diperbaharui" });
+      return res.json({
+         status: true,
+         message: "Jenis usulan berhasil diperbaharui",
+         refetchQuery: [
+            ["/referensi/jenis-usulan", { limit: "25", offset: "0" }],
+            [`/referensi/jenis-usulan/${id}`, {}],
+         ],
+      });
    } catch (error) {
       return res.json({ status: false, message: error.message });
    }
@@ -137,7 +147,11 @@ router.delete("/:id", async (req, res) => {
 
       logAudit(user_modified, "DELETE", "tb_jenis_usulan", req.ip, { ...oldData }, null);
 
-      return res.json({ status: true, message: "Jenis usulan berhasil dihapus" });
+      return res.json({
+         status: true,
+         message: "Jenis usulan berhasil dihapus",
+         refetchQuery: [["/referensi/jenis-usulan", { limit: "25", offset: "0" }]],
+      });
    } catch (error) {
       return res.json({ status: false, message: error.message });
    }

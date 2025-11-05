@@ -69,7 +69,11 @@ router.post("/", async (req, res) => {
 
       logAudit(user_modified, "CREATE", "tb_biro_master", req.ip, null, { ...newData });
 
-      res.status(201).json({ status: true, message: "Biro berhasil ditambahkan" });
+      res.status(201).json({
+         status: true,
+         message: "Biro berhasil ditambahkan",
+         refetchQuery: [["/unit-kerja/biro", { limit: "25", offset: "0" }]],
+      });
    } catch (error) {
       res.status(500).json({ error: error.message });
    }
@@ -106,7 +110,14 @@ router.put("/:id", async (req, res) => {
 
       logAudit(user_modified, "UPDATE", "tb_biro_master", req.ip, { ...oldData }, { ...newData });
 
-      res.json({ status: true, message: "Biro berhasil diperbaharui" });
+      res.json({
+         status: true,
+         message: "Biro berhasil diperbaharui",
+         refetchQuery: [
+            ["/unit-kerja/biro", { limit: "25", offset: "0" }],
+            [`/unit-kerja/biro/${id}`, {}],
+         ],
+      });
    } catch (error) {
       if (error.code === "P2025") {
          return res.status(404).json({ error: "Biro tidak ditemukan" });
@@ -135,7 +146,7 @@ router.delete("/:id", async (req, res) => {
 
       logAudit(user_modified, "DELETE", "tb_biro_master", req.ip, { ...oldData }, null);
 
-      res.json({ status: true });
+      res.json({ status: true, refetchQuery: [["/unit-kerja/biro", { limit: "25", offset: "0" }]] });
    } catch (error) {
       if (error.code === "P2025") {
          return res.status(404).json({ error: "Biro tidak ditemukan" });

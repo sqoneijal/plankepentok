@@ -76,14 +76,10 @@ const JenisTableCell = ({ getValue }: { getValue: () => unknown }) => <JenisCell
 const columns = ({
    setOpenDialog,
    setFormData,
-   id_jenis_usulan,
-   id_usulan_kegiatan,
    verifikasi,
 }: {
    setOpenDialog: (status: boolean) => void;
    setFormData: (data: FormData) => void;
-   id_jenis_usulan: string;
-   id_usulan_kegiatan: string;
    verifikasi: Array<VerifikasiItem>;
 }): Array<ColumnDef<IkuItem>> => [
    {
@@ -95,7 +91,7 @@ const columns = ({
             variant="outline"
             onClick={() => {
                setOpenDialog(true);
-               setFormData({ id: String(getValue()), id_jenis_usulan, id_usulan_kegiatan });
+               setFormData({ id: String(getValue()) });
             }}>
             <PackageCheck />
          </Button>
@@ -152,8 +148,8 @@ function DialogIku({
    openDialog,
    setOpenDialog,
    endpoint,
-   id_jenis_usulan,
    id_usulan_kegiatan,
+   klaim_verifikasi,
 }: Readonly<{
    formData: FormData;
    setFormData: (data: FormData) => void;
@@ -163,10 +159,10 @@ function DialogIku({
    setOpenDialog: (open: boolean) => void;
    endpoint: string;
    id_usulan: string;
-   id_jenis_usulan: string;
    id_usulan_kegiatan: string;
+   klaim_verifikasi: Record<string, string>;
 }>) {
-   const submit = usePutMutation<FormData, unknown>(`${endpoint}/iku/${formData?.id}`, (data) => ({ ...data, id_jenis_usulan, id_usulan_kegiatan }));
+   const submit = usePutMutation<FormData, unknown>(`${endpoint}/iku/${formData?.id}`, (data) => ({ ...data, id_usulan_kegiatan, klaim_verifikasi }));
 
    return (
       <Dialog open={openDialog}>
@@ -239,17 +235,17 @@ export default function Iku({
    isLoading,
    endpoint,
    id_usulan,
-   id_jenis_usulan,
    id_usulan_kegiatan,
    verifikasi,
+   klaim_verifikasi,
 }: Readonly<{
    results: Array<IkuItem>;
    isLoading: boolean;
    endpoint: string;
    id_usulan: string;
-   id_jenis_usulan: string;
    id_usulan_kegiatan: string;
    verifikasi: Array<VerifikasiItem>;
+   klaim_verifikasi: Record<string, string>;
 }>) {
    const [formData, setFormData] = useState<FormData>({});
    const [errors, setErrors] = useState<FormData>({});
@@ -266,8 +262,8 @@ export default function Iku({
             setOpenDialog={setOpenDialog}
             endpoint={endpoint}
             id_usulan={id_usulan}
-            id_jenis_usulan={id_jenis_usulan}
             id_usulan_kegiatan={id_usulan_kegiatan}
+            klaim_verifikasi={klaim_verifikasi}
          />
          <Card className="mt-4">
             <CardHeader>
@@ -275,7 +271,7 @@ export default function Iku({
             </CardHeader>
             <CardContent>
                <Table
-                  columns={columns({ setOpenDialog, setFormData, id_jenis_usulan, id_usulan_kegiatan, verifikasi })}
+                  columns={columns({ setOpenDialog, setFormData, verifikasi })}
                   data={results}
                   isLoading={isLoading}
                   usePagination={false}

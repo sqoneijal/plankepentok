@@ -67,11 +67,10 @@ export function useInitPage(id?: string) {
 export function useUpdateInformasiUsulan(id: string | undefined, formData: FormData, setErrors: (errors: Record<string, string | null>) => void) {
    const { user } = UseAuth();
 
-   const { mutate, isPending } = usePutMutation<FormData, unknown>(
-      `/usulan-kegiatan/${id}`,
-      (data) => ({ ...covertToSTring(data), operator_input: String(user?.preferred_username) }),
-      [[`/usulan-kegiatan/${id}`]]
-   );
+   const { mutate, isPending } = usePutMutation<FormData, unknown>(`/usulan-kegiatan/${id}`, (data) => ({
+      ...covertToSTring(data),
+      operator_input: String(user?.preferred_username),
+   }));
 
    const onSubmit = () => {
       handleSubmit(mutate, formData, setErrors);

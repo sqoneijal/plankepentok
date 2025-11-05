@@ -80,11 +80,8 @@ export function ActionButton<T extends ActionButtonProps>({
    endpoint: string;
 }) {
    const id = selectedRow?.id;
-   const tahun_anggaran = selectedRow?.tahun_anggaran;
 
-   const { mutate, isPending } = usePutMutation<FormData, unknown>(`/pagu-anggaran/${endpoint}/${id}`, (data) => ({ id, ...data }), [
-      [`/pagu-anggaran/${tahun_anggaran}/${endpoint}`],
-   ]);
+   const { mutate, isPending } = usePutMutation<FormData, unknown>(`/pagu-anggaran/${endpoint}/${id}`, (data) => ({ id, ...data }));
 
    const onSubmit = () => {
       if (!selectedRow) return;
@@ -104,11 +101,8 @@ export function ActionButtonSub<T extends PaguSubUnitRow>({
    setSelectedRow: (data: PaguParentRow | PaguSubUnitRow | null) => void;
 }) {
    const id = selectedRow?.id;
-   const tahun_anggaran = selectedRow?.tahun_anggaran;
 
-   const { mutate, isPending } = usePutMutation<FormData, unknown>(`/pagu-anggaran/sub-unit/${id}`, (data) => ({ id, ...data }), [
-      [`/pagu-anggaran/${tahun_anggaran}/sub-unit`],
-   ]);
+   const { mutate, isPending } = usePutMutation<FormData, unknown>(`/pagu-anggaran/sub-unit/${id}`, (data) => ({ id, ...data }));
 
    const onSubmit = () => {
       if (!selectedRow) return;

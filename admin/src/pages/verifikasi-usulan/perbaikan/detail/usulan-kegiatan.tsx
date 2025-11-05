@@ -1,18 +1,7 @@
-import ConfirmDialog from "@/components/confirm-submit";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ButtonGroup } from "@/components/ui/button-group";
-import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Spinner } from "@/components/ui/spinner";
 import { toRupiah } from "@/helpers/init";
-import { usePostMutation } from "@/hooks/usePostMutation";
-import { FormTextarea } from "@/lib/helpers";
-import type { ApiResponse } from "@/types/init";
-import { useState } from "react";
-import { useNavigate } from "react-router";
-import { toast } from "sonner";
 
 export type Unit = {
    id: number;
@@ -47,12 +36,8 @@ export type DetailUsulan = {
       verikator_usulan: {
          id: number;
          tahap: string;
-         id_jenis_usulan: number;
-         pengguna: {
-            id: number;
-            username: string;
-         };
       };
+      [key: string]: string | number | boolean | object;
    };
 };
 
@@ -96,83 +81,11 @@ const formatStatus = (status: string) => {
    return status.charAt(0).toUpperCase() + status.slice(1);
 };
 
-export default function UsulanKegiatan({
-   results,
-   endpoint,
-   id_usulan,
-   klaim_verifikasi,
-}: Readonly<{ results: DetailUsulan; endpoint: string; id_usulan: string; klaim_verifikasi: Record<string, string> }>) {
-   const [dialogType, setDialogType] = useState<"reject" | "improve" | null>(null);
-   const [alasan, setAlasan] = useState("");
-   const [errors, setErrors] = useState({});
-
-   const navigate = useNavigate();
-
-   const tolakMutation = usePostMutation(`${endpoint}/${id_usulan}/tolak`);
-
-   const perbaikiMutation = usePostMutation(`${endpoint}/${id_usulan}/perbaiki`);
-
-   const handleAction = (mutation: ReturnType<typeof usePostMutation>) => {
-      mutation.mutate(
-         {
-            klaim_verifikasi,
-            catatan: alasan,
-         },
-         {
-            onSuccess: (response: ApiResponse) => {
-               const { errors, status, message } = response;
-               setErrors(errors || {});
-
-               if (status) {
-                  toast.success(message);
-                  setDialogType(null);
-                  setAlasan("");
-                  navigate(endpoint);
-                  return;
-               }
-
-               toast.error(message);
-            },
-         }
-      );
-   };
-
-   const handleTolak = () => {
-      handleAction(tolakMutation);
-   };
-
-   const handlePerbaiki = () => {
-      handleAction(perbaikiMutation);
-   };
-
+export default function UsulanKegiatan({ results }: Readonly<{ results: DetailUsulan }>) {
    return (
       <Card>
          <CardHeader>
             <CardTitle>Detail Usulan Kegiatan</CardTitle>
-            <CardAction>
-               <ButtonGroup className="-mt-2">
-                  <ConfirmDialog
-                     url={`${endpoint}/setujui`}
-                     refetchKey={[`${endpoint}/${id_usulan}`]}
-                     formData={{ id_usulan, klaim_verifikasi }}
-                     actionButton={
-                        <Button variant="outline" className="bg-green-300 font-bold">
-                           Setujui
-                        </Button>
-                     }
-                     message="Apakah Anda yakin ingin menyetujui usulan kegiatan ini?"
-                     onSuccess={(status) => {
-                        if (status) navigate(endpoint);
-                     }}
-                  />
-                  <Button variant="outline" className="bg-yellow-300 font-bold" onClick={() => setDialogType("improve")}>
-                     Perbaiki
-                  </Button>
-                  <Button variant="outline" className="bg-red-300 font-bold" onClick={() => setDialogType("reject")}>
-                     Tolak
-                  </Button>
-               </ButtonGroup>
-            </CardAction>
          </CardHeader>
          <CardContent>
             <div className="row">
@@ -252,37 +165,6 @@ export default function UsulanKegiatan({
                </div>
             </div>
          </CardContent>
-         {dialogType && (
-            <Dialog open={!!dialogType} onOpenChange={(open) => !open && setDialogType(null)}>
-               <DialogContent>
-                  <DialogHeader>
-                     <DialogTitle>{dialogType === "reject" ? "Konfirmasi Penolakan" : "Konfirmasi Perbaikan"}</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4 row">
-                     <FormTextarea
-                        divClassName="col-12"
-                        label={dialogType === "reject" ? "Alasan Penolakan" : "Alasan Perbaikan"}
-                        name="catatan"
-                        value={alasan}
-                        onChange={(value) => setAlasan(value)}
-                        errors={errors}
-                     />
-                  </div>
-                  <DialogFooter>
-                     <Button variant="outline" onClick={() => setDialogType(null)}>
-                        Batal
-                     </Button>
-                     <Button
-                        variant="destructive"
-                        onClick={dialogType === "reject" ? handleTolak : handlePerbaiki}
-                        disabled={dialogType === "reject" ? tolakMutation.isPending : perbaikiMutation.isPending}>
-                        {(dialogType === "reject" ? tolakMutation.isPending : perbaikiMutation.isPending) && <Spinner />}
-                        {dialogType === "reject" ? "Tolak" : "Perbaiki"}
-                     </Button>
-                  </DialogFooter>
-               </DialogContent>
-            </Dialog>
-         )}
       </Card>
    );
 }

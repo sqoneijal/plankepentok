@@ -105,9 +105,7 @@ export function useCreateData({
    setErrors: (errors: FormData) => void;
    handleSheetForm: (status: boolean) => void;
 }) {
-   const { mutate, isPending } = usePostMutation<FormData, unknown>("/usulan-kegiatan/rab", (data) => ({ ...data, id_usulan: id_usulan_kegiatan }), [
-      [`/usulan-kegiatan/${id_usulan_kegiatan}/rab`],
-   ]);
+   const { mutate, isPending } = usePostMutation<FormData, unknown>("/usulan-kegiatan/rab", (data) => ({ ...data, id_usulan: id_usulan_kegiatan }));
 
    const navigate = useNavigate();
 
@@ -131,11 +129,9 @@ export function useUpdateData({
    setErrors: (errors: FormData) => void;
    handleSheetForm: (status: boolean) => void;
 }) {
-   const { mutate, isPending } = usePutMutation<FormData, unknown>(
-      `/usulan-kegiatan/rab/${id_usulan_kegiatan}/${id_rab_detail}`,
-      (data) => ({ ...data }),
-      [[`/usulan-kegiatan/rab/${id_usulan_kegiatan}`]]
-   );
+   const { mutate, isPending } = usePutMutation<FormData, unknown>(`/usulan-kegiatan/rab/${id_usulan_kegiatan}/${id_rab_detail}`, (data) => ({
+      ...data,
+   }));
 
    const navigate = useNavigate();
 

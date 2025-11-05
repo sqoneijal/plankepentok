@@ -1,11 +1,14 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
-const { PrismaClient } = require("@prisma/client");
-const { withAccelerate } = require("@prisma/extension-accelerate");
+const prisma = require("./db.js");
+const moduleAlias = require("module-alias");
+
+moduleAlias.addAliases({
+   "@": __dirname,
+});
 
 const app = express();
-const prisma = new PrismaClient().$extends(withAccelerate());
 
 // Middleware
 app.use(cors());
@@ -32,6 +35,7 @@ app.use("/api/usulan-kegiatan", require("./routes/usulan-kegiatan"));
 app.use("/api/master-iku", require("./routes/master-iku"));
 app.use("/api/pengaturan", require("./routes/pengaturan"));
 app.use("/api/verifikasi-usulan/pengajuan", require("./routes/verifikasi-usulan/pengajuan"));
+app.use("/api/verifikasi-usulan/perbaikan", require("./routes/verifikasi-usulan/perbaikan"));
 app.use("/api/realisasi", require("./routes/realisasi"));
 app.use("/api/pengguna/daftar", require("./routes/pengguna/daftar"));
 app.use("/api/pengguna/logs", require("./routes/pengguna/logs"));

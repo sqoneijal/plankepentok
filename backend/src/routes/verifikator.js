@@ -1,7 +1,6 @@
 const express = require("express");
-const { PrismaClient } = require("@prisma/client");
-const { logAudit } = require("../helpers.js");
-const errorHandler = require("../handle-error.js");
+const { logAudit } = require("@/helpers.js");
+const errorHandler = require("@/handle-error.js");
 const { z } = require("zod");
 
 const validation = z.object({
@@ -11,7 +10,7 @@ const validation = z.object({
 });
 
 const router = express.Router();
-const prisma = new PrismaClient();
+const prisma = require("@/db.js");
 
 router.get("/", async (req, res) => {
    try {
@@ -112,7 +111,11 @@ router.post("/", async (req, res) => {
 
       logAudit(user_modified, "CREATE", "tb_verikator_usulan", req.ip, null, { ...newData });
 
-      return res.json({ status: true, message: "Verifikator berhasil ditambahkan" });
+      return res.json({
+         status: true,
+         message: "Verifikator berhasil ditambahkan",
+         refetchQuery: [["/verifikator", { limit: "25", offset: "0" }]],
+      });
    } catch (error) {
       return res.status(500).json({ status: false, message: error.message });
    }
@@ -137,7 +140,11 @@ router.delete("/:id", async (req, res) => {
 
       logAudit(user_modified, "DELETE", "tb_verikator_usulan", req.ip, { ...oldData }, null);
 
-      return res.json({ status: true, message: "Verifikator berhasil dihapus" });
+      return res.json({
+         status: true,
+         message: "Verifikator berhasil dihapus",
+         refetchQuery: [["/verifikator", { limit: "25", offset: "0" }]],
+      });
    } catch (error) {
       return res.status(500).json({ status: false, message: error.message });
    }

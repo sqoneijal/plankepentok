@@ -204,8 +204,7 @@ function DialogValidasi({
    openDialog,
    setOpenDialog,
    endpoint,
-   id_usulan,
-   id_jenis_usulan,
+   klaim_verifikasi,
 }: Readonly<{
    formData: FormData;
    setFormData: (data: FormData) => void;
@@ -214,15 +213,13 @@ function DialogValidasi({
    openDialog: boolean;
    setOpenDialog: (open: boolean) => void;
    endpoint: string;
-   id_usulan: string;
-   id_jenis_usulan: string;
+   klaim_verifikasi: Record<string, string>;
 }>) {
    const [selectedReferensi, setSelectedReferensi] = useState<ReferensiSbmItem>();
 
    const submit = usePutMutation<FormData, unknown>(`${endpoint}/rab/${formData?.id}`, (data) => ({
       ...data,
-      id_usulan_kegiatan: id_usulan,
-      id_jenis_usulan,
+      klaim_verifikasi,
    }));
 
    const { data, isLoading } = useApiQuery({
@@ -287,7 +284,6 @@ function DialogValidasi({
                               errors={errors}
                            />
                            <FormInput
-                              apakahFormatRupiah={true}
                               divClassName={cn("col-12 mt-4", formData?.approve === "ubah" && "col-md-6")}
                               type="number"
                               label="QTY"
@@ -403,18 +399,16 @@ export default function RencanaAnggaranBiaya({
    results,
    isLoading,
    endpoint,
-   id_usulan,
    anggaran_disetujui,
-   id_jenis_usulan,
    verifikasi,
+   klaim_verifikasi,
 }: Readonly<{
    results: Array<RencanaAnggaranBiayaItem>;
    isLoading: boolean;
    endpoint: string;
-   id_usulan: string;
    anggaran_disetujui: Record<string, string>;
    verifikasi: Array<VerifikasiItem>;
-   id_jenis_usulan: string;
+   klaim_verifikasi: Record<string, string>;
 }>) {
    const totalBiaya = results.reduce((sum: number, item: RencanaAnggaranBiayaItem) => sum + Number.parseFloat(item.total_biaya || "0"), 0);
 
@@ -432,8 +426,7 @@ export default function RencanaAnggaranBiaya({
             openDialog={openDialog}
             setOpenDialog={setOpenDialog}
             endpoint={endpoint}
-            id_usulan={id_usulan}
-            id_jenis_usulan={id_jenis_usulan}
+            klaim_verifikasi={klaim_verifikasi}
          />
          <Card className="mt-4">
             <CardHeader>

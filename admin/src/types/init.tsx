@@ -1,6 +1,7 @@
 export type Lists = Record<string, string | null>;
 
-export type FormData = Record<string, string>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type FormData = Record<string, any>;
 
 export type Option = {
    value: string;

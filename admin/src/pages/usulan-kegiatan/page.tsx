@@ -22,8 +22,7 @@ export default function Page() {
    const { data: dataPegawai, isLoading: isLoadingPegawai } = usePegawai(user?.preferred_username);
    const { mutate, isPending } = usePostMutation<{ kode: string; tempat_pelaksanaan: string; pengguna: Record<string, string> }, unknown>(
       endpoint,
-      (data) => ({ ...data }),
-      [[endpoint]]
+      (data) => ({ ...data })
    );
    const { results: detailPengguna } = useGetQueryDetail("/user-validate", user?.preferred_username);
 

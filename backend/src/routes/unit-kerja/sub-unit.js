@@ -155,7 +155,11 @@ router.post("/", async (req, res) => {
 
       logAudit(user_modified, "CREATE", "tb_sub_unit", req.ip, null, { ...newData });
 
-      res.status(201).json({ status: true, message: "Sub unit berhasil ditambahkan" });
+      res.status(201).json({
+         status: true,
+         message: "Sub unit berhasil ditambahkan",
+         refetchQuery: [["/unit-kerja/sub-unit", { limit: "25", offset: "0" }]],
+      });
    } catch (error) {
       res.status(500).json({ error: error.message });
    }
@@ -200,7 +204,14 @@ router.put("/:id", async (req, res) => {
 
       logAudit(user_modified, "UPDATE", "tb_sub_unit", req.ip, { ...oldData }, { ...newData });
 
-      res.status(201).json({ status: true, message: "Sub unit berhasil diperbaharui" });
+      res.status(201).json({
+         status: true,
+         message: "Sub unit berhasil diperbaharui",
+         refetchQuery: [
+            ["/unit-kerja/sub-unit", { limit: "25", offset: "0" }],
+            [`/unit-kerja/sub-unit/${id}`, {}],
+         ],
+      });
    } catch (error) {
       res.status(500).json({ error: error.message });
    }
@@ -225,7 +236,11 @@ router.delete("/:id", async (req, res) => {
 
       logAudit(user_modified, "DELETE", "tb_sub_unit", req.ip, { ...oldData }, null);
 
-      res.json({ status: true, message: "Sub unit berhasil dihapus" });
+      res.json({
+         status: true,
+         message: "Sub unit berhasil dihapus",
+         refetchQuery: [["/unit-kerja/sub-unit", { limit: "25", offset: "0" }]],
+      });
    } catch (error) {
       if (error.code === "P2025") {
          return res.status(404).json({ error: "Submit unit tidak ditemukan" });

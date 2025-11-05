@@ -68,7 +68,11 @@ router.post("/", async (req, res) => {
 
       logAudit(user_modified, "CREATE", "tb_lembaga_master", req.ip, null, { ...newData });
 
-      res.status(201).json({ status: true, message: "Lembaga berhasil ditambahkan" });
+      res.status(201).json({
+         status: true,
+         message: "Lembaga berhasil ditambahkan",
+         refetchQuery: [["/unit-kerja/lembaga", { limit: "25", offset: "0" }]],
+      });
    } catch (error) {
       res.status(500).json({ error: error.message });
    }
@@ -104,7 +108,14 @@ router.put("/:id", async (req, res) => {
 
       logAudit(user_modified, "UPDATE", "tb_lembaga_master", req.ip, { ...oldData }, { ...newData });
 
-      res.json({ status: true, message: "Lembaga berhasil diperbaharui" });
+      res.json({
+         status: true,
+         message: "Lembaga berhasil diperbaharui",
+         refetchQuery: [
+            ["/unit-kerja/lembaga", { limit: "25", offset: "0" }],
+            [`/unit-kerja/lembaga/${id}`, {}],
+         ],
+      });
    } catch (error) {
       if (error.code === "P2025") {
          return res.status(404).json({ error: "Lembaga tidak ditemukan" });
@@ -133,7 +144,10 @@ router.delete("/:id", async (req, res) => {
 
       logAudit(user_modified, "DELETE", "tb_lembaga_master", req.ip, { ...oldData }, null);
 
-      res.json({ status: true });
+      res.json({
+         status: true,
+         refetchQuery: [["/unit-kerja/lembaga", { limit: "25", offset: "0" }]],
+      });
    } catch (error) {
       if (error.code === "P2025") {
          return res.status(404).json({ error: "Lembaga tidak ditemukan" });

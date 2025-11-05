@@ -110,7 +110,7 @@ export const getColumns = (endpoint: string): Array<ColumnDef<RowData, unknown>>
                   <LinkButton label={<SquarePen />} url={`${endpoint}/actions/${original.id}`} type="edit" />
                )}
                {["", "draft", "perbaiki", "ditolak"].includes(original?.status_usulan as string) && (
-                  <ConfirmDelete url={endpoint} id={original.id as string | number} refetchKey={[[endpoint]]} />
+                  <ConfirmDelete url={endpoint} id={original.id as string | number} />
                )}
             </>
          );

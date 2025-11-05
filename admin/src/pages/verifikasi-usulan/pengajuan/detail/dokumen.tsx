@@ -12,6 +12,13 @@ import { PackageCheck } from "lucide-react";
 import React, { useState } from "react";
 import { toast } from "sonner";
 
+interface VerifikasiItem {
+   id_referensi: number;
+   table_referensi: string;
+   status: string | null;
+   catatan?: string;
+}
+
 interface DokumenItem {
    id: number;
    id_usulan: number;
@@ -41,17 +48,19 @@ const getApproveBadgeClass = (approve: string | null | undefined) => {
 
 const getApproveStatus = (approve: string | null) => {
    if (approve === null) return "Draft";
-   if (approve === "sesuai") return "Approved";
-   if (approve === "tidak_sesuai") return "Rejected";
+   if (approve === "sesuai") return "Sesuai";
+   if (approve === "tidak_sesuai") return "Tidak Sesuai";
    return "Draft";
 };
 
 const columns = ({
    setOpenDialog,
    setFormData,
+   verifikasi,
 }: {
    setOpenDialog: (open: boolean) => void;
    setFormData: (data: FormData) => void;
+   verifikasi: Array<VerifikasiItem>;
 }): Array<ColumnDef<DokumenItem>> => [
    {
       accessorKey: "id",
@@ -70,9 +79,15 @@ const columns = ({
       meta: { className: "w-[10px]" },
    },
    {
-      accessorKey: "approve",
-      header: "status",
-      cell: ({ getValue }) => <Badge className={getApproveBadgeClass(getValue()?.toString())}>{getApproveStatus(getValue() as string | null)}</Badge>,
+      accessorKey: "id",
+      header: "Status",
+      cell: ({ getValue }) => {
+         const value = verifikasi.find(
+            (e: { id_referensi: number; table_referensi: string }) => e.id_referensi === getValue() && e.table_referensi === "tb_dokumen_pendukung"
+         );
+
+         return <Badge className={getApproveBadgeClass(value?.status)}>{getApproveStatus(value?.status as string)}</Badge>;
+      },
       meta: { className: "w-[10px]" },
    },
    {
@@ -93,8 +108,14 @@ const columns = ({
       cell: AksiTableCell,
    },
    {
-      accessorKey: "catatan_perbaikan",
-      header: "catatan perbaikan",
+      accessorKey: "id",
+      header: "Catatan Perbaikan",
+      cell: ({ getValue }) => {
+         const value = verifikasi.find(
+            (e: { id_referensi: number; table_referensi: string }) => e.id_referensi === getValue() && e.table_referensi === "tb_dokumen_pendukung"
+         );
+         if (value && value?.status === "tidak_sesuai") return value?.catatan;
+      },
    },
 ];
 
@@ -102,8 +123,15 @@ export default function Dokumen({
    results,
    isLoading,
    endpoint,
-   id_usulan,
-}: Readonly<{ results: Array<DokumenItem>; isLoading: boolean; endpoint: string; id_usulan: string }>) {
+   verifikasi,
+   klaim_verifikasi,
+}: Readonly<{
+   results: Array<DokumenItem>;
+   isLoading: boolean;
+   endpoint: string;
+   verifikasi: Array<VerifikasiItem>;
+   klaim_verifikasi: Record<string, string>;
+}>) {
    const [formData, setFormData] = useState<FormData>({});
    const [errors, setErrors] = useState<FormData>({});
    const [openDialog, setOpenDialog] = useState(false);
@@ -118,7 +146,7 @@ export default function Dokumen({
             openDialog={openDialog}
             setOpenDialog={setOpenDialog}
             endpoint={endpoint}
-            id_usulan={id_usulan}
+            klaim_verifikasi={klaim_verifikasi}
          />
          <Card className="mt-4">
             <CardHeader>
@@ -126,7 +154,7 @@ export default function Dokumen({
             </CardHeader>
             <CardContent>
                <Table
-                  columns={columns({ setOpenDialog, setFormData })}
+                  columns={columns({ setOpenDialog, setFormData, verifikasi })}
                   data={results || []}
                   isLoading={isLoading}
                   usePagination={false}
@@ -146,7 +174,7 @@ function DialogActions({
    openDialog,
    setOpenDialog,
    endpoint,
-   id_usulan,
+   klaim_verifikasi,
 }: Readonly<{
    formData: FormData;
    setFormData: (data: FormData) => void;
@@ -155,9 +183,9 @@ function DialogActions({
    openDialog: boolean;
    setOpenDialog: (open: boolean) => void;
    endpoint: string;
-   id_usulan: string;
+   klaim_verifikasi: Record<string, string>;
 }>) {
-   const submit = usePutMutation<FormData, unknown>(`${endpoint}/dokumen/${formData?.id}`, (data) => ({ ...data }), [[`${endpoint}/${id_usulan}`]]);
+   const submit = usePutMutation<FormData, unknown>(`${endpoint}/dokumen/${formData?.id}`, (data) => ({ ...data, klaim_verifikasi }));
 
    return (
       <Dialog open={openDialog}>
