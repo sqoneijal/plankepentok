@@ -232,6 +232,8 @@ router.post("/", async (req, res) => {
          },
       });
 
+      await logAudit(user_modified, "CREATE", "tb_pengguna", req.ip, null, { ...newData });
+
       if (Number.parseInt(id_roles) === 3) {
          const newDataPenggunaRole = await prisma.tb_pengguna_role.create({
             data: {
@@ -244,17 +246,18 @@ router.post("/", async (req, res) => {
             },
          });
 
-         logAudit(user_modified, "CREATE", "tb_pengguna_role", req.ip, null, { ...newDataPenggunaRole });
+         await logAudit(user_modified, "CREATE", "tb_pengguna_role", req.ip, null, { ...newDataPenggunaRole });
       }
-
-      logAudit(user_modified, "CREATE", "tb_pengguna", req.ip, null, { ...newData });
 
       return res.json({
          status: true,
          message: "Pengguna berhasil disimpan",
          split_id_parent,
          length: split_id_parent.length,
-         refetchQuery: [["/pengguna/daftar", { limit: "25", offset: "0" }]],
+         refetchQuery: [
+            ["/pengguna/daftar", { limit: "25", offset: "0" }],
+            [`/user-validate/${user_modified}`, {}],
+         ],
       });
    } catch (error) {
       return res.json({ status: false, message: error.message });
@@ -286,9 +289,16 @@ router.delete("/:id", async (req, res) => {
          where: { id: Number.parseInt(id) },
       });
 
-      logAudit(user_modified, "DELETE", "tb_pengguna", req.ip, { ...oldData }, null);
+      await logAudit(user_modified, "DELETE", "tb_pengguna", req.ip, { ...oldData }, null);
 
-      return res.json({ status: true, message: "Pengguna berhasil dihapus", refetchQuery: [["/pengguna/daftar", { limit: "25", offset: "0" }]] });
+      return res.json({
+         status: true,
+         message: "Pengguna berhasil dihapus",
+         refetchQuery: [
+            ["/pengguna/daftar", { limit: "25", offset: "0" }],
+            [`/user-validate/${user_modified}`, {}],
+         ],
+      });
    } catch (error) {
       return res.json({ status: false, message: error.message });
    }

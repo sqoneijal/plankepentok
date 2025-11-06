@@ -48,6 +48,7 @@ export default function Page() {
                onClick={() => {
                   const operator = detailPengguna.find((e: { roles: { id: number } }) => e.roles.id === 3);
                   if (!objectLength(operator)) {
+                     toast.error("Anda tidak dapat melakukan penambahan usulan kegiatan.");
                      return;
                   }
 

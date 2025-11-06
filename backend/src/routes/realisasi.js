@@ -1,7 +1,6 @@
 const express = require("express");
-const { PrismaClient } = require("@prisma/client");
-const errorHandler = require("../handle-error.js");
-const { logAudit } = require("../helpers.js");
+const errorHandler = require("@/handle-error.js");
+const { logAudit } = require("@/helpers.js");
 const { z } = require("zod");
 
 const cleanRupiah = (val, fallback = 0) => {
@@ -19,12 +18,71 @@ const validation = z.object({
 });
 
 const router = express.Router();
-const prisma = new PrismaClient();
+const prisma = require("@/db.js");
+
+const getActiveIdField = (data) => {
+   const mapping = {
+      id_biro: "tb_pagu_anggaran_biro",
+      id_lembaga: "tb_pagu_anggaran_lembaga",
+      id_upt: "tb_pagu_anggaran_upt",
+      id_fakultas: "tb_pagu_anggaran_fakultas",
+      id_sub_unit: "tb_pagu_sub_unit",
+   };
+
+   for (const [field, table] of Object.entries(mapping)) {
+      if (data[field] != null) {
+         return {
+            field,
+            value: data[field],
+            tabel_referensi: table,
+            keterangan: `Nilai berasal dari field '${field}' (${table})`,
+         };
+      }
+   }
+
+   return {
+      field: null,
+      value: null,
+      tabel_referensi: null,
+      keterangan: "Semua field bernilai null",
+   };
+};
+
+const hitungRealiasi = async (tx, anggaran_digunakan, unit_pengusul, user_modified, ip) => {
+   const pengaturan = await tx.tb_pengaturan.findFirst({
+      where: { is_aktif: true },
+   });
+
+   const paguUnit = getActiveIdField(unit_pengusul);
+
+   const oldData = await tx[paguUnit.tabel_referensi].findFirst({
+      where: { [paguUnit.field]: paguUnit.value, tahun_anggaran: pengaturan.tahun_anggaran },
+   });
+
+   const newData = await tx[paguUnit.tabel_referensi].update({
+      where: { id: oldData.id },
+      data: {
+         realisasi: cleanRupiah(anggaran_digunakan) + cleanRupiah(oldData.realisasi),
+      },
+   });
+
+   await logAudit(user_modified, "UPDATE", paguUnit.tabel_referensi, ip, { ...oldData }, { ...newData });
+
+   const newDataPengaturan = await tx.tb_pengaturan.update({
+      where: { id: pengaturan.id },
+      data: {
+         realisasi: cleanRupiah(anggaran_digunakan) + cleanRupiah(pengaturan.realisasi),
+      },
+   });
+
+   await logAudit(user_modified, "UPDATE", "tb_pengaturan", ip, { ...pengaturan }, { ...newDataPengaturan });
+};
 
 router.post("/:id_usulan", async (req, res) => {
    try {
       const { id_usulan } = req.params;
-      const { id, new_total_biaya, anggaran_digunakan, user_modified, deskripsi, tanggal_selesai, tanggal_mulai } = req.body;
+      const { id, new_total_biaya, anggaran_digunakan, user_modified, deskripsi, tanggal_selesai, tanggal_mulai, usulan_kegiatan } = req.body;
+      const { unit_pengusul } = usulan_kegiatan;
 
       const parsed = validation.safeParse(req.body);
 
@@ -42,22 +100,32 @@ router.post("/:id_usulan", async (req, res) => {
          });
       }
 
-      const newData = await prisma.tb_realisasi.create({
-         data: {
-            id_usulan: Number.parseInt(id_usulan),
-            id_rab: Number.parseInt(id),
-            tanggal_mulai: new Date(tanggal_mulai),
-            tanggal_selesai: new Date(tanggal_selesai),
-            deskripsi,
-            anggaran_digunakan: Number.parseFloat(cleanRupiah(anggaran_digunakan)),
-            uploaded: new Date(),
-            user_modified,
-         },
+      await prisma.$transaction(async (tx) => {
+         const newData = await tx.tb_realisasi.create({
+            data: {
+               id_usulan: Number.parseInt(id_usulan),
+               id_rab: Number.parseInt(id),
+               tanggal_mulai: new Date(tanggal_mulai),
+               tanggal_selesai: new Date(tanggal_selesai),
+               deskripsi,
+               anggaran_digunakan: Number.parseFloat(cleanRupiah(anggaran_digunakan)),
+               uploaded: new Date(),
+               user_modified,
+            },
+         });
+
+         await logAudit(user_modified, "CREATE", "tb_realisasi", req.ip, null, { ...newData });
+         await hitungRealiasi(tx, anggaran_digunakan, unit_pengusul, user_modified, req.ip);
       });
 
-      logAudit(user_modified, "CREATE", "tb_realisasi", req.ip, null, { ...newData });
-
-      return res.json({ status: true, message: "Realisasi berhasil disimpan" });
+      return res.json({
+         status: true,
+         message: "Realisasi berhasil disimpan",
+         refetchQuery: [
+            [`/realisasi/${id_usulan}`, {}],
+            [`/realisasi/${id_usulan}/ref-rab`, {}],
+         ],
+      });
    } catch (error) {
       return res.json({ error: error.message });
    }
@@ -78,21 +146,26 @@ router.get("/", async (req, res) => {
          select: {
             id: true,
             kode: true,
-            nama: true,
-            waktu_mulai: true,
-            waktu_selesai: true,
-            rencana_total_anggaran: true,
-            total_anggaran: true,
-            rab_detail: {
-               where: { approve: "valid" },
+            jenis_usulan: {
                select: {
-                  rab_detail_perubahan: {
-                     select: {
-                        total_biaya: true,
-                     },
-                  },
+                  nama: true,
                },
             },
+            waktu_mulai: true,
+            waktu_selesai: true,
+            unit_pengusul: {
+               select: {
+                  biro_master: { select: { nama: true } },
+                  fakultas_master: { select: { nama: true } },
+                  upt_master: { select: { nama: true } },
+                  lembaga_master: { select: { nama: true } },
+                  sub_unit: { select: { nama: true } },
+               },
+            },
+            anggaran_disetujui: {
+               select: { jumlah: true },
+            },
+            realisasi: true,
          },
       });
       res.json({ results, total });
@@ -112,8 +185,27 @@ router.get("/:id_usulan/ref-rab", async (req, res) => {
 
       const realizedIds = realisasi.map((r) => r.id_rab);
 
+      const verifikasi = await prisma.tb_verifikasi.findMany({
+         where: {
+            table_referensi: "tb_rab_detail",
+            status: "valid",
+            id_usulan_kegiatan: Number.parseInt(id_usulan),
+            id_referensi: { notIn: realizedIds },
+         },
+         orderBy: {
+            tahap: "desc",
+         },
+         distinct: ["id_referensi", "table_referensi"],
+         select: { id_referensi: true },
+      });
+
+      const referensiID = verifikasi.map((r) => r.id_referensi);
+
       const results = await prisma.tb_rab_detail.findMany({
-         where: { id_usulan: Number.parseInt(id_usulan), approve: "valid", id: { notIn: realizedIds } },
+         where: {
+            id_usulan: Number.parseInt(id_usulan),
+            id: { in: referensiID },
+         },
          select: {
             id: true,
             uraian_biaya: true,
@@ -136,12 +228,17 @@ router.get("/:id_usulan/ref-rab", async (req, res) => {
                   total_biaya: true,
                },
             },
+            usulan_kegiatan: {
+               select: {
+                  unit_pengusul: true,
+               },
+            },
          },
       });
 
-      return res.json({ results });
+      res.json({ results });
    } catch (error) {
-      return res.json({ error: error.message });
+      res.json({ error: error.message });
    }
 });
 
@@ -149,57 +246,87 @@ router.get("/:id", async (req, res) => {
    try {
       const { id } = req.params;
 
+      const sesuaiRelasiIKU = await prisma.tb_verifikasi.findMany({
+         where: {
+            table_referensi: "tb_relasi_usulan_iku",
+            status: "sesuai",
+            id_usulan_kegiatan: Number.parseInt(id),
+         },
+         orderBy: {
+            tahap: "desc",
+         },
+         distinct: ["id_referensi", "table_referensi"],
+         select: { id_referensi: true },
+      });
+
+      const sesuaiRelasiIKUID = sesuaiRelasiIKU.map((r) => r.id_referensi);
+
+      const validAnggaranBiaya = await prisma.tb_verifikasi.findMany({
+         where: {
+            table_referensi: "tb_rab_detail",
+            status: "valid",
+            id_usulan_kegiatan: Number.parseInt(id),
+         },
+         orderBy: {
+            tahap: "desc",
+         },
+         distinct: ["id_referensi", "table_referensi"],
+         select: { id_referensi: true },
+      });
+
+      const validAnggaranBiayaID = validAnggaranBiaya.map((r) => r.id_referensi);
+
+      const sesuaiDokumen = await prisma.tb_verifikasi.findMany({
+         where: {
+            table_referensi: "tb_dokumen_pendukung",
+            status: "sesuai",
+            id_usulan_kegiatan: Number.parseInt(id),
+         },
+         orderBy: {
+            tahap: "desc",
+         },
+         distinct: ["id_referensi", "table_referensi"],
+         select: { id_referensi: true },
+      });
+
+      const sesuaiDokumenID = sesuaiDokumen.map((r) => r.id_referensi);
+
       const results = await prisma.tb_usulan_kegiatan.findUnique({
          where: { id: Number.parseInt(id), status_usulan: "diterima" },
          select: {
             id: true,
             kode: true,
-            nama: true,
             latar_belakang: true,
             tujuan: true,
             sasaran: true,
             waktu_mulai: true,
             waktu_selesai: true,
             tempat_pelaksanaan: true,
-            id_unit_pengusul: true,
-            operator_input: true,
-            total_anggaran: true,
-            tanggal_submit: true,
-            rencana_total_anggaran: true,
-            dokumen_pendukung: {
-               where: { approve: "sesuai" },
+            pengguna: {
                select: {
-                  id: true,
-                  nama_dokumen: true,
-                  tipe_dokumen: true,
-                  path_file: true,
-                  file_dokumen: true,
+                  fullname: true,
                },
             },
-            rab_detail: {
-               where: { approve: "valid" },
+            total_anggaran: true,
+            status_usulan: true,
+            tanggal_submit: true,
+            rencana_total_anggaran: true,
+            catatan_perbaikan: true,
+            jenis_usulan: { select: { id: true, nama: true } },
+            anggaran_disetujui: {
+               select: { jumlah: true },
+            },
+            unit_pengusul: {
                select: {
-                  id: true,
-                  uraian_biaya: true,
-                  qty: true,
-                  harga_satuan: true,
-                  total_biaya: true,
-                  catatan: true,
-                  unit_satuan: {
-                     select: {
-                        id: true,
-                        nama: true,
-                        deskripsi: true,
-                        aktif: true,
-                     },
-                  },
-                  rab_detail_perubahan: {
-                     select: { id: true, qty: true, harga_satuan: true, total_biaya: true },
-                  },
+                  biro_master: { select: { nama: true } },
+                  lembaga_master: { select: { nama: true } },
+                  fakultas_master: { select: { nama: true } },
+                  upt_master: { select: { nama: true } },
+                  sub_unit: { select: { nama: true } },
                },
             },
             relasi_usulan_iku: {
-               where: { approve: "sesuai" },
+               where: { id: { in: sesuaiRelasiIKUID } },
                select: {
                   id: true,
                   iku_master: {
@@ -213,6 +340,42 @@ router.get("/:id", async (req, res) => {
                   },
                },
             },
+            rab_detail: {
+               where: { id: { in: validAnggaranBiayaID } },
+               select: {
+                  id: true,
+                  id_usulan: true,
+                  uraian_biaya: true,
+                  qty: true,
+                  unit_satuan: {
+                     select: {
+                        nama: true,
+                        deskripsi: true,
+                     },
+                  },
+                  harga_satuan: true,
+                  total_biaya: true,
+                  catatan: true,
+                  rab_detail_perubahan: {
+                     select: {
+                        id: true,
+                        qty: true,
+                        harga_satuan: true,
+                        total_biaya: true,
+                     },
+                  },
+               },
+            },
+            dokumen_pendukung: {
+               where: { id: { in: sesuaiDokumenID } },
+               select: {
+                  id: true,
+                  nama_dokumen: true,
+                  tipe_dokumen: true,
+                  path_file: true,
+                  file_dokumen: true,
+               },
+            },
             realisasi: {
                select: {
                   id: true,
@@ -222,18 +385,20 @@ router.get("/:id", async (req, res) => {
                   anggaran_digunakan: true,
                   rab_detail: {
                      select: {
-                        id: true,
                         uraian_biaya: true,
                         qty: true,
                         rab_detail_perubahan: {
-                           select: { id: true, qty: true, harga_satuan: true, total_biaya: true },
+                           select: {
+                              id: true,
+                              harga_satuan: true,
+                              qty: true,
+                              total_biaya: true,
+                           },
                         },
                         unit_satuan: {
                            select: {
-                              id: true,
                               nama: true,
                               deskripsi: true,
-                              aktif: true,
                            },
                         },
                      },

@@ -1,4 +1,4 @@
-import { toRupiah } from "@/helpers/init";
+import { objectLength, toRupiah } from "@/helpers/init";
 import { LinkButton } from "@/lib/helpers";
 import { createColumnHelper, type CellContext, type ColumnDef } from "@tanstack/react-table";
 import { Eye } from "lucide-react";
@@ -9,10 +9,39 @@ type RowData = Record<string, unknown>;
 
 const columnHelper = createColumnHelper<RowData>();
 
+export type Unit = {
+   id: number;
+   nama: string;
+};
+
 type ColumnConfig = {
    key: string;
    header: string;
    cell?: (info: CellContext<RowData, unknown>) => React.ReactNode;
+};
+
+export type UnitPengusul = {
+   biro_master?: Unit | null;
+   fakultas_master?: Unit | null;
+   lembaga_master?: Unit | null;
+   sub_unit?: Unit | null;
+   upt_master?: Unit | null;
+};
+
+export const getActiveUnit = (unit_pengusul: UnitPengusul) => {
+   if (!unit_pengusul) return null;
+   const keys = Object.keys(unit_pengusul) as Array<keyof UnitPengusul>;
+
+   let unit;
+
+   for (const key of keys) {
+      const value = unit_pengusul[key];
+      if (objectLength(value)) {
+         unit = value?.nama;
+      }
+   }
+
+   return unit;
 };
 
 const columnConfigs: Array<ColumnConfig> = [
@@ -21,8 +50,8 @@ const columnConfigs: Array<ColumnConfig> = [
       header: "kode",
    },
    {
-      key: "nama",
-      header: "nama usulan",
+      key: "jenis_usulan.nama",
+      header: "jenis usulan",
    },
    {
       key: "waktu_mulai",
@@ -41,29 +70,14 @@ const columnConfigs: Array<ColumnConfig> = [
       },
    },
    {
-      key: "rencana_total_anggaran",
-      header: "rencana anggaran",
-      cell: (info) => {
-         const value = info.getValue();
-         return toRupiah(value);
-      },
+      key: "anggaran_disetujui.jumlah",
+      header: "anggaran",
+      cell: ({ getValue }) => toRupiah(getValue()),
    },
    {
-      key: "",
-      header: "anggaran",
-      cell: (info) => {
-         const row = info.row.original;
-         const rabDetail = row.rab_detail || [];
-         const total = (rabDetail as Array<Record<string, unknown>>).reduce((sum: number, item: Record<string, unknown>) => {
-            const perubahan = item.rab_detail_perubahan as Record<string, unknown> | undefined;
-            return (
-               sum +
-               (perubahan ? Number.parseFloat((perubahan.total_biaya as string) || "0") : Number.parseFloat((item.total_biaya as string) || "0"))
-            );
-         }, 0);
-
-         return `${toRupiah(row.total_anggaran)} -> ${toRupiah(total)}`;
-      },
+      key: "unit_pengusul",
+      header: "unit",
+      cell: ({ getValue }) => getActiveUnit(getValue() as UnitPengusul),
    },
 ];
 

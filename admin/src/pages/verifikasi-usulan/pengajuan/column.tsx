@@ -119,39 +119,30 @@ export const getColumns = (endpoint: string, navigate: (path: string) => void): 
       columnHelper.display({
          id: "actions",
          header: "",
-         cell: ({ row: { original } }) => {
-            const pending_klaim = original.klaim_verifikasi.find((e) => e.status_klaim === "pending");
-
-            return pending_klaim ? (
-               <Button
-                  variant="outline"
-                  className="size-6"
-                  onClick={() =>
-                     mutate(
-                        {
-                           id_usulan_kegiatan: String(original.id),
-                           id_verikator_usulan: String(pending_klaim.id_verikator_usulan),
+         cell: ({ row: { original } }) => (
+            <Button
+               variant="outline"
+               className="size-6"
+               onClick={() =>
+                  mutate(
+                     {
+                        id_usulan_kegiatan: String(original.id),
+                     },
+                     {
+                        onSuccess: (response) => {
+                           const { status, message, redirect } = response;
+                           if (status) {
+                              navigate(redirect);
+                           } else {
+                              toast.error(message);
+                           }
                         },
-                        {
-                           onSuccess: (response) => {
-                              const { status, message, redirect } = response;
-                              if (status) {
-                                 navigate(redirect);
-                              } else {
-                                 toast.error(message);
-                              }
-                           },
-                        }
-                     )
-                  }>
-                  {isPending ? <Spinner /> : <Eye />}
-               </Button>
-            ) : (
-               <Button variant="outline" className="size-6" onClick={() => navigate(`/verifikasi-usulan/pengajuan/${original.id}`)}>
-                  <Eye />
-               </Button>
-            );
-         },
+                     }
+                  )
+               }>
+               {isPending ? <Spinner /> : <Eye />}
+            </Button>
+         ),
          meta: { className: "w-[10px]" },
       }),
       ...columnConfigs.map((config) =>

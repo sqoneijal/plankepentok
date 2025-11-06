@@ -6,9 +6,9 @@ import { toNumber } from "@/helpers/init";
 import { useHeaderButton } from "@/hooks/store";
 import { useGetQueryDetail } from "@/hooks/useGetQueryDetail";
 import { usePostMutation } from "@/hooks/usePostMutation";
-import { FormDatePicker, FormInput, FormTextarea, LinkButton } from "@/lib/helpers";
+import { FormDatePicker, FormInput, FormTextarea } from "@/lib/helpers";
 import { useEffect, useState } from "react";
-import { useParams } from "react-router";
+import { Link, useParams } from "react-router";
 import { toast } from "sonner";
 import { columns } from "./column";
 
@@ -24,7 +24,11 @@ export default function Page() {
    const { mutate, isPending } = usePostMutation<FormData, unknown>(`${endpoint}/${id}`, (data) => ({ ...data }));
 
    useEffect(() => {
-      setButton(<LinkButton label="Batal" url={`${endpoint}/${id}`} type="actions" />);
+      setButton(
+         <Button asChild variant="outline">
+            <Link to={`${endpoint}/${id}`}>Batal</Link>
+         </Button>
+      );
       return () => {
          setButton(<div />);
       };

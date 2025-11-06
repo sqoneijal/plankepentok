@@ -1,9 +1,10 @@
 import Table from "@/components/table";
+import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { objectLength, toRupiah } from "@/helpers/init";
-import { LinkButton } from "@/lib/helpers";
 import type { ColumnDef } from "@tanstack/react-table";
+import { Link } from "react-router";
 
 type ApproveStatus = "valid" | "tidak_valid" | "perbaiki" | null;
 
@@ -102,13 +103,20 @@ export default function RencanaAnggaranBiaya({
    isLoading,
    endpoint,
    id,
-}: Readonly<{ results: Array<RealisasiRencanaAnggaranBiayaItem>; isLoading: boolean; endpoint: string; id: string }>) {
+}: Readonly<{
+   results: Array<RealisasiRencanaAnggaranBiayaItem>;
+   isLoading: boolean;
+   endpoint: string;
+   id: string;
+}>) {
    return (
       <Card className="mt-4">
          <CardHeader>
             <CardTitle>Realisasi Rencana Anggaran Biaya</CardTitle>
             <CardAction>
-               <LinkButton label="Tambah Realisasi" url={`${endpoint}/${id}/actions`} type="actions" />
+               <Button asChild variant="outline" className="-mt-2">
+                  <Link to={`${endpoint}/${id}/actions`}>Tambah Realisasi</Link>
+               </Button>
             </CardAction>
          </CardHeader>
          <CardContent>

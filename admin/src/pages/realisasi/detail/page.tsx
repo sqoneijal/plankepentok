@@ -11,6 +11,12 @@ const RencanaAnggaranBiaya = lazy(() => import("./rencana-anggaran-biaya"));
 const RencanaAnggaranBiayaRealisasi = lazy(() => import("./rencana-anggaran-biaya-realisasi"));
 const Dokumen = lazy(() => import("./dokumen"));
 
+export interface VerifikasiItem {
+   id_referensi: number;
+   table_referensi: string;
+   status: string;
+}
+
 export default function Page() {
    const { id } = useParams() as { id: string };
 

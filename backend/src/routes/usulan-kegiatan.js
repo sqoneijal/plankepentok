@@ -332,8 +332,23 @@ router.put("/usul", async (req, res) => {
    try {
       const { id_usulan, user_modified } = req.body;
 
+      const pengaturan = await prisma.tb_pengaturan.findFirst({
+         where: { is_aktif: true },
+         select: { id: true },
+      });
+
+      if (!pengaturan) {
+         return res.json({ status: false, message: "Tidak dapat melakukan penambahkan usulan kegiatan, tidak ada tahun anggaran yang sedang aktif" });
+      }
+
       const oldData = await prisma.tb_usulan_kegiatan.findUnique({
          where: { id: Number.parseInt(id_usulan) },
+         select: {
+            modified: true,
+            user_modified: true,
+            status_usulan: true,
+            id_pengaturan: true,
+         },
       });
 
       if (!oldData) {
@@ -371,38 +386,27 @@ router.put("/usul", async (req, res) => {
          });
       }
 
-      // Check if klaim already exists to simulate insert ignore
-      const existingKlaim = await prisma.tb_klaim_verifikasi.findFirst({
-         where: {
-            id_usulan_kegiatan: oldData.id,
-            id_verikator_usulan: checkVerifikator.id,
-         },
-      });
-
-      if (!existingKlaim) {
-         const newDataKlaim = await prisma.tb_klaim_verifikasi.create({
-            data: {
-               id_usulan_kegiatan: oldData.id,
-               id_verikator_usulan: checkVerifikator.id,
-               status_klaim: "pending",
-            },
-         });
-
-         logAudit("system", "CREATE", "tb_klaim_verifikasi", req.ip, null, { ...newDataKlaim });
-      }
-
       const newData = await prisma.tb_usulan_kegiatan.update({
          where: { id: Number.parseInt(id_usulan) },
          data: {
             modified: new Date(),
             user_modified,
             status_usulan: "pengajuan",
+            id_pengaturan: pengaturan.id,
          },
       });
 
       await logAudit(user_modified, "UPDATE", "tb_usulan_kegiatan", req.ip, { ...oldData }, { ...newData });
 
-      return res.json({ status: true, message: "Usulan kegiatan berhasil diperbaharui", checkVerifikator });
+      return res.json({
+         status: true,
+         message: "Usulan kegiatan berhasil diperbaharui",
+         checkVerifikator,
+         refetchQuery: [
+            [`/usulan-kegiatan/${id_usulan}`, {}],
+            ["/verifikasi-usulan/pengajuan", { limit: "25", offset: "0" }],
+         ],
+      });
    } catch (error) {
       return res.json({ status: false, message: error.message });
    }
@@ -629,11 +633,40 @@ router.delete("/:id", async (req, res) => {
          return res.json({ status: false, message: "Tidak dapat melakukan penghapusan pengajuan" });
       }
 
+      // Delete related records first to avoid foreign key constraint violations
+      await prisma.tb_anggaran_disetujui.deleteMany({
+         where: { id_usulan: Number.parseInt(id) },
+      });
+
+      await prisma.tb_unit_pengusul.deleteMany({
+         where: { id_usulan_kegiatan: Number.parseInt(id) },
+      });
+
+      await prisma.tb_relasi_usulan_iku.deleteMany({
+         where: { id_usulan: Number.parseInt(id) },
+      });
+
+      await prisma.tb_rab_detail.deleteMany({
+         where: { id_usulan: Number.parseInt(id) },
+      });
+
+      await prisma.tb_dokumen_pendukung.deleteMany({
+         where: { id_usulan: Number.parseInt(id) },
+      });
+
+      await prisma.tb_klaim_verifikasi.deleteMany({
+         where: { id_usulan_kegiatan: Number.parseInt(id) },
+      });
+
+      await prisma.tb_verifikasi.deleteMany({
+         where: { id_usulan_kegiatan: Number.parseInt(id) },
+      });
+
       await prisma.tb_usulan_kegiatan.delete({
          where: { id: Number.parseInt(id) },
       });
 
-      await logAudit(user_modified, "DELETE", "tb_usulan_kegiatan", req.ip, null, null);
+      await logAudit(user_modified, "DELETE", "tb_usulan_kegiatan", req.ip, { ...checkStatusUsulan }, null);
 
       return res.json({
          status: true,
