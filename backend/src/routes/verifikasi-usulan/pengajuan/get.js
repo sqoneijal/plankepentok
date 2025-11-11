@@ -1,4 +1,4 @@
-const prisma = require("@/db.js");
+const db = require("@/db.js");
 
 const getData = async (req, res) => {
    try {
@@ -7,7 +7,7 @@ const getData = async (req, res) => {
       let results = [];
       let total = 0;
 
-      await prisma.$transaction(async (tx) => {
+      await db.read.$transaction(async (tx) => {
          const pengguna = await tx.tb_pengguna.findFirst({
             where: { username, id_roles: 4 },
             select: {
@@ -102,201 +102,199 @@ const getDetail = async (req, res) => {
 
       let results = {};
 
-      await prisma.$transaction(async (tx) => {
-         const checkAnggaranDisetujui = await tx.tb_anggaran_disetujui.findUnique({
-            where: { id_usulan: Number.parseInt(id_usulan_kegiatan) },
-            select: {
-               id_usulan: true,
-               jumlah: true,
+      const checkAnggaranDisetujui = await db.read.tb_anggaran_disetujui.findUnique({
+         where: { id_usulan: Number.parseInt(id_usulan_kegiatan) },
+         select: {
+            id_usulan: true,
+            jumlah: true,
+         },
+      });
+
+      if (!checkAnggaranDisetujui) {
+         const newDataAnggaran = await db.write.tb_anggaran_disetujui.create({
+            data: {
+               id_usulan: Number.parseInt(id_usulan_kegiatan),
+               jumlah: 0,
             },
          });
 
-         if (!checkAnggaranDisetujui) {
-            const newDataAnggaran = await tx.tb_anggaran_disetujui.create({
-               data: {
-                  id_usulan: Number.parseInt(id_usulan_kegiatan),
-                  jumlah: 0,
-               },
-            });
+         await logAudit("system", "CREATE", "tb_anggaran_disetujui", req.ip, { ...checkAnggaranDisetujui }, { ...newDataAnggaran });
+      }
 
-            await logAudit("system", "CREATE", "tb_anggaran_disetujui", req.ip, { ...checkAnggaranDisetujui }, { ...newDataAnggaran });
-         }
-
-         const klaim = await tx.tb_klaim_verifikasi.findFirst({
-            where: {
-               id_usulan_kegiatan: Number.parseInt(id_usulan_kegiatan),
-               status_klaim: "aktif",
-               verikator_usulan: {
-                  pengguna: {
-                     username,
-                  },
+      const klaim = await db.read.tb_klaim_verifikasi.findFirst({
+         where: {
+            id_usulan_kegiatan: Number.parseInt(id_usulan_kegiatan),
+            status_klaim: "aktif",
+            verikator_usulan: {
+               pengguna: {
+                  username,
                },
             },
-            select: {
-               verikator_usulan: {
-                  select: {
-                     tahap: true,
-                  },
+         },
+         select: {
+            verikator_usulan: {
+               select: {
+                  tahap: true,
                },
             },
-         });
+         },
+      });
 
-         results = await tx.tb_usulan_kegiatan.findUnique({
-            where: { id: Number.parseInt(id_usulan_kegiatan) },
-            select: {
-               id: true,
-               klaim_verifikasi: {
-                  where: {
-                     status_klaim: "aktif",
-                  },
-                  select: {
-                     id: true,
-                     status_klaim: true,
-                     verikator_usulan: {
-                        select: {
-                           id: true,
-                           tahap: true,
-                           id_jenis_usulan: true,
-                           pengguna: {
-                              select: {
-                                 id: true,
-                                 username: true,
-                              },
+      results = await db.read.tb_usulan_kegiatan.findUnique({
+         where: { id: Number.parseInt(id_usulan_kegiatan) },
+         select: {
+            id: true,
+            klaim_verifikasi: {
+               where: {
+                  status_klaim: "aktif",
+               },
+               select: {
+                  id: true,
+                  status_klaim: true,
+                  verikator_usulan: {
+                     select: {
+                        id: true,
+                        tahap: true,
+                        id_jenis_usulan: true,
+                        pengguna: {
+                           select: {
+                              id: true,
+                              username: true,
                            },
                         },
                      },
                   },
                },
-               kode: true,
-               latar_belakang: true,
-               tujuan: true,
-               sasaran: true,
-               waktu_mulai: true,
-               waktu_selesai: true,
-               tempat_pelaksanaan: true,
-               pengguna: {
-                  select: {
-                     id: true,
-                     fullname: true,
-                  },
+            },
+            kode: true,
+            latar_belakang: true,
+            tujuan: true,
+            sasaran: true,
+            waktu_mulai: true,
+            waktu_selesai: true,
+            tempat_pelaksanaan: true,
+            pengguna: {
+               select: {
+                  id: true,
+                  fullname: true,
                },
-               total_anggaran: true,
-               status_usulan: true,
-               tanggal_submit: true,
-               rencana_total_anggaran: true,
-               catatan_perbaikan: true,
-               jenis_usulan: {
-                  select: {
-                     id: true,
-                     nama: true,
-                  },
+            },
+            total_anggaran: true,
+            status_usulan: true,
+            tanggal_submit: true,
+            rencana_total_anggaran: true,
+            catatan_perbaikan: true,
+            jenis_usulan: {
+               select: {
+                  id: true,
+                  nama: true,
                },
-               dokumen_pendukung: {
-                  orderBy: { uploaded: "asc" },
-                  select: {
-                     id: true,
-                     nama_dokumen: true,
-                     tipe_dokumen: true,
-                     path_file: true,
-                     uploaded: true,
-                     modified: true,
-                     user_modified: true,
-                     file_dokumen: true,
-                  },
+            },
+            dokumen_pendukung: {
+               orderBy: { uploaded: "asc" },
+               select: {
+                  id: true,
+                  nama_dokumen: true,
+                  tipe_dokumen: true,
+                  path_file: true,
+                  uploaded: true,
+                  modified: true,
+                  user_modified: true,
+                  file_dokumen: true,
                },
-               rab_detail: {
-                  orderBy: { uploaded: "asc" },
-                  select: {
-                     id: true,
-                     uraian_biaya: true,
-                     qty: true,
-                     harga_satuan: true,
-                     total_biaya: true,
-                     catatan: true,
-                     unit_satuan: {
-                        select: {
-                           id: true,
-                           nama: true,
-                           deskripsi: true,
-                        },
-                     },
-                     rab_detail_perubahan: {
-                        where: { tahap_verifikasi: Number.parseInt(klaim.verikator_usulan.tahap) },
-                        select: {
-                           id: true,
-                           qty: true,
-                           harga_satuan: true,
-                           total_biaya: true,
-                        },
+            },
+            rab_detail: {
+               orderBy: { uploaded: "asc" },
+               select: {
+                  id: true,
+                  uraian_biaya: true,
+                  qty: true,
+                  harga_satuan: true,
+                  total_biaya: true,
+                  catatan: true,
+                  unit_satuan: {
+                     select: {
+                        id: true,
+                        nama: true,
+                        deskripsi: true,
                      },
                   },
-               },
-               relasi_usulan_iku: {
-                  orderBy: { id: "desc" },
-                  select: {
-                     id: true,
-                     iku_master: {
-                        select: {
-                           id: true,
-                           jenis: true,
-                           kode: true,
-                           deskripsi: true,
-                           tahun_berlaku: true,
-                        },
+                  rab_detail_perubahan: {
+                     where: { tahap_verifikasi: Number.parseInt(klaim.verikator_usulan.tahap) },
+                     select: {
+                        id: true,
+                        qty: true,
+                        harga_satuan: true,
+                        total_biaya: true,
                      },
-                  },
-               },
-               unit_pengusul: {
-                  select: {
-                     biro_master: {
-                        select: {
-                           id: true,
-                           nama: true,
-                        },
-                     },
-                     lembaga_master: {
-                        select: {
-                           id: true,
-                           nama: true,
-                        },
-                     },
-                     upt_master: {
-                        select: {
-                           id: true,
-                           nama: true,
-                        },
-                     },
-                     fakultas_master: {
-                        select: {
-                           id: true,
-                           nama: true,
-                        },
-                     },
-                     sub_unit: {
-                        select: {
-                           id: true,
-                           nama: true,
-                        },
-                     },
-                  },
-               },
-               anggaran_disetujui: {
-                  select: { jumlah: true },
-               },
-               verifikasi: {
-                  where: {
-                     tahap: Number.parseInt(klaim.verikator_usulan.tahap),
-                  },
-                  select: {
-                     id: true,
-                     id_referensi: true,
-                     table_referensi: true,
-                     catatan: true,
-                     status: true,
                   },
                },
             },
-         });
+            relasi_usulan_iku: {
+               orderBy: { id: "desc" },
+               select: {
+                  id: true,
+                  iku_master: {
+                     select: {
+                        id: true,
+                        jenis: true,
+                        kode: true,
+                        deskripsi: true,
+                        tahun_berlaku: true,
+                     },
+                  },
+               },
+            },
+            unit_pengusul: {
+               select: {
+                  biro_master: {
+                     select: {
+                        id: true,
+                        nama: true,
+                     },
+                  },
+                  lembaga_master: {
+                     select: {
+                        id: true,
+                        nama: true,
+                     },
+                  },
+                  upt_master: {
+                     select: {
+                        id: true,
+                        nama: true,
+                     },
+                  },
+                  fakultas_master: {
+                     select: {
+                        id: true,
+                        nama: true,
+                     },
+                  },
+                  sub_unit: {
+                     select: {
+                        id: true,
+                        nama: true,
+                     },
+                  },
+               },
+            },
+            anggaran_disetujui: {
+               select: { jumlah: true },
+            },
+            verifikasi: {
+               where: {
+                  tahap: Number.parseInt(klaim.verikator_usulan.tahap),
+               },
+               select: {
+                  id: true,
+                  id_referensi: true,
+                  table_referensi: true,
+                  catatan: true,
+                  status: true,
+               },
+            },
+         },
       });
 
       return res.json({ results });

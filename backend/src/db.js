@@ -1,6 +1,27 @@
 const { PrismaClient } = require("@prisma/client");
 const { withAccelerate } = require("@prisma/extension-accelerate");
 
-const prisma = new PrismaClient().$extends(withAccelerate());
+class Database {
+   constructor() {
+      this.write = new PrismaClient({
+         datasources: {
+            db: { url: process.env.DATABASE_URL_WRITE },
+         },
+      }).$extends(withAccelerate());
 
-module.exports = prisma;
+      this.read = new PrismaClient({
+         datasources: {
+            db: { url: process.env.DATABASE_URL_READ },
+         },
+      }).$extends(withAccelerate());
+   }
+
+   async disconnect() {
+      await this.write.$disconnect();
+      await this.read.$disconnect();
+   }
+}
+
+const db = new Database();
+
+module.exports = db;

@@ -9,15 +9,15 @@ const cleanRupiah = (val, fallback = 0) => {
 };
 
 const router = express.Router();
-const prisma = require("@/db.js");
+const db = require("@/db.js");
 
 router.get("/", async (req, res) => {
    try {
       const limit = Number.parseInt(req.query.limit) || 25;
       const offset = Number.parseInt(req.query.offset) || 0;
 
-      const total = await prisma.tb_pengaturan.count();
-      const results = await prisma.tb_pengaturan.findMany({
+      const total = await db.read.tb_pengaturan.count();
+      const results = await db.read.tb_pengaturan.findMany({
          orderBy: { id: "desc" },
          take: limit,
          skip: offset,
@@ -39,7 +39,7 @@ router.get("/:id", async (req, res) => {
    try {
       const { id } = req.params;
 
-      const results = await prisma.tb_pengaturan.findUnique({
+      const results = await db.read.tb_pengaturan.findUnique({
          where: { id: Number.parseInt(id) },
       });
       res.json({ results });
@@ -54,10 +54,10 @@ router.get("/:tahun_anggaran/biro", async (req, res) => {
       const tahun = Number.parseInt(tahun_anggaran);
 
       // Fetch all biros
-      const biros = await prisma.tb_biro_master.findMany();
+      const biros = await db.read.tb_biro_master.findMany();
 
       // Fetch existing pagu for this tahun
-      const existingPagu = await prisma.tb_pagu_anggaran_biro.findMany({
+      const existingPagu = await db.read.tb_pagu_anggaran_biro.findMany({
          where: { tahun_anggaran: tahun },
          select: { id_biro: true },
       });
@@ -78,7 +78,7 @@ router.get("/:tahun_anggaran/biro", async (req, res) => {
             user_modified: "system",
          }));
 
-         const newData = await prisma.tb_pagu_anggaran_biro.createMany({
+         const newData = await db.write.tb_pagu_anggaran_biro.createMany({
             data: inserts,
             skipDuplicates: true,
          });
@@ -87,7 +87,7 @@ router.get("/:tahun_anggaran/biro", async (req, res) => {
       }
 
       // Fetch all results
-      const results = await prisma.tb_pagu_anggaran_biro.findMany({
+      const results = await db.read.tb_pagu_anggaran_biro.findMany({
          where: { tahun_anggaran: tahun },
          orderBy: { id: "asc" },
          select: {
@@ -123,7 +123,7 @@ router.put("/biro/:id", async (req, res) => {
       const { id } = req.params;
       const { total_pagu, user_modified } = req.body;
 
-      const oldData = await prisma.tb_pagu_anggaran_biro.findUnique({
+      const oldData = await db.read.tb_pagu_anggaran_biro.findUnique({
          where: { id: Number.parseInt(id) },
       });
 
@@ -131,7 +131,7 @@ router.put("/biro/:id", async (req, res) => {
          return res.json({ status: false, message: "Pagu biro tidak ditemukan" });
       }
 
-      const newData = await prisma.tb_pagu_anggaran_biro.update({
+      const newData = await db.write.tb_pagu_anggaran_biro.update({
          where: { id: Number.parseInt(id) },
          data: {
             total_pagu: cleanRupiah(total_pagu),
@@ -158,10 +158,10 @@ router.get("/:tahun_anggaran/fakultas", async (req, res) => {
       const tahun = Number.parseInt(tahun_anggaran);
 
       // Fetch all fakultas
-      const fakultas = await prisma.tb_fakultas_master.findMany();
+      const fakultas = await db.read.tb_fakultas_master.findMany();
 
       // Fetch existing pagu for this tahun
-      const existingPagu = await prisma.tb_pagu_anggaran_fakultas.findMany({
+      const existingPagu = await db.read.tb_pagu_anggaran_fakultas.findMany({
          where: { tahun_anggaran: tahun },
          select: { id_fakultas: true },
       });
@@ -182,7 +182,7 @@ router.get("/:tahun_anggaran/fakultas", async (req, res) => {
             user_modified: "system",
          }));
 
-         const newData = await prisma.tb_pagu_anggaran_fakultas.createMany({
+         const newData = await db.write.tb_pagu_anggaran_fakultas.createMany({
             data: inserts,
             skipDuplicates: true,
          });
@@ -191,7 +191,7 @@ router.get("/:tahun_anggaran/fakultas", async (req, res) => {
       }
 
       // Fetch all results
-      const results = await prisma.tb_pagu_anggaran_fakultas.findMany({
+      const results = await db.read.tb_pagu_anggaran_fakultas.findMany({
          where: { tahun_anggaran: tahun },
          orderBy: { id: "asc" },
          select: {
@@ -226,7 +226,7 @@ router.put("/fakultas/:id", async (req, res) => {
       const { id } = req.params;
       const { total_pagu, user_modified } = req.body;
 
-      const oldData = await prisma.tb_pagu_anggaran_fakultas.findUnique({
+      const oldData = await db.read.tb_pagu_anggaran_fakultas.findUnique({
          where: { id: Number.parseInt(id) },
       });
 
@@ -234,7 +234,7 @@ router.put("/fakultas/:id", async (req, res) => {
          return res.json({ status: false, message: "Pagu fakultas tidak ditemukan" });
       }
 
-      const newData = await prisma.tb_pagu_anggaran_fakultas.update({
+      const newData = await db.write.tb_pagu_anggaran_fakultas.update({
          where: { id: Number.parseInt(id) },
          data: {
             total_pagu: cleanRupiah(total_pagu),
@@ -257,10 +257,10 @@ router.get("/:tahun_anggaran/upt", async (req, res) => {
       const tahun = Number.parseInt(tahun_anggaran);
 
       // Fetch all upts
-      const upts = await prisma.tb_upt_master.findMany();
+      const upts = await db.read.tb_upt_master.findMany();
 
       // Fetch existing pagu for this tahun
-      const existingPagu = await prisma.tb_pagu_anggaran_upt.findMany({
+      const existingPagu = await db.read.tb_pagu_anggaran_upt.findMany({
          where: { tahun_anggaran: tahun },
          select: { id_upt: true },
       });
@@ -281,7 +281,7 @@ router.get("/:tahun_anggaran/upt", async (req, res) => {
             user_modified: "system",
          }));
 
-         const newData = await prisma.tb_pagu_anggaran_upt.createMany({
+         const newData = await db.write.tb_pagu_anggaran_upt.createMany({
             data: inserts,
             skipDuplicates: true,
          });
@@ -290,7 +290,7 @@ router.get("/:tahun_anggaran/upt", async (req, res) => {
       }
 
       // Fetch all results
-      const results = await prisma.tb_pagu_anggaran_upt.findMany({
+      const results = await db.read.tb_pagu_anggaran_upt.findMany({
          where: { tahun_anggaran: tahun },
          orderBy: { id: "asc" },
          select: {
@@ -325,7 +325,7 @@ router.put("/upt/:id", async (req, res) => {
       const { id } = req.params;
       const { total_pagu, user_modified } = req.body;
 
-      const oldData = await prisma.tb_pagu_anggaran_upt.findUnique({
+      const oldData = await db.read.tb_pagu_anggaran_upt.findUnique({
          where: { id: Number.parseInt(id) },
       });
 
@@ -333,7 +333,7 @@ router.put("/upt/:id", async (req, res) => {
          return res.json({ status: false, message: "Pagu UPT tidak ditemukan" });
       }
 
-      const newData = await prisma.tb_pagu_anggaran_upt.update({
+      const newData = await db.write.tb_pagu_anggaran_upt.update({
          where: { id: Number.parseInt(id) },
          data: {
             total_pagu: cleanRupiah(total_pagu),
@@ -356,10 +356,10 @@ router.get("/:tahun_anggaran/lembaga", async (req, res) => {
       const tahun = Number.parseInt(tahun_anggaran);
 
       // Fetch all lembagas
-      const lembagas = await prisma.tb_lembaga_master.findMany();
+      const lembagas = await db.read.tb_lembaga_master.findMany();
 
       // Fetch existing pagu for this tahun
-      const existingPagu = await prisma.tb_pagu_anggaran_lembaga.findMany({
+      const existingPagu = await db.read.tb_pagu_anggaran_lembaga.findMany({
          where: { tahun_anggaran: tahun },
          select: { id_lembaga: true },
       });
@@ -380,7 +380,7 @@ router.get("/:tahun_anggaran/lembaga", async (req, res) => {
             user_modified: "system",
          }));
 
-         const newData = await prisma.tb_pagu_anggaran_lembaga.createMany({
+         const newData = await db.write.tb_pagu_anggaran_lembaga.createMany({
             data: inserts,
             skipDuplicates: true,
          });
@@ -389,7 +389,7 @@ router.get("/:tahun_anggaran/lembaga", async (req, res) => {
       }
 
       // Fetch all results
-      const results = await prisma.tb_pagu_anggaran_lembaga.findMany({
+      const results = await db.read.tb_pagu_anggaran_lembaga.findMany({
          where: { tahun_anggaran: tahun },
          orderBy: { id: "asc" },
          select: {
@@ -424,7 +424,7 @@ router.put("/lembaga/:id", async (req, res) => {
       const { id } = req.params;
       const { total_pagu, user_modified } = req.body;
 
-      const oldData = await prisma.tb_pagu_anggaran_lembaga.findUnique({
+      const oldData = await db.read.tb_pagu_anggaran_lembaga.findUnique({
          where: { id: Number.parseInt(id) },
       });
 
@@ -432,7 +432,7 @@ router.put("/lembaga/:id", async (req, res) => {
          return res.json({ status: false, message: "Pagu lembaga tidak ditemukan" });
       }
 
-      const newData = await prisma.tb_pagu_anggaran_lembaga.update({
+      const newData = await db.write.tb_pagu_anggaran_lembaga.update({
          where: { id: Number.parseInt(id) },
          data: {
             total_pagu: cleanRupiah(total_pagu),
@@ -455,10 +455,10 @@ router.get("/:tahun_anggaran/sub-unit", async (req, res) => {
       const tahun = Number.parseInt(tahun_anggaran);
 
       // Fetch all
-      const subUnits = await prisma.tb_sub_unit.findMany();
+      const subUnits = await db.read.tb_sub_unit.findMany();
 
       // Fetch existing pagu for this tahun
-      const existingPagu = await prisma.tb_pagu_sub_unit.findMany({
+      const existingPagu = await db.read.tb_pagu_sub_unit.findMany({
          where: { tahun_anggaran: tahun },
          select: { id_sub_unit: true },
       });
@@ -479,7 +479,7 @@ router.get("/:tahun_anggaran/sub-unit", async (req, res) => {
             user_modified: "system",
          }));
 
-         const newData = await prisma.tb_pagu_sub_unit.createMany({
+         const newData = await db.write.tb_pagu_sub_unit.createMany({
             data: inserts,
             skipDuplicates: true,
          });
@@ -488,7 +488,7 @@ router.get("/:tahun_anggaran/sub-unit", async (req, res) => {
       }
 
       // Fetch all results
-      const results = await prisma.tb_pagu_sub_unit.findMany({
+      const results = await db.read.tb_pagu_sub_unit.findMany({
          where: { tahun_anggaran: tahun },
          orderBy: { id: "asc" },
          select: {
@@ -517,7 +517,7 @@ router.put("/sub-unit/:id", async (req, res) => {
       const { id } = req.params;
       const { total_pagu, user_modified } = req.body;
 
-      const oldData = await prisma.tb_pagu_sub_unit.findUnique({
+      const oldData = await db.read.tb_pagu_sub_unit.findUnique({
          where: { id: Number.parseInt(id) },
       });
 
@@ -525,7 +525,7 @@ router.put("/sub-unit/:id", async (req, res) => {
          return res.json({ status: false, message: "Pagu sub unit tidak ditemukan" });
       }
 
-      const newData = await prisma.tb_pagu_sub_unit.update({
+      const newData = await db.write.tb_pagu_sub_unit.update({
          where: { id: Number.parseInt(id) },
          data: {
             total_pagu: cleanRupiah(total_pagu),

@@ -1,5 +1,5 @@
 const express = require("express");
-const prisma = require("@/db.js");
+const db = require("@/db.js");
 
 const router = express.Router();
 
@@ -9,8 +9,8 @@ router.get("/", async (req, res) => {
          status_usulan: "perbaiki",
       };
 
-      const total = await prisma.tb_usulan_kegiatan.count({ where });
-      const results = await prisma.tb_usulan_kegiatan.findMany({
+      const total = await db.read.tb_usulan_kegiatan.count({ where });
+      const results = await db.read.tb_usulan_kegiatan.findMany({
          where,
          select: {
             id: true,
@@ -70,7 +70,7 @@ router.get("/:id_usulan_kegiatan", async (req, res) => {
    try {
       const { id_usulan_kegiatan } = req.params;
 
-      const results = await prisma.tb_usulan_kegiatan.findUnique({
+      const results = await db.read.tb_usulan_kegiatan.findUnique({
          where: { id: Number.parseInt(id_usulan_kegiatan) },
          select: {
             id: true,

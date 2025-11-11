@@ -1,5 +1,4 @@
 const express = require("express");
-const { PrismaClient } = require("@prisma/client");
 const errorHandler = require("../../handle-error.js");
 const { logAudit } = require("../../helpers.js");
 const { z } = require("zod");
@@ -12,7 +11,7 @@ const validation = z.object({
 });
 
 const router = express.Router();
-const prisma = new PrismaClient();
+const db = require("@/db.js");
 
 router.get("/", async (req, res) => {
    try {
@@ -29,8 +28,8 @@ router.get("/", async (req, res) => {
       };
       const where = search ? query : {};
 
-      const total = await prisma.tb_standar_biaya_master.count({ where });
-      const results = await prisma.tb_standar_biaya_master.findMany({
+      const total = await db.read.tb_standar_biaya_master.count({ where });
+      const results = await db.read.tb_standar_biaya_master.findMany({
          where,
          include: {
             kategori_sbm: true,
@@ -50,7 +49,7 @@ router.get("/", async (req, res) => {
 router.get("/:id", async (req, res) => {
    try {
       const { id } = req.params;
-      const results = await prisma.tb_standar_biaya_master.findUnique({
+      const results = await db.read.tb_standar_biaya_master.findUnique({
          where: { id: Number.parseInt(id) },
       });
 
@@ -70,7 +69,7 @@ router.post("/", async (req, res) => {
          return errorHandler(parsed, res);
       }
 
-      const duplicate = await prisma.tb_standar_biaya_master.findUnique({
+      const duplicate = await db.read.tb_standar_biaya_master.findUnique({
          where: { kode },
       });
 
@@ -78,7 +77,7 @@ router.post("/", async (req, res) => {
          return res.json({ status: false, errors: { kode: "Kode standar biaya sudah terdaftar" } });
       }
 
-      const newData = await prisma.tb_standar_biaya_master.create({
+      const newData = await db.write.tb_standar_biaya_master.create({
          data: {
             kode,
             nama,
@@ -113,7 +112,7 @@ router.put("/:id", async (req, res) => {
          return errorHandler(parsed, res);
       }
 
-      const duplicate = await prisma.tb_standar_biaya_master.findFirst({
+      const duplicate = await db.read.tb_standar_biaya_master.findFirst({
          where: { kode, id: { not: Number.parseInt(id) } },
       });
 
@@ -121,7 +120,7 @@ router.put("/:id", async (req, res) => {
          return res.json({ status: false, errors: { kode: "Kode standar biaya sudah terdaftar" } });
       }
 
-      const oldData = await prisma.tb_standar_biaya_master.findUnique({
+      const oldData = await db.read.tb_standar_biaya_master.findUnique({
          where: { id: Number.parseInt(id) },
       });
 
@@ -129,7 +128,7 @@ router.put("/:id", async (req, res) => {
          return res.json({ status: false, message: "Standa biaya tidak ditemukan" });
       }
 
-      const newData = await prisma.tb_standar_biaya_master.update({
+      const newData = await db.write.tb_standar_biaya_master.update({
          where: { id: Number.parseInt(id) },
          data: {
             kode,
@@ -162,7 +161,7 @@ router.delete("/:id", async (req, res) => {
       const { id } = req.params;
       const { user_modified } = req.body;
 
-      const oldData = await prisma.tb_standar_biaya_master.findUnique({
+      const oldData = await db.read.tb_standar_biaya_master.findUnique({
          where: { id: Number.parseInt(id) },
       });
 
@@ -170,7 +169,7 @@ router.delete("/:id", async (req, res) => {
          return res.json({ status: false, message: "Standar biaya tidak ditemukan" });
       }
 
-      await prisma.tb_standar_biaya_master.delete({
+      await db.write.tb_standar_biaya_master.delete({
          where: { id: Number.parseInt(id) },
       });
 

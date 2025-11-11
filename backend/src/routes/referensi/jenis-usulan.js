@@ -9,15 +9,15 @@ const validation = z.object({
 });
 
 const router = express.Router();
-const prisma = require("@/db.js");
+const db = require("@/db.js");
 
 router.get("/", async (req, res) => {
    try {
       const limit = Number.parseInt(req.query.limit) || 25;
       const offset = Number.parseInt(req.query.offset) || 0;
 
-      const total = await prisma.tb_jenis_usulan.count();
-      const results = await prisma.tb_jenis_usulan.findMany({
+      const total = await db.read.tb_jenis_usulan.count();
+      const results = await db.read.tb_jenis_usulan.findMany({
          orderBy: { id: "desc" },
          take: limit,
          skip: offset,
@@ -38,7 +38,7 @@ router.get("/:id", async (req, res) => {
    try {
       const { id } = req.params;
 
-      const results = await prisma.tb_jenis_usulan.findUnique({
+      const results = await db.read.tb_jenis_usulan.findUnique({
          where: { id: Number.parseInt(id) },
          select: {
             id: true,
@@ -63,7 +63,7 @@ router.post("/", async (req, res) => {
          return errorHandler(parsed, res);
       }
 
-      const newData = await prisma.tb_jenis_usulan.create({
+      const newData = await db.write.tb_jenis_usulan.create({
          data: {
             nama,
             is_aktif: is_aktif === "true",
@@ -95,7 +95,7 @@ router.put("/:id", async (req, res) => {
          return errorHandler(parsed, res);
       }
 
-      const oldData = await prisma.tb_jenis_usulan.findUnique({
+      const oldData = await db.read.tb_jenis_usulan.findUnique({
          where: { id: Number.parseInt(id) },
       });
 
@@ -103,7 +103,7 @@ router.put("/:id", async (req, res) => {
          return res.json({ status: false, message: "Jenis usulan tidak ditemukan" });
       }
 
-      const newData = await prisma.tb_jenis_usulan.update({
+      const newData = await db.write.tb_jenis_usulan.update({
          where: { id: Number.parseInt(id) },
          data: {
             nama,
@@ -133,7 +133,7 @@ router.delete("/:id", async (req, res) => {
       const { id } = req.params;
       const { user_modified } = req.body;
 
-      const oldData = await prisma.tb_jenis_usulan.findUnique({
+      const oldData = await db.read.tb_jenis_usulan.findUnique({
          where: { id: Number.parseInt(id) },
       });
 
@@ -141,7 +141,7 @@ router.delete("/:id", async (req, res) => {
          return res.json({ status: false, message: "Jenis usulan tidak ditemukan" });
       }
 
-      await prisma.tb_jenis_usulan.delete({
+      await db.write.tb_jenis_usulan.delete({
          where: { id: Number.parseInt(id) },
       });
 

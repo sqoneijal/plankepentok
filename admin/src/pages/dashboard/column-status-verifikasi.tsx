@@ -5,7 +5,30 @@ import { IconCircleCheckFilled } from "@tabler/icons-react";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 import moment from "moment";
 
-type RowData = Record<string, unknown>;
+interface KlaimVerifikasi {
+   status_klaim: string;
+   verikator_usulan: {
+      tahap: string;
+      pengguna: {
+         fullname: string;
+      };
+   };
+}
+
+interface RowData {
+   id: number;
+   kode: string;
+   tanggal_submit: string;
+   jenis_usulan: {
+      nama: string;
+   };
+   rencana_total_anggaran: number;
+   total_anggaran: number;
+   anggaran_disetujui: {
+      jumlah: number;
+   };
+   klaim_verifikasi: KlaimVerifikasi[];
+}
 
 const columnHelper = createColumnHelper<RowData>();
 
@@ -17,30 +40,43 @@ type ColumnConfig = {
 
 const columnConfigs: Array<ColumnConfig> = [
    {
-      key: "verikator_usulan.pengguna.fullname",
+      key: "klaim_verifikasi",
       header: "verifikator",
+      cell: (value: unknown) => {
+         if (!value || !Array.isArray(value) || value.length === 0) return "-";
+
+         const tahap = value[0]?.verikator_usulan.tahap;
+         const verifikator = value[0]?.verikator_usulan.pengguna.fullname;
+
+         return `${tahap} -> ${verifikator}`;
+      },
    },
    {
-      key: "usulan_kegiatan.kode",
+      key: "kode",
       header: "kode",
    },
    {
-      key: "usulan_kegiatan.tanggal_submit",
+      key: "tanggal_submit",
       header: "tanggal pengajuan",
       cell: (value: unknown) => moment(value as string).format("DD-MM-YYYY"),
    },
    {
-      key: "usulan_kegiatan.jenis_usulan.nama",
+      key: "jenis_usulan.nama",
       header: "jenis",
    },
    {
-      key: "usulan_kegiatan.rencana_total_anggaran",
+      key: "rencana_total_anggaran",
       header: "rencana",
       cell: (value: unknown) => toRupiah(value),
    },
    {
-      key: "usulan_kegiatan.total_anggaran",
-      header: "anggaran",
+      key: "total_anggaran",
+      header: "pengajuan",
+      cell: (value: unknown) => toRupiah(value),
+   },
+   {
+      key: "anggaran_disetujui.jumlah",
+      header: "disetujui",
       cell: (value: unknown) => toRupiah(value),
    },
 ];
@@ -50,7 +86,7 @@ export const getColumns = (): Array<ColumnDef<RowData, unknown>> => [
       id: "actions",
       header: "",
       cell: ({ row: { original } }) => {
-         const status_klaim = original?.status_klaim;
+         const status_klaim = original?.klaim_verifikasi[0]?.status_klaim;
          if (status_klaim === "selesai") {
             return (
                <Badge variant="outline">
@@ -69,7 +105,8 @@ export const getColumns = (): Array<ColumnDef<RowData, unknown>> => [
       },
    }),
    ...columnConfigs.map((config) =>
-      columnHelper.accessor(config.key, {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      columnHelper.accessor(config.key as any, {
          header: config.header,
          cell: config.cell ? (info) => config.cell!(info.getValue()) : (info) => String(info.getValue()),
       })

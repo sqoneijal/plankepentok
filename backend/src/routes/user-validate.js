@@ -1,14 +1,13 @@
 const express = require("express");
-const { PrismaClient } = require("@prisma/client");
+const db = require("@/db.js");
 
 const router = express.Router();
-const prisma = new PrismaClient();
 
 router.get("/:username", async (req, res) => {
    try {
       const { username } = req.params;
 
-      const results = await prisma.tb_pengguna.findMany({
+      const results = await db.read.tb_pengguna.findMany({
          where: { username },
          select: {
             id: true,

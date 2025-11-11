@@ -18,7 +18,7 @@ const validation = z.object({
 });
 
 const router = express.Router();
-const prisma = require("@/db.js");
+const db = require("@/db.js");
 
 const getActiveIdField = (data) => {
    const mapping = {
@@ -48,18 +48,18 @@ const getActiveIdField = (data) => {
    };
 };
 
-const hitungRealiasi = async (tx, anggaran_digunakan, unit_pengusul, user_modified, ip) => {
-   const pengaturan = await tx.tb_pengaturan.findFirst({
+const hitungRealiasi = async (anggaran_digunakan, unit_pengusul, user_modified, ip) => {
+   const pengaturan = await db.read.tb_pengaturan.findFirst({
       where: { is_aktif: true },
    });
 
    const paguUnit = getActiveIdField(unit_pengusul);
 
-   const oldData = await tx[paguUnit.tabel_referensi].findFirst({
+   const oldData = await db.read[paguUnit.tabel_referensi].findFirst({
       where: { [paguUnit.field]: paguUnit.value, tahun_anggaran: pengaturan.tahun_anggaran },
    });
 
-   const newData = await tx[paguUnit.tabel_referensi].update({
+   const newData = await db.write[paguUnit.tabel_referensi].update({
       where: { id: oldData.id },
       data: {
          realisasi: cleanRupiah(anggaran_digunakan) + cleanRupiah(oldData.realisasi),
@@ -68,7 +68,7 @@ const hitungRealiasi = async (tx, anggaran_digunakan, unit_pengusul, user_modifi
 
    await logAudit(user_modified, "UPDATE", paguUnit.tabel_referensi, ip, { ...oldData }, { ...newData });
 
-   const newDataPengaturan = await tx.tb_pengaturan.update({
+   const newDataPengaturan = await db.write.tb_pengaturan.update({
       where: { id: pengaturan.id },
       data: {
          realisasi: cleanRupiah(anggaran_digunakan) + cleanRupiah(pengaturan.realisasi),
@@ -100,23 +100,21 @@ router.post("/:id_usulan", async (req, res) => {
          });
       }
 
-      await prisma.$transaction(async (tx) => {
-         const newData = await tx.tb_realisasi.create({
-            data: {
-               id_usulan: Number.parseInt(id_usulan),
-               id_rab: Number.parseInt(id),
-               tanggal_mulai: new Date(tanggal_mulai),
-               tanggal_selesai: new Date(tanggal_selesai),
-               deskripsi,
-               anggaran_digunakan: Number.parseFloat(cleanRupiah(anggaran_digunakan)),
-               uploaded: new Date(),
-               user_modified,
-            },
-         });
-
-         await logAudit(user_modified, "CREATE", "tb_realisasi", req.ip, null, { ...newData });
-         await hitungRealiasi(tx, anggaran_digunakan, unit_pengusul, user_modified, req.ip);
+      const newData = await db.write.tb_realisasi.create({
+         data: {
+            id_usulan: Number.parseInt(id_usulan),
+            id_rab: Number.parseInt(id),
+            tanggal_mulai: new Date(tanggal_mulai),
+            tanggal_selesai: new Date(tanggal_selesai),
+            deskripsi,
+            anggaran_digunakan: Number.parseFloat(cleanRupiah(anggaran_digunakan)),
+            uploaded: new Date(),
+            user_modified,
+         },
       });
+
+      await logAudit(user_modified, "CREATE", "tb_realisasi", req.ip, null, { ...newData });
+      await hitungRealiasi(anggaran_digunakan, unit_pengusul, user_modified, req.ip);
 
       return res.json({
          status: true,
@@ -137,8 +135,8 @@ router.get("/", async (req, res) => {
       const offset = Number.parseInt(req.query.offset) || 0;
       const where = { status_usulan: "diterima" };
 
-      const total = await prisma.tb_usulan_kegiatan.count({ where });
-      const results = await prisma.tb_usulan_kegiatan.findMany({
+      const total = await db.read.tb_usulan_kegiatan.count({ where });
+      const results = await db.read.tb_usulan_kegiatan.findMany({
          where,
          orderBy: { id: "desc" },
          take: limit,
@@ -178,14 +176,14 @@ router.get("/:id_usulan/ref-rab", async (req, res) => {
    try {
       const { id_usulan } = req.params;
 
-      const realisasi = await prisma.tb_realisasi.findMany({
+      const realisasi = await db.read.tb_realisasi.findMany({
          where: { id_usulan: Number.parseInt(id_usulan) },
          select: { id_rab: true },
       });
 
       const realizedIds = realisasi.map((r) => r.id_rab);
 
-      const verifikasi = await prisma.tb_verifikasi.findMany({
+      const verifikasi = await db.read.tb_verifikasi.findMany({
          where: {
             table_referensi: "tb_rab_detail",
             status: "valid",
@@ -201,7 +199,7 @@ router.get("/:id_usulan/ref-rab", async (req, res) => {
 
       const referensiID = verifikasi.map((r) => r.id_referensi);
 
-      const results = await prisma.tb_rab_detail.findMany({
+      const results = await db.read.tb_rab_detail.findMany({
          where: {
             id_usulan: Number.parseInt(id_usulan),
             id: { in: referensiID },
@@ -246,7 +244,7 @@ router.get("/:id", async (req, res) => {
    try {
       const { id } = req.params;
 
-      const sesuaiRelasiIKU = await prisma.tb_verifikasi.findMany({
+      const sesuaiRelasiIKU = await db.read.tb_verifikasi.findMany({
          where: {
             table_referensi: "tb_relasi_usulan_iku",
             status: "sesuai",
@@ -261,7 +259,7 @@ router.get("/:id", async (req, res) => {
 
       const sesuaiRelasiIKUID = sesuaiRelasiIKU.map((r) => r.id_referensi);
 
-      const validAnggaranBiaya = await prisma.tb_verifikasi.findMany({
+      const validAnggaranBiaya = await db.read.tb_verifikasi.findMany({
          where: {
             table_referensi: "tb_rab_detail",
             status: "valid",
@@ -276,7 +274,7 @@ router.get("/:id", async (req, res) => {
 
       const validAnggaranBiayaID = validAnggaranBiaya.map((r) => r.id_referensi);
 
-      const sesuaiDokumen = await prisma.tb_verifikasi.findMany({
+      const sesuaiDokumen = await db.read.tb_verifikasi.findMany({
          where: {
             table_referensi: "tb_dokumen_pendukung",
             status: "sesuai",
@@ -291,7 +289,7 @@ router.get("/:id", async (req, res) => {
 
       const sesuaiDokumenID = sesuaiDokumen.map((r) => r.id_referensi);
 
-      const results = await prisma.tb_usulan_kegiatan.findUnique({
+      const results = await db.read.tb_usulan_kegiatan.findUnique({
          where: { id: Number.parseInt(id), status_usulan: "diterima" },
          select: {
             id: true,

@@ -4,7 +4,7 @@ const errorHandler = require("@/handle-error.js");
 const { logAudit } = require("@/helpers.js");
 
 const router = express.Router();
-const prisma = require("@/db.js");
+const db = require("@/db.js");
 
 const uptSchema = z.object({
    nama: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Nama UPT wajib diisi")),
@@ -19,8 +19,8 @@ router.get("/", async (req, res) => {
       const query = { nama: { contains: search, mode: "insensitive" } };
       const where = search ? query : {};
 
-      const total = await prisma.tb_upt_master.count({ where });
-      const results = await prisma.tb_upt_master.findMany({
+      const total = await db.read.tb_upt_master.count({ where });
+      const results = await db.read.tb_upt_master.findMany({
          where,
          orderBy: { id: "desc" },
          take: limit,
@@ -35,7 +35,7 @@ router.get("/", async (req, res) => {
 router.get("/:id", async (req, res) => {
    try {
       const { id } = req.params;
-      const results = await prisma.tb_upt_master.findUnique({
+      const results = await db.read.tb_upt_master.findUnique({
          where: { id: Number.parseInt(id) },
       });
 
@@ -55,7 +55,7 @@ router.post("/", async (req, res) => {
          return errorHandler(parsed, res);
       }
 
-      const newData = await prisma.tb_upt_master.create({
+      const newData = await db.write.tb_upt_master.create({
          data: {
             nama,
             uploaded: new Date(),
@@ -82,7 +82,7 @@ router.put("/:id", async (req, res) => {
          return errorHandler(parsed, res);
       }
 
-      const oldData = await prisma.tb_upt_master.findUnique({
+      const oldData = await db.read.tb_upt_master.findUnique({
          where: { id: Number.parseInt(id) },
       });
 
@@ -90,7 +90,7 @@ router.put("/:id", async (req, res) => {
          return res.json({ status: false, message: "UPT tidak ditemukan" });
       }
 
-      const newData = await prisma.tb_upt_master.update({
+      const newData = await db.write.tb_upt_master.update({
          where: { id: Number.parseInt(id) },
          data: {
             nama,
@@ -123,7 +123,7 @@ router.delete("/:id", async (req, res) => {
       const { id } = req.params;
       const { user_modified } = req.body;
 
-      const oldData = await prisma.tb_upt_master.findUnique({
+      const oldData = await db.read.tb_upt_master.findUnique({
          where: { id: Number.parseInt(id) },
       });
 
@@ -131,7 +131,7 @@ router.delete("/:id", async (req, res) => {
          return res.json({ status: false, message: "UPT tidak ditemukan" });
       }
 
-      await prisma.tb_upt_master.delete({
+      await db.write.tb_upt_master.delete({
          where: { id: Number.parseInt(id) },
       });
 

@@ -10,15 +10,15 @@ const validation = z.object({
 });
 
 const router = express.Router();
-const prisma = require("@/db.js");
+const db = require("@/db.js");
 
 router.get("/", async (req, res) => {
    try {
       const limit = Number.parseInt(req.query.limit) || 25;
       const offset = Number.parseInt(req.query.offset) || 0;
 
-      const total = await prisma.tb_verikator_usulan.count();
-      const results = await prisma.tb_verikator_usulan.findMany({
+      const total = await db.read.tb_verikator_usulan.count();
+      const results = await db.read.tb_verikator_usulan.findMany({
          take: limit,
          skip: offset,
          select: {
@@ -48,7 +48,7 @@ router.get("/", async (req, res) => {
 
 router.get("/daftar-jenis-usulan", async (req, res) => {
    try {
-      const results = await prisma.tb_jenis_usulan.findMany({
+      const results = await db.read.tb_jenis_usulan.findMany({
          where: { is_aktif: true },
          select: {
             id: true,
@@ -72,7 +72,7 @@ router.post("/", async (req, res) => {
          return errorHandler(parsed, res);
       }
 
-      const pengguna = await prisma.tb_pengguna.findUnique({
+      const pengguna = await db.read.tb_pengguna.findUnique({
          where: {
             username_id_roles: {
                username: verifikator,
@@ -86,7 +86,7 @@ router.post("/", async (req, res) => {
       if (pengguna) {
          IdPengguna = pengguna.id;
       } else {
-         const createPengguna = await prisma.tb_pengguna.create({
+         const createPengguna = await db.write.tb_pengguna.create({
             data: {
                username: verifikator,
                fullname: detail_verifikator?.nama,
@@ -99,7 +99,7 @@ router.post("/", async (req, res) => {
          logAudit("system", "CREATE", "tb_pengguna", req.ip, null, { ...createPengguna });
       }
 
-      const newData = await prisma.tb_verikator_usulan.create({
+      const newData = await db.write.tb_verikator_usulan.create({
          data: {
             id_jenis_usulan: Number.parseInt(id_jenis_usulan),
             id_pengguna: IdPengguna,
@@ -126,7 +126,7 @@ router.delete("/:id", async (req, res) => {
       const { id } = req.params;
       const { user_modified } = req.body;
 
-      const oldData = await prisma.tb_verikator_usulan.findUnique({
+      const oldData = await db.read.tb_verikator_usulan.findUnique({
          where: { id: Number.parseInt(id) },
       });
 
@@ -134,7 +134,7 @@ router.delete("/:id", async (req, res) => {
          return res.json({ status: false, message: "Verifikator tidak ditemukan" });
       }
 
-      await prisma.tb_verikator_usulan.delete({
+      await db.write.tb_verikator_usulan.delete({
          where: { id: Number.parseInt(id) },
       });
 

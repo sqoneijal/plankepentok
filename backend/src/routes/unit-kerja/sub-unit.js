@@ -1,11 +1,10 @@
 const express = require("express");
-const { PrismaClient } = require("@prisma/client");
 const { z } = require("zod");
-const errorHandler = require("../../handle-error.js");
-const { logAudit } = require("../../helpers.js");
+const errorHandler = require("@/handle-error.js");
+const { logAudit } = require("@/helpers.js");
 
 const router = express.Router();
-const prisma = new PrismaClient();
+const db = require("@/db.js");
 
 const subUnitSchema = z.object({
    id_parent: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Parent unit wajib diisi")),
@@ -14,10 +13,10 @@ const subUnitSchema = z.object({
 
 router.get("/options", async (req, res) => {
    try {
-      const biroData = await prisma.tb_biro_master.findMany();
-      const lembagaData = await prisma.tb_lembaga_master.findMany();
-      const uptData = await prisma.tb_upt_master.findMany();
-      const fakultasData = await prisma.tb_fakultas_master.findMany();
+      const biroData = await db.read.tb_biro_master.findMany();
+      const lembagaData = await db.read.tb_lembaga_master.findMany();
+      const uptData = await db.read.tb_upt_master.findMany();
+      const fakultasData = await db.read.tb_fakultas_master.findMany();
 
       const results = [];
       for (const row of biroData) {
@@ -63,8 +62,8 @@ router.get("/", async (req, res) => {
       const limit = Number.parseInt(req.query.limit) || 25;
       const offset = Number.parseInt(req.query.offset) || 0;
 
-      const total = await prisma.tb_sub_unit.count();
-      const results = await prisma.tb_sub_unit.findMany({
+      const total = await db.read.tb_sub_unit.count();
+      const results = await db.read.tb_sub_unit.findMany({
          orderBy: { id: "desc" },
          take: limit,
          skip: offset,
@@ -96,7 +95,7 @@ router.get("/:id", async (req, res) => {
    try {
       const { id } = req.params;
 
-      const results = await prisma.tb_sub_unit.findUnique({
+      const results = await db.read.tb_sub_unit.findUnique({
          where: { id: Number.parseInt(id) },
          select: {
             id: true,
@@ -140,7 +139,7 @@ router.post("/", async (req, res) => {
       const id_relation = Number.parseInt(extract[0]);
       const level = extract[1];
 
-      const newData = await prisma.tb_sub_unit.create({
+      const newData = await db.write.tb_sub_unit.create({
          data: {
             level,
             id_biro: level === "biro" ? id_relation : null,
@@ -176,7 +175,7 @@ router.put("/:id", async (req, res) => {
          return errorHandler(parsed, res);
       }
 
-      const oldData = await prisma.tb_sub_unit.findUnique({
+      const oldData = await db.read.tb_sub_unit.findUnique({
          where: { id: Number.parseInt(id) },
       });
 
@@ -188,7 +187,7 @@ router.put("/:id", async (req, res) => {
       const id_relation = Number.parseInt(extract[0]);
       const level = extract[1];
 
-      const newData = await prisma.tb_sub_unit.update({
+      const newData = await db.write.tb_sub_unit.update({
          where: { id: Number.parseInt(id) },
          data: {
             level,
@@ -222,7 +221,7 @@ router.delete("/:id", async (req, res) => {
       const { id } = req.params;
       const { user_modified } = req.body;
 
-      const oldData = await prisma.tb_sub_unit.findUnique({
+      const oldData = await db.read.tb_sub_unit.findUnique({
          where: { id: Number.parseInt(id) },
       });
 
@@ -230,7 +229,7 @@ router.delete("/:id", async (req, res) => {
          return res.json({ status: false, message: "Sub unit tidak ditemukan" });
       }
 
-      await prisma.tb_sub_unit.delete({
+      await db.write.tb_sub_unit.delete({
          where: { id: Number.parseInt(id) },
       });
 

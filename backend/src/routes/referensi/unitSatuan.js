@@ -9,7 +9,7 @@ const validation = z.object({
 });
 
 const router = express.Router();
-const prisma = require("@/db.js");
+const db = require("@/db.js");
 
 router.get("/", async (req, res) => {
    try {
@@ -22,8 +22,8 @@ router.get("/", async (req, res) => {
       };
       const where = search ? query : {};
 
-      const total = await prisma.tb_unit_satuan.count({ where });
-      const results = await prisma.tb_unit_satuan.findMany({
+      const total = await db.read.tb_unit_satuan.count({ where });
+      const results = await db.read.tb_unit_satuan.findMany({
          where,
          orderBy: { id: "desc" },
          take: limit,
@@ -38,7 +38,7 @@ router.get("/", async (req, res) => {
 router.get("/:id", async (req, res) => {
    try {
       const { id } = req.params;
-      const results = await prisma.tb_unit_satuan.findUnique({
+      const results = await db.read.tb_unit_satuan.findUnique({
          where: { id: Number.parseInt(id) },
       });
 
@@ -58,7 +58,7 @@ router.post("/", async (req, res) => {
          return errorHandler(parsed, res);
       }
 
-      const newData = await prisma.tb_unit_satuan.create({
+      const newData = await db.write.tb_unit_satuan.create({
          data: {
             nama,
             deskripsi,
@@ -91,7 +91,7 @@ router.put("/:id", async (req, res) => {
          return errorHandler(parsed, res);
       }
 
-      const oldData = await prisma.tb_unit_satuan.findUnique({
+      const oldData = await db.read.tb_unit_satuan.findUnique({
          where: { id: Number.parseInt(id) },
       });
 
@@ -99,7 +99,7 @@ router.put("/:id", async (req, res) => {
          return res.json({ status: false, message: "Unit satuan tidak ditemukan" });
       }
 
-      const newData = await prisma.tb_unit_satuan.update({
+      const newData = await db.write.tb_unit_satuan.update({
          where: { id: Number.parseInt(id) },
          data: {
             nama,
@@ -134,7 +134,7 @@ router.delete("/:id", async (req, res) => {
       const { id } = req.params;
       const { user_modified } = req.body;
 
-      const oldData = await prisma.tb_unit_satuan.findUnique({
+      const oldData = await db.read.tb_unit_satuan.findUnique({
          where: { id: Number.parseInt(id) },
       });
 
@@ -142,7 +142,7 @@ router.delete("/:id", async (req, res) => {
          return res.json({ status: false, message: "Unit satuan tidak ditemukan" });
       }
 
-      await prisma.tb_unit_satuan.delete({
+      await db.write.tb_unit_satuan.delete({
          where: { id: Number.parseInt(id) },
       });
 

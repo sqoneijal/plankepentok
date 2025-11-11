@@ -1,5 +1,4 @@
 const express = require("express");
-const { PrismaClient } = require("@prisma/client");
 const { z } = require("zod");
 const errorHandler = require("../handle-error.js");
 const { logAudit } = require("../helpers.js");
@@ -18,15 +17,15 @@ const cleanRupiah = (val, fallback = 0) => {
 };
 
 const router = express.Router();
-const prisma = new PrismaClient();
+const db = require("@/db.js");
 
 router.get("/", async (req, res) => {
    try {
       const limit = Number.parseInt(req.query.limit) || 25;
       const offset = Number.parseInt(req.query.offset) || 0;
 
-      const total = await prisma.tb_pengaturan.count();
-      const results = await prisma.tb_pengaturan.findMany({
+      const total = await db.read.tb_pengaturan.count();
+      const results = await db.read.tb_pengaturan.findMany({
          orderBy: { tahun_anggaran: "desc" },
          take: limit,
          skip: offset,
@@ -41,7 +40,7 @@ router.get("/:id", async (req, res) => {
    try {
       const { id } = req.params;
 
-      const results = await prisma.tb_pengaturan.findUnique({
+      const results = await db.read.tb_pengaturan.findUnique({
          where: { id: Number.parseInt(id) },
       });
       res.json({ results });
@@ -60,7 +59,7 @@ router.post("/", async (req, res) => {
          return errorHandler(parsed, res);
       }
 
-      const newData = await prisma.tb_pengaturan.create({
+      const newData = await db.write.tb_pengaturan.create({
          data: {
             tahun_anggaran: Number.parseInt(tahun_anggaran),
             total_pagu: cleanRupiah(total_pagu),
@@ -89,7 +88,7 @@ router.put("/:id", async (req, res) => {
          return errorHandler(parsed, res);
       }
 
-      const oldData = await prisma.tb_pengaturan.findUnique({
+      const oldData = await db.write.tb_pengaturan.findUnique({
          where: { id: Number.parseInt(id) },
       });
 
@@ -97,7 +96,7 @@ router.put("/:id", async (req, res) => {
          return res.json({ status: false, message: "Data pengaturan tidak ditemukan" });
       }
 
-      const newData = await prisma.tb_pengaturan.update({
+      const newData = await db.write.tb_pengaturan.update({
          where: { id: Number.parseInt(id) },
          data: {
             total_pagu: cleanRupiah(total_pagu),

@@ -1,8 +1,7 @@
 const express = require("express");
-const { PrismaClient } = require("@prisma/client");
 const { z } = require("zod");
-const errorHandler = require("../../handle-error.js");
-const { logAudit } = require("../../helpers.js");
+const errorHandler = require("@/handle-error.js");
+const { logAudit } = require("@/helpers.js");
 
 const validation = z
    .object({
@@ -24,15 +23,15 @@ const validation = z
    );
 
 const router = express.Router();
-const prisma = new PrismaClient();
+const db = require("@/db.js");
 
 router.get("/", async (req, res) => {
    try {
       const limit = Number.parseInt(req.query.limit) || 25;
       const offset = Number.parseInt(req.query.offset) || 0;
 
-      const total = await prisma.tb_pengguna.count();
-      const results = await prisma.tb_pengguna.findMany({
+      const total = await db.read.tb_pengguna.count();
+      const results = await db.read.tb_pengguna.findMany({
          orderBy: { id: "desc" },
          take: limit,
          skip: offset,
@@ -73,7 +72,7 @@ router.get("/", async (req, res) => {
 
 router.get("/roles", async (req, res) => {
    try {
-      const results = await prisma.tb_roles.findMany();
+      const results = await db.read.tb_roles.findMany();
 
       return res.json({ results });
    } catch (error) {
@@ -83,7 +82,7 @@ router.get("/roles", async (req, res) => {
 
 router.get("/unit-kerja", async (req, res) => {
    try {
-      const biro = await prisma.tb_biro_master.findMany({
+      const biro = await db.read.tb_biro_master.findMany({
          select: {
             id: true,
             nama: true,
@@ -93,7 +92,7 @@ router.get("/unit-kerja", async (req, res) => {
          },
       });
 
-      const lembaga = await prisma.tb_lembaga_master.findMany({
+      const lembaga = await db.read.tb_lembaga_master.findMany({
          select: {
             id: true,
             nama: true,
@@ -103,7 +102,7 @@ router.get("/unit-kerja", async (req, res) => {
          },
       });
 
-      const upt = await prisma.tb_upt_master.findMany({
+      const upt = await db.read.tb_upt_master.findMany({
          select: {
             id: true,
             nama: true,
@@ -113,7 +112,7 @@ router.get("/unit-kerja", async (req, res) => {
          },
       });
 
-      const fakultas = await prisma.tb_fakultas_master.findMany({
+      const fakultas = await db.read.tb_fakultas_master.findMany({
          select: {
             id: true,
             nama: true,
@@ -146,7 +145,7 @@ router.post("/", async (req, res) => {
          return errorHandler(parsed, res);
       }
 
-      const checkDuplicate = await prisma.tb_pengguna.findUnique({
+      const checkDuplicate = await db.read.tb_pengguna.findUnique({
          where: {
             username_id_roles: {
                username,
@@ -174,19 +173,19 @@ router.post("/", async (req, res) => {
          let exists;
          switch (levelUnit) {
             case "biro":
-               exists = await prisma.tb_biro_master.findUnique({ where: { id: idParent } });
+               exists = await db.read.tb_biro_master.findUnique({ where: { id: idParent } });
                break;
             case "lembaga":
-               exists = await prisma.tb_lembaga_master.findUnique({ where: { id: idParent } });
+               exists = await db.read.tb_lembaga_master.findUnique({ where: { id: idParent } });
                break;
             case "upt":
-               exists = await prisma.tb_upt_master.findUnique({ where: { id: idParent } });
+               exists = await db.read.tb_upt_master.findUnique({ where: { id: idParent } });
                break;
             case "fakultas":
-               exists = await prisma.tb_fakultas_master.findUnique({ where: { id: idParent } });
+               exists = await db.read.tb_fakultas_master.findUnique({ where: { id: idParent } });
                break;
             case "sub_unit":
-               exists = await prisma.tb_sub_unit.findUnique({ where: { id: idParent } });
+               exists = await db.read.tb_sub_unit.findUnique({ where: { id: idParent } });
                break;
             default:
                exists = false;
@@ -223,7 +222,7 @@ router.post("/", async (req, res) => {
          }
       }
 
-      const newData = await prisma.tb_pengguna.create({
+      const newData = await db.write.tb_pengguna.create({
          data: {
             username,
             level_unit: levelUnit,
@@ -235,7 +234,7 @@ router.post("/", async (req, res) => {
       await logAudit(user_modified, "CREATE", "tb_pengguna", req.ip, null, { ...newData });
 
       if (Number.parseInt(id_roles) === 3) {
-         const newDataPenggunaRole = await prisma.tb_pengguna_role.create({
+         const newDataPenggunaRole = await db.write.tb_pengguna_role.create({
             data: {
                id_pengguna: newData.id,
                id_biro,
@@ -269,7 +268,7 @@ router.delete("/:id", async (req, res) => {
       const { id } = req.params;
       const { user_modified } = req.body;
 
-      const oldData = await prisma.tb_pengguna.findUnique({
+      const oldData = await db.read.tb_pengguna.findUnique({
          where: { id: Number.parseInt(id) },
       });
 
@@ -277,7 +276,7 @@ router.delete("/:id", async (req, res) => {
          return res.json({ status: false, message: "Pengguna tidak ditemukan" });
       }
 
-      const oldDataRole = await prisma.tb_pengguna_role.findUnique({
+      const oldDataRole = await db.read.tb_pengguna_role.findUnique({
          where: { id_pengguna: Number.parseInt(id) },
       });
 
@@ -285,7 +284,7 @@ router.delete("/:id", async (req, res) => {
          logAudit(user_modified, "DELETE", "tb_pengguna_role", req.ip, { ...oldDataRole }, null);
       }
 
-      await prisma.tb_pengguna.delete({
+      await db.write.tb_pengguna.delete({
          where: { id: Number.parseInt(id) },
       });
 

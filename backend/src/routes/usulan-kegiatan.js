@@ -7,7 +7,7 @@ const fs = require("node:fs");
 const { Client } = require("ssh2");
 
 const router = express.Router();
-const prisma = require("@/db.js");
+const db = require("@/db.js");
 
 // Helper function to upload file via SFTP
 const uploadFileViaSFTP = (conn, localPath, remotePath) => {
@@ -227,7 +227,7 @@ const cleanRupiah = (val, fallback = 0) => {
 
 router.get("/daftar-jenis-usulan", async (req, res) => {
    try {
-      const results = await prisma.tb_jenis_usulan.findMany({
+      const results = await db.read.tb_jenis_usulan.findMany({
          where: { is_aktif: true },
          select: {
             id: true,
@@ -257,8 +257,8 @@ router.get("/referensi-sbm", async (req, res) => {
       };
       const where = search ? query : {};
 
-      const total = await prisma.tb_detail_harga_sbm.count({ where: { status_validasi: "valid", ...where } });
-      const results = await prisma.tb_detail_harga_sbm.findMany({
+      const total = await db.read.tb_detail_harga_sbm.count({ where: { status_validasi: "valid", ...where } });
+      const results = await db.read.tb_detail_harga_sbm.findMany({
          orderBy: { uploaded: "asc" },
          where: { status_validasi: "valid", ...where },
          take: limit,
@@ -301,8 +301,8 @@ router.get("/", async (req, res) => {
       const limit = Number.parseInt(req.query.limit) || 25;
       const offset = Number.parseInt(req.query.offset) || 0;
 
-      const total = await prisma.tb_usulan_kegiatan.count();
-      const results = await prisma.tb_usulan_kegiatan.findMany({
+      const total = await db.read.tb_usulan_kegiatan.count();
+      const results = await db.read.tb_usulan_kegiatan.findMany({
          take: limit,
          skip: offset,
          orderBy: { id: "desc" },
@@ -332,7 +332,7 @@ router.put("/usul", async (req, res) => {
    try {
       const { id_usulan, user_modified } = req.body;
 
-      const pengaturan = await prisma.tb_pengaturan.findFirst({
+      const pengaturan = await db.read.tb_pengaturan.findFirst({
          where: { is_aktif: true },
          select: { id: true },
       });
@@ -341,7 +341,7 @@ router.put("/usul", async (req, res) => {
          return res.json({ status: false, message: "Tidak dapat melakukan penambahkan usulan kegiatan, tidak ada tahun anggaran yang sedang aktif" });
       }
 
-      const oldData = await prisma.tb_usulan_kegiatan.findUnique({
+      const oldData = await db.read.tb_usulan_kegiatan.findUnique({
          where: { id: Number.parseInt(id_usulan) },
          select: {
             modified: true,
@@ -355,7 +355,7 @@ router.put("/usul", async (req, res) => {
          return res.json({ status: false, message: "Usulan kegiatan tidak ditemukan" });
       }
 
-      const checkStatusUsulan = await prisma.tb_usulan_kegiatan.findFirst({
+      const checkStatusUsulan = await db.read.tb_usulan_kegiatan.findFirst({
          where: {
             id: Number.parseInt(id_usulan),
             status_usulan: {
@@ -368,7 +368,7 @@ router.put("/usul", async (req, res) => {
          return res.json({ status: false, message: "Tidak dapat melakukan pengajuan" });
       }
 
-      const checkVerifikator = await prisma.tb_verikator_usulan.findFirst({
+      const checkVerifikator = await db.read.tb_verikator_usulan.findFirst({
          where: {
             id_jenis_usulan: oldData.id_jenis_usulan,
             tahap: 1,
@@ -386,7 +386,7 @@ router.put("/usul", async (req, res) => {
          });
       }
 
-      const newData = await prisma.tb_usulan_kegiatan.update({
+      const newData = await db.write.tb_usulan_kegiatan.update({
          where: { id: Number.parseInt(id_usulan) },
          data: {
             modified: new Date(),
@@ -420,7 +420,7 @@ router.post("/", async (req, res) => {
          return res.json({ status: false, message: "Anda tidak mempunyai akses untuk melakukan penambahan usulan kegiatan" });
       }
 
-      const newData = await prisma.tb_usulan_kegiatan.create({
+      const newData = await db.write.tb_usulan_kegiatan.create({
          data: {
             kode,
             uploaded: new Date(),
@@ -430,7 +430,7 @@ router.post("/", async (req, res) => {
          },
       });
 
-      const newDataUnit = await prisma.tb_unit_pengusul.create({
+      const newDataUnit = await db.write.tb_unit_pengusul.create({
          data: {
             id_usulan_kegiatan: newData.id,
             id_biro: pengguna.pengguna_role.id_biro,
@@ -454,7 +454,7 @@ router.get("/:id", async (req, res) => {
    try {
       const { id } = req.params;
 
-      const results = await prisma.tb_usulan_kegiatan.findUnique({
+      const results = await db.read.tb_usulan_kegiatan.findUnique({
          where: { id: Number.parseInt(id) },
          select: {
             id: true,
@@ -557,7 +557,7 @@ router.put("/:id", async (req, res) => {
          });
       }
 
-      const oldData = await prisma.tb_usulan_kegiatan.findUnique({
+      const oldData = await db.read.tb_usulan_kegiatan.findUnique({
          where: { id: Number.parseInt(id) },
       });
 
@@ -565,7 +565,7 @@ router.put("/:id", async (req, res) => {
          return res.json({ status: false, message: "Usulan kegiatan tidak ditemukan" });
       }
 
-      const checkStatusUsulan = await prisma.tb_usulan_kegiatan.findFirst({
+      const checkStatusUsulan = await db.read.tb_usulan_kegiatan.findFirst({
          where: {
             id: Number.parseInt(id),
             status_usulan: {
@@ -578,7 +578,7 @@ router.put("/:id", async (req, res) => {
          return res.json({ status: false, message: "Tidak dapat melakukan perubahan usulan" });
       }
 
-      const newData = await prisma.tb_usulan_kegiatan.update({
+      const newData = await db.write.tb_usulan_kegiatan.update({
          where: { id: Number.parseInt(id) },
          data: {
             id_jenis_usulan: Number.parseInt(id_jenis_usulan),
@@ -612,7 +612,7 @@ router.delete("/:id", async (req, res) => {
       const { id } = req.params;
       const { user_modified } = req.body;
 
-      const oldData = await prisma.tb_usulan_kegiatan.findUnique({
+      const oldData = await db.read.tb_usulan_kegiatan.findUnique({
          where: { id: Number.parseInt(id) },
       });
 
@@ -620,7 +620,7 @@ router.delete("/:id", async (req, res) => {
          return res.json({ status: false, message: "Usulan kegiatan tidak ditemukan" });
       }
 
-      const checkStatusUsulan = await prisma.tb_usulan_kegiatan.findFirst({
+      const checkStatusUsulan = await db.read.tb_usulan_kegiatan.findFirst({
          where: {
             id: Number.parseInt(id),
             status_usulan: {
@@ -634,35 +634,35 @@ router.delete("/:id", async (req, res) => {
       }
 
       // Delete related records first to avoid foreign key constraint violations
-      await prisma.tb_anggaran_disetujui.deleteMany({
+      await db.write.tb_anggaran_disetujui.deleteMany({
          where: { id_usulan: Number.parseInt(id) },
       });
 
-      await prisma.tb_unit_pengusul.deleteMany({
+      await db.write.tb_unit_pengusul.deleteMany({
          where: { id_usulan_kegiatan: Number.parseInt(id) },
       });
 
-      await prisma.tb_relasi_usulan_iku.deleteMany({
+      await db.write.tb_relasi_usulan_iku.deleteMany({
          where: { id_usulan: Number.parseInt(id) },
       });
 
-      await prisma.tb_rab_detail.deleteMany({
+      await db.write.tb_rab_detail.deleteMany({
          where: { id_usulan: Number.parseInt(id) },
       });
 
-      await prisma.tb_dokumen_pendukung.deleteMany({
+      await db.write.tb_dokumen_pendukung.deleteMany({
          where: { id_usulan: Number.parseInt(id) },
       });
 
-      await prisma.tb_klaim_verifikasi.deleteMany({
+      await db.write.tb_klaim_verifikasi.deleteMany({
          where: { id_usulan_kegiatan: Number.parseInt(id) },
       });
 
-      await prisma.tb_verifikasi.deleteMany({
+      await db.write.tb_verifikasi.deleteMany({
          where: { id_usulan_kegiatan: Number.parseInt(id) },
       });
 
-      await prisma.tb_usulan_kegiatan.delete({
+      await db.write.tb_usulan_kegiatan.delete({
          where: { id: Number.parseInt(id) },
       });
 
@@ -682,11 +682,11 @@ router.get("/:id/relasi-iku", async (req, res) => {
    try {
       const { id } = req.params;
 
-      const total = await prisma.tb_relasi_usulan_iku.count({
+      const total = await db.read.tb_relasi_usulan_iku.count({
          where: { id_usulan: Number.parseInt(id) },
       });
 
-      const results = await prisma.tb_relasi_usulan_iku.findMany({
+      const results = await db.read.tb_relasi_usulan_iku.findMany({
          where: { id_usulan: Number.parseInt(id) },
          orderBy: { iku_master: { kode: "asc" } },
          select: {
@@ -730,7 +730,7 @@ router.post("/:id_usulan_kegiatan/relasi-iku", async (req, res) => {
       const { id, user_modified } = req.body;
 
       // Check if the relation already exists
-      const existing = await prisma.tb_relasi_usulan_iku.findFirst({
+      const existing = await db.read.tb_relasi_usulan_iku.findFirst({
          where: {
             id_usulan: Number.parseInt(id_usulan_kegiatan),
             id_iku: Number.parseInt(id),
@@ -741,7 +741,7 @@ router.post("/:id_usulan_kegiatan/relasi-iku", async (req, res) => {
          return res.json({ status: false, message: "Relasi IKU sudah ada." });
       }
 
-      const checkStatusUsulan = await prisma.tb_usulan_kegiatan.findFirst({
+      const checkStatusUsulan = await db.read.tb_usulan_kegiatan.findFirst({
          where: {
             id: Number.parseInt(id_usulan_kegiatan),
             status_usulan: {
@@ -754,7 +754,7 @@ router.post("/:id_usulan_kegiatan/relasi-iku", async (req, res) => {
          return res.json({ status: false, message: "Tidak dapat memperbaharui atau menambahkan IKU baru" });
       }
 
-      const newData = await prisma.tb_relasi_usulan_iku.create({
+      const newData = await db.write.tb_relasi_usulan_iku.create({
          data: {
             id_usulan: Number.parseInt(id_usulan_kegiatan),
             id_iku: Number.parseInt(id),
@@ -781,7 +781,7 @@ router.delete("/relasi-iku/:id", async (req, res) => {
       const { id_usulan_kegiatan } = req.query;
       const { user_modified } = req.body;
 
-      const oldData = await prisma.tb_relasi_usulan_iku.findUnique({
+      const oldData = await db.read.tb_relasi_usulan_iku.findUnique({
          where: { id: Number.parseInt(id) },
       });
 
@@ -789,7 +789,7 @@ router.delete("/relasi-iku/:id", async (req, res) => {
          return res.json({ status: false, message: "Relasi IKU tidak ditemukan" });
       }
 
-      const checkStatusUsulan = await prisma.tb_usulan_kegiatan.findFirst({
+      const checkStatusUsulan = await db.read.tb_usulan_kegiatan.findFirst({
          where: {
             id: Number.parseInt(oldData.id_usulan),
             status_usulan: {
@@ -802,7 +802,7 @@ router.delete("/relasi-iku/:id", async (req, res) => {
          return res.json({ status: false, message: "Tidak dapat menghapus relasi IKU" });
       }
 
-      await prisma.tb_relasi_usulan_iku.delete({
+      await db.write.tb_relasi_usulan_iku.delete({
          where: { id: Number.parseInt(id) },
       });
 
@@ -822,7 +822,7 @@ router.get("/rab/:id_usulan/:id", async (req, res) => {
    try {
       const { id_usulan, id } = req.params;
 
-      const results = await prisma.tb_rab_detail.findUnique({
+      const results = await db.read.tb_rab_detail.findUnique({
          where: { id_usulan: Number.parseInt(id_usulan), id: Number.parseInt(id) },
       });
       return res.json({ results });
@@ -835,11 +835,11 @@ router.get("/:id/rab", async (req, res) => {
    try {
       const { id } = req.params;
 
-      const total = await prisma.tb_rab_detail.count({
+      const total = await db.read.tb_rab_detail.count({
          where: { id_usulan: Number.parseInt(id) },
       });
 
-      const results = await prisma.tb_rab_detail.findMany({
+      const results = await db.read.tb_rab_detail.findMany({
          where: { id_usulan: Number.parseInt(id) },
          select: {
             id: true,
@@ -900,7 +900,7 @@ router.post("/rab", async (req, res) => {
          });
       }
 
-      const checkStatusUsulan = await prisma.tb_usulan_kegiatan.findFirst({
+      const checkStatusUsulan = await db.read.tb_usulan_kegiatan.findFirst({
          where: {
             id: Number.parseInt(id_usulan),
             status_usulan: {
@@ -913,7 +913,7 @@ router.post("/rab", async (req, res) => {
          return res.json({ status: false, message: "Tidak dapat memperbaharui atau menambahkan rencana anggaran baru" });
       }
 
-      const newData = await prisma.tb_rab_detail.create({
+      const newData = await db.write.tb_rab_detail.create({
          data: {
             id_usulan: Number.parseInt(id_usulan),
             uraian_biaya,
@@ -961,7 +961,7 @@ router.put("/rab/:id_usulan/:id", async (req, res) => {
          });
       }
 
-      const oldData = await prisma.tb_rab_detail.findUnique({
+      const oldData = await db.read.tb_rab_detail.findUnique({
          where: { id_usulan: Number.parseInt(id_usulan), id: Number.parseInt(id) },
       });
 
@@ -969,7 +969,7 @@ router.put("/rab/:id_usulan/:id", async (req, res) => {
          return res.json({ status: false, message: "Rencana anggaran biaya tidak ditemukan" });
       }
 
-      const checkStatusUsulan = await prisma.tb_usulan_kegiatan.findFirst({
+      const checkStatusUsulan = await db.read.tb_usulan_kegiatan.findFirst({
          where: {
             id: Number.parseInt(id_usulan),
             status_usulan: {
@@ -982,7 +982,7 @@ router.put("/rab/:id_usulan/:id", async (req, res) => {
          return res.json({ status: false, message: "Tidak dapat melakukan penambahan atau perubahan rencana anggaran biaya" });
       }
 
-      const newData = await prisma.tb_rab_detail.update({
+      const newData = await db.write.tb_rab_detail.update({
          where: { id_usulan: Number.parseInt(id_usulan), id: Number.parseInt(id) },
          data: {
             uraian_biaya,
@@ -1015,7 +1015,7 @@ router.delete("/rab/:id", async (req, res) => {
       const { user_modified } = req.body;
       const { id_usulan_kegiatan } = req.query;
 
-      const oldData = await prisma.tb_rab_detail.findUnique({
+      const oldData = await db.read.tb_rab_detail.findUnique({
          where: { id: Number.parseInt(id) },
       });
 
@@ -1023,7 +1023,7 @@ router.delete("/rab/:id", async (req, res) => {
          return res.json({ status: false, message: "Rencana anggaran biaya tidak ditemukan" });
       }
 
-      const checkStatusUsulan = await prisma.tb_usulan_kegiatan.findFirst({
+      const checkStatusUsulan = await db.read.tb_usulan_kegiatan.findFirst({
          where: {
             id: Number.parseInt(oldData.id_usulan),
             status_usulan: {
@@ -1036,7 +1036,7 @@ router.delete("/rab/:id", async (req, res) => {
          return res.json({ status: false, message: "Tidak dapat melakukan penghapusan rencana anggaran biaya" });
       }
 
-      await prisma.tb_rab_detail.delete({
+      await db.write.tb_rab_detail.delete({
          where: { id: Number.parseInt(id) },
       });
 
@@ -1057,8 +1057,8 @@ router.get("/:id/dokumen", async (req, res) => {
       const { id } = req.params;
       const where = { id_usulan: Number.parseInt(id) };
 
-      const total = await prisma.tb_dokumen_pendukung.count({ where });
-      const results = await prisma.tb_dokumen_pendukung.findMany({
+      const total = await db.read.tb_dokumen_pendukung.count({ where });
+      const results = await db.read.tb_dokumen_pendukung.findMany({
          where,
          select: {
             id: true,
@@ -1123,7 +1123,7 @@ router.post("/:id_usulan_kegiatan/dokumen", upload.single("file_dokumen"), async
          });
       }
 
-      const checkStatusUsulan = await prisma.tb_usulan_kegiatan.findFirst({
+      const checkStatusUsulan = await db.read.tb_usulan_kegiatan.findFirst({
          where: {
             id: Number.parseInt(id_usulan_kegiatan),
             status_usulan: {
@@ -1142,7 +1142,7 @@ router.post("/:id_usulan_kegiatan/dokumen", upload.single("file_dokumen"), async
       const { path_file } = await handleFileStorage(req);
 
       // Save to database
-      const newData = await prisma.tb_dokumen_pendukung.create({
+      const newData = await db.write.tb_dokumen_pendukung.create({
          data: {
             id_usulan: Number.parseInt(id_usulan_kegiatan),
             nama_dokumen: nama_dokumen.trim(),
@@ -1187,7 +1187,7 @@ router.put("/:id_usulan_kegiatan/dokumen/:id", upload.single("file_dokumen"), as
          });
       }
 
-      const oldData = await prisma.tb_dokumen_pendukung.findUnique({
+      const oldData = await db.read.tb_dokumen_pendukung.findUnique({
          where: { id: Number.parseInt(id) },
       });
 
@@ -1195,7 +1195,7 @@ router.put("/:id_usulan_kegiatan/dokumen/:id", upload.single("file_dokumen"), as
          return res.json({ status: false, message: "Dokumen tidak ditemukan" });
       }
 
-      const checkStatusUsulan = await prisma.tb_usulan_kegiatan.findFirst({
+      const checkStatusUsulan = await db.read.tb_usulan_kegiatan.findFirst({
          where: {
             id: Number.parseInt(id_usulan_kegiatan),
             status_usulan: {
@@ -1211,7 +1211,7 @@ router.put("/:id_usulan_kegiatan/dokumen/:id", upload.single("file_dokumen"), as
       const fileUpdate = await updateDocumentFile(req, oldData);
 
       // Update database
-      const newData = await prisma.tb_dokumen_pendukung.update({
+      const newData = await db.write.tb_dokumen_pendukung.update({
          where: { id: Number.parseInt(id) },
          data: {
             nama_dokumen: nama_dokumen.trim(),
@@ -1242,7 +1242,7 @@ router.delete("/dokumen/:id", async (req, res) => {
       const { user_modified } = req.body;
       const { id_usulan_kegiatan } = req.query;
 
-      const oldData = await prisma.tb_dokumen_pendukung.findUnique({
+      const oldData = await db.read.tb_dokumen_pendukung.findUnique({
          where: {
             id: Number.parseInt(id),
          },
@@ -1252,7 +1252,7 @@ router.delete("/dokumen/:id", async (req, res) => {
          return res.json({ status: false, message: "Dokumen pendukung tidak ditemukan" });
       }
 
-      const checkStatusUsulan = await prisma.tb_usulan_kegiatan.findFirst({
+      const checkStatusUsulan = await db.read.tb_usulan_kegiatan.findFirst({
          where: {
             id: Number.parseInt(oldData.id_usulan),
             status_usulan: {
@@ -1265,7 +1265,7 @@ router.delete("/dokumen/:id", async (req, res) => {
          return res.json({ status: false, message: "Tidak dapat melakukan penghapusan dokumen" });
       }
 
-      await prisma.tb_dokumen_pendukung.delete({
+      await db.write.tb_dokumen_pendukung.delete({
          where: {
             id: Number.parseInt(id),
          },

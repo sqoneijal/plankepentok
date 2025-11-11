@@ -22,7 +22,7 @@ const perbaiki = async (req, res) => {
          return errorHandler(parsed, res);
       }
 
-      const oldData = await db.tb_usulan_kegiatan.findUnique({
+      const oldData = await db.read.tb_usulan_kegiatan.findUnique({
          where: {
             id: Number.parseInt(id_usulan),
             status_usulan: {
@@ -35,7 +35,7 @@ const perbaiki = async (req, res) => {
          return res.json({ status: false, message: "Usulan kegiatan tidak ditemukan" });
       }
 
-      await db.$transaction(async (tx) => {
+      await db.write.$transaction(async (tx) => {
          const newDataLog = await tx.tb_log_verifikasi.create({
             data: {
                id_usulan_kegiatan: Number.parseInt(id_usulan),
@@ -96,7 +96,7 @@ const tolak = async (req, res) => {
          return errorHandler(parsed, res);
       }
 
-      const oldData = await db.tb_usulan_kegiatan.findUnique({
+      const oldData = await db.read.tb_usulan_kegiatan.findUnique({
          where: {
             id: Number.parseInt(id_usulan),
             status_usulan: {
@@ -109,7 +109,7 @@ const tolak = async (req, res) => {
          return res.json({ status: false, message: "Usulan kegiatan tidak ditemukan" });
       }
 
-      await db.$transaction(async (tx) => {
+      await db.write.$transaction(async (tx) => {
          const newDataLog = await tx.tb_log_verifikasi.create({
             data: {
                id_usulan_kegiatan: Number.parseInt(id_usulan),

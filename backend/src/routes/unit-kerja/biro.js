@@ -1,7 +1,6 @@
 const express = require("express");
-const { PrismaClient } = require("@prisma/client");
-const errorHandler = require("../../handle-error.js");
-const { logAudit } = require("../../helpers.js");
+const errorHandler = require("@/handle-error.js");
+const { logAudit } = require("@/helpers.js");
 const { z } = require("zod");
 
 const validation = z.object({
@@ -9,7 +8,7 @@ const validation = z.object({
 });
 
 const router = express.Router();
-const prisma = new PrismaClient();
+const db = require("@/db.js");
 
 router.get("/", async (req, res) => {
    try {
@@ -22,8 +21,8 @@ router.get("/", async (req, res) => {
       };
       const where = search ? query : {};
 
-      const total = await prisma.tb_biro_master.count({ where });
-      const results = await prisma.tb_biro_master.findMany({
+      const total = await db.read.tb_biro_master.count({ where });
+      const results = await db.read.tb_biro_master.findMany({
          where,
          orderBy: { id: "desc" },
          take: limit,
@@ -39,7 +38,7 @@ router.get("/", async (req, res) => {
 router.get("/:id", async (req, res) => {
    try {
       const { id } = req.params;
-      const results = await prisma.tb_biro_master.findUnique({
+      const results = await db.read.tb_biro_master.findUnique({
          where: { id: Number.parseInt(id) },
       });
 
@@ -59,7 +58,7 @@ router.post("/", async (req, res) => {
          return errorHandler(parsed, res);
       }
 
-      const newData = await prisma.tb_biro_master.create({
+      const newData = await db.write.tb_biro_master.create({
          data: {
             nama,
             uploaded: new Date(),
@@ -91,7 +90,7 @@ router.put("/:id", async (req, res) => {
          return errorHandler(parsed, res);
       }
 
-      const oldData = await prisma.tb_biro_master.findUnique({
+      const oldData = await db.read.tb_biro_master.findUnique({
          where: { id: Number.parseInt(id) },
       });
 
@@ -99,7 +98,7 @@ router.put("/:id", async (req, res) => {
          return res.json({ status: false, message: "Biro tidak ditemukan" });
       }
 
-      const newData = await prisma.tb_biro_master.update({
+      const newData = await db.write.tb_biro_master.update({
          where: { id: Number.parseInt(id) },
          data: {
             nama,
@@ -132,7 +131,7 @@ router.delete("/:id", async (req, res) => {
       const { id } = req.params;
       const { user_modified } = req.body;
 
-      const oldData = await prisma.tb_biro_master.findUnique({
+      const oldData = await db.read.tb_biro_master.findUnique({
          where: { id: Number.parseInt(id) },
       });
 
@@ -140,7 +139,7 @@ router.delete("/:id", async (req, res) => {
          return res.json({ status: false, message: "Biro tidak ditemukan" });
       }
 
-      await prisma.tb_biro_master.delete({
+      await db.write.tb_biro_master.delete({
          where: { id: Number.parseInt(id) },
       });
 

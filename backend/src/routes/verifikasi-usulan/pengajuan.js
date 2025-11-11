@@ -1,5 +1,5 @@
 const express = require("express");
-const prisma = require("@/db.js");
+const db = require("@/db.js");
 const errorHandler = require("@/handle-error.js");
 const { logAudit } = require("@/helpers.js");
 const { z } = require("zod");
@@ -52,7 +52,7 @@ const validationDokumen = z
 
 const router = express.Router();
 
-const handleStatusVerifikasi = async (data = {}, tx = prisma) => {
+const handleStatusVerifikasi = async (data = {}, tx = db.write) => {
    const oldData = await tx.tb_verifikasi.findFirst({
       where: {
          id_referensi: Number.parseInt(data.id_referensi),
@@ -119,7 +119,7 @@ router.put("/setujui", setujui);
 
 router.get("/referensi-sbm", async (req, res) => {
    try {
-      const results = await prisma.tb_detail_harga_sbm.findMany({
+      const results = await db.read.tb_detail_harga_sbm.findMany({
          where: { status_validasi: "valid" },
          select: {
             id: true,
@@ -155,7 +155,7 @@ router.get("/:id_usulan/histori-penolakan", async (req, res) => {
    try {
       const { id_usulan } = req.params;
 
-      const results = await prisma.tb_penolakan_usulan.findMany({
+      const results = await db.read.tb_penolakan_usulan.findMany({
          where: { id_usulan_kegiatan: Number.parseInt(id_usulan) },
       });
 
@@ -169,7 +169,7 @@ router.get("/:id_usulan/histori-perbaikan", async (req, res) => {
    try {
       const { id_usulan } = req.params;
 
-      const results = await prisma.tb_perbaikan_usulan.findMany({
+      const results = await db.read.tb_perbaikan_usulan.findMany({
          where: { id_usulan_kegiatan: Number.parseInt(id_usulan) },
          orderBy: { id: "desc" },
       });
@@ -191,7 +191,7 @@ router.put("/iku/:id", async (req, res) => {
          return errorHandler(parsed, res);
       }
 
-      const oldData = await prisma.tb_relasi_usulan_iku.findUnique({
+      const oldData = await db.read.tb_relasi_usulan_iku.findUnique({
          where: { id: Number.parseInt(id) },
          select: {
             id_usulan: true,
@@ -237,7 +237,7 @@ router.put("/dokumen/:id", async (req, res) => {
          return errorHandler(parsed, res);
       }
 
-      const oldData = await prisma.tb_dokumen_pendukung.findUnique({
+      const oldData = await db.read.tb_dokumen_pendukung.findUnique({
          where: { id: Number.parseInt(id) },
       });
 

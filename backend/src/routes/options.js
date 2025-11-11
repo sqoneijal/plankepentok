@@ -1,12 +1,10 @@
 const express = require("express");
-const { PrismaClient } = require("@prisma/client");
-
 const router = express.Router();
-const prisma = new PrismaClient();
+const db = require("@/db.js");
 
 router.get("/kategori-sbm", async (req, res) => {
    try {
-      const results = await prisma.tb_kategori_sbm.findMany();
+      const results = await db.read.tb_kategori_sbm.findMany();
       res.json({ results });
    } catch (error) {
       res.status(500).json({ error: error.message });
@@ -15,7 +13,7 @@ router.get("/kategori-sbm", async (req, res) => {
 
 router.get("/unit-satuan", async (req, res) => {
    try {
-      const results = await prisma.tb_unit_satuan.findMany({
+      const results = await db.read.tb_unit_satuan.findMany({
          where: { aktif: true },
       });
       res.json({ results });
@@ -26,7 +24,7 @@ router.get("/unit-satuan", async (req, res) => {
 
 router.get("/tahun-anggaran", async (req, res) => {
    try {
-      const results = await prisma.tb_pengaturan.findMany();
+      const results = await db.read.tb_pengaturan.findMany();
       res.json({ results });
    } catch (error) {
       res.status(500).json({ error: error.message });
@@ -35,7 +33,7 @@ router.get("/tahun-anggaran", async (req, res) => {
 
 router.get("/standar-biaya", async (req, res) => {
    try {
-      const results = await prisma.tb_standar_biaya_master.findMany();
+      const results = await db.read.tb_standar_biaya_master.findMany();
       res.json({ results });
    } catch (error) {
       res.status(500).json({ error: error.message });
@@ -44,7 +42,7 @@ router.get("/standar-biaya", async (req, res) => {
 
 router.get("/biro", async (req, res) => {
    try {
-      const results = await prisma.tb_biro_master.findMany();
+      const results = await db.read.tb_biro_master.findMany();
       res.json({ results });
    } catch (error) {
       res.status(500).json({ error: error.message });
@@ -53,7 +51,7 @@ router.get("/biro", async (req, res) => {
 
 router.get("/fakultas", async (req, res) => {
    try {
-      const results = await prisma.tb_fakultas_master.findMany();
+      const results = await db.read.tb_fakultas_master.findMany();
       res.json({ results });
    } catch (error) {
       res.status(500).json({ error: error.message });
@@ -62,7 +60,7 @@ router.get("/fakultas", async (req, res) => {
 
 router.get("/tahun-anggaran", async (req, res) => {
    try {
-      const results = await prisma.tb_pengaturan.findMany();
+      const results = await db.read.tb_pengaturan.findMany();
       res.json({ results });
    } catch (error) {
       res.status(500).json({ error: error.message });

@@ -1,12 +1,10 @@
 const express = require("express");
-const { PrismaClient } = require("@prisma/client");
-
+const db = require("@/db.js");
 const router = express.Router();
-const prisma = new PrismaClient();
 
 router.get("/angka-pagu", async (req, res) => {
    try {
-      const pengaturan = await prisma.tb_pengaturan.findFirst({
+      const pengaturan = await db.read.tb_pengaturan.findFirst({
          where: { is_aktif: true },
          select: {
             id: true,
@@ -20,7 +18,7 @@ router.get("/angka-pagu", async (req, res) => {
          return res.json({ status: false, message: "Pengaturan aktif tidak ditemukan" });
       }
 
-      const sumAnggaranDisetujui = await prisma.tb_usulan_kegiatan.aggregate({
+      const sumAnggaranDisetujui = await db.read.tb_usulan_kegiatan.aggregate({
          _sum: {
             total_anggaran: true,
          },
@@ -29,7 +27,7 @@ router.get("/angka-pagu", async (req, res) => {
          },
       });
 
-      const sumRencanaAnggaran = await prisma.tb_rab_detail.aggregate({
+      const sumRencanaAnggaran = await db.read.tb_rab_detail.aggregate({
          _sum: {
             total_biaya: true,
          },
@@ -58,38 +56,56 @@ router.get("/status-verifikasi", async (req, res) => {
    try {
       const { limit, offset } = req.query;
 
+      const pengaturan = await db.read.tb_pengaturan.findFirst({
+         where: {
+            is_aktif: true,
+         },
+         select: {
+            id: true,
+         },
+      });
+
       const where = {
-         usulan_kegiatan: { pengaturan: { is_aktif: true } },
-         status_klaim: { not: "batal" },
+         id_pengaturan: pengaturan.id,
+         status_usulan: { notIn: ["draft", "diterima"] },
       };
 
-      const total = await prisma.tb_klaim_verifikasi.count({ where });
-      const results = await prisma.tb_klaim_verifikasi.findMany({
-         where,
+      const total = await db.read.tb_usulan_kegiatan.count({ where });
+      const results = await db.read.tb_usulan_kegiatan.findMany({
          take: Number.parseInt(limit),
          skip: Number.parseInt(offset),
+         where,
          select: {
-            status_klaim: true,
-            verikator_usulan: {
+            id: true,
+            kode: true,
+            tanggal_submit: true,
+            id_jenis_usulan: true,
+            rencana_total_anggaran: true,
+            total_anggaran: true,
+            jenis_usulan: {
                select: {
-                  tahap: true,
-                  pengguna: {
-                     select: {
-                        fullname: true,
-                     },
-                  },
+                  nama: true,
                },
             },
-            usulan_kegiatan: {
+            anggaran_disetujui: {
                select: {
-                  kode: true,
-                  status_usulan: true,
-                  tanggal_submit: true,
-                  rencana_total_anggaran: true,
-                  total_anggaran: true,
-                  jenis_usulan: {
+                  jumlah: true,
+               },
+            },
+            klaim_verifikasi: {
+               where: {
+                  status_klaim: { not: "selesai" },
+               },
+               select: {
+                  status_klaim: true,
+                  verikator_usulan: {
                      select: {
-                        nama: true,
+                        tahap: true,
+                        pengguna: {
+                           select: {
+                              fullname: true,
+                           },
+                        },
                      },
                   },
                },

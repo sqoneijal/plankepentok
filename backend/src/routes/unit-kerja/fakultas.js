@@ -1,11 +1,10 @@
 const express = require("express");
-const { PrismaClient } = require("@prisma/client");
 const { z } = require("zod");
-const { logAudit } = require("../../helpers.js");
-const errorHandler = require("../../handle-error.js");
+const { logAudit } = require("@/helpers.js");
+const errorHandler = require("@/handle-error.js");
 
 const router = express.Router();
-const prisma = new PrismaClient();
+const db = require("@/db.js");
 
 const fakultasSchema = z.object({
    nama: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Nama fakultas wajib diisi")),
@@ -20,8 +19,8 @@ router.get("/", async (req, res) => {
       const query = { nama: { contains: search, mode: "insensitive" } };
       const where = search ? query : {};
 
-      const total = await prisma.tb_fakultas_master.count({ where });
-      const results = await prisma.tb_fakultas_master.findMany({
+      const total = await db.read.tb_fakultas_master.count({ where });
+      const results = await db.read.tb_fakultas_master.findMany({
          where,
          orderBy: { id: "desc" },
          take: limit,
@@ -37,7 +36,7 @@ router.get("/:id", async (req, res) => {
    try {
       const { id } = req.params;
 
-      const results = await prisma.tb_fakultas_master.findUnique({
+      const results = await db.read.tb_fakultas_master.findUnique({
          where: { id: Number.parseInt(id) },
       });
 
@@ -57,7 +56,7 @@ router.post("/", async (req, res) => {
          return errorHandler(parsed, res);
       }
 
-      const newData = await prisma.tb_fakultas_master.create({
+      const newData = await db.write.tb_fakultas_master.create({
          data: {
             nama,
             uploaded: new Date(),
@@ -88,7 +87,7 @@ router.put("/:id", async (req, res) => {
          return errorHandler(parsed, res);
       }
 
-      const oldData = await prisma.tb_fakultas_master.findUnique({
+      const oldData = await db.read.tb_fakultas_master.findUnique({
          where: { id: Number.parseInt(id) },
       });
 
@@ -96,7 +95,7 @@ router.put("/:id", async (req, res) => {
          return res.json({ status: false, message: "Fakultas tidak ditemukan" });
       }
 
-      const newData = await prisma.tb_fakultas_master.update({
+      const newData = await db.write.tb_fakultas_master.update({
          where: { id: Number.parseInt(id) },
          data: {
             nama,
@@ -129,7 +128,7 @@ router.delete("/:id", async (req, res) => {
       const { id } = req.params;
       const { user_modified } = req.body;
 
-      const oldData = await prisma.tb_fakultas_master.findUnique({
+      const oldData = await db.read.tb_fakultas_master.findUnique({
          where: { id: Number.parseInt(id) },
       });
 
@@ -137,7 +136,7 @@ router.delete("/:id", async (req, res) => {
          return res.json({ status: false, message: "Fakultas tidak ditemukan" });
       }
 
-      await prisma.tb_fakultas_master.delete({
+      await db.write.tb_fakultas_master.delete({
          where: { id: Number.parseInt(id) },
       });
 

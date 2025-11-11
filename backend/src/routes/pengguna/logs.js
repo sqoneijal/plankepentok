@@ -1,16 +1,15 @@
 const express = require("express");
-const { PrismaClient } = require("@prisma/client");
 
 const router = express.Router();
-const prisma = new PrismaClient();
+const db = require("@/db.js");
 
 router.get("/", async (req, res) => {
    try {
       const limit = Number.parseInt(req.query.limit) || 25;
       const offset = Number.parseInt(req.query.offset) || 0;
 
-      const total = await prisma.tb_audit_logs.count();
-      const results = await prisma.tb_audit_logs.findMany({
+      const total = await db.read.tb_audit_logs.count();
+      const results = await db.read.tb_audit_logs.findMany({
          orderBy: { id: "desc" },
          take: limit,
          skip: offset,

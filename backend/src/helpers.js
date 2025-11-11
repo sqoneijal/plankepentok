@@ -1,11 +1,9 @@
-const { PrismaClient } = require("@prisma/client");
-
-const prisma = new PrismaClient();
+const db = require("@/db.js");
 
 // Helper function to log audit
 const logAudit = async (user_modified, action_type, table_affected, ip_address, old_value = null, new_value = null) => {
    try {
-      await prisma.tb_audit_logs.create({
+      await db.write.tb_audit_logs.create({
          data: {
             user_modified,
             action_type,

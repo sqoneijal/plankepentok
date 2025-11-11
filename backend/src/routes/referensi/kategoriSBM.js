@@ -1,7 +1,6 @@
 const express = require("express");
-const { PrismaClient } = require("@prisma/client");
-const errorHandler = require("../../handle-error.js");
-const { logAudit } = require("../../helpers.js");
+const errorHandler = require("@/handle-error.js");
+const { logAudit } = require("@/helpers.js");
 const { z } = require("zod");
 
 const validation = z.object({
@@ -10,7 +9,7 @@ const validation = z.object({
 });
 
 const router = express.Router();
-const prisma = new PrismaClient();
+const db = require("@/db.js");
 
 router.get("/", async (req, res) => {
    try {
@@ -27,8 +26,8 @@ router.get("/", async (req, res) => {
       };
       const where = search ? query : {};
 
-      const total = await prisma.tb_kategori_sbm.count({ where });
-      const results = await prisma.tb_kategori_sbm.findMany({
+      const total = await db.read.tb_kategori_sbm.count({ where });
+      const results = await db.read.tb_kategori_sbm.findMany({
          where,
          orderBy: { id: "desc" },
          take: limit,
@@ -43,7 +42,7 @@ router.get("/", async (req, res) => {
 router.get("/:id", async (req, res) => {
    try {
       const { id } = req.params;
-      const results = await prisma.tb_kategori_sbm.findUnique({
+      const results = await db.read.tb_kategori_sbm.findUnique({
          where: { id: Number.parseInt(id) },
       });
 
@@ -63,7 +62,7 @@ router.post("/", async (req, res) => {
          return errorHandler(parsed, res);
       }
 
-      const duplicate = await prisma.tb_kategori_sbm.findUnique({
+      const duplicate = await db.read.tb_kategori_sbm.findUnique({
          where: { kode },
       });
 
@@ -71,7 +70,7 @@ router.post("/", async (req, res) => {
          return res.json({ status: false, errors: { kode: "Kode kategori SMB sudah terdaftar" } });
       }
 
-      const newData = await prisma.tb_kategori_sbm.create({
+      const newData = await db.write.tb_kategori_sbm.create({
          data: {
             kode,
             nama,
@@ -107,7 +106,7 @@ router.put("/:id", async (req, res) => {
          return errorHandler(parsed, res);
       }
 
-      const duplicate = await prisma.tb_kategori_sbm.findFirst({
+      const duplicate = await db.read.tb_kategori_sbm.findFirst({
          where: { kode, id: { not: Number.parseInt(id) } },
       });
 
@@ -115,7 +114,7 @@ router.put("/:id", async (req, res) => {
          return res.json({ status: false, errors: { kode: "Kode kategori SMB sudah terdaftar" } });
       }
 
-      const oldData = await prisma.tb_kategori_sbm.findUnique({
+      const oldData = await db.read.tb_kategori_sbm.findUnique({
          where: { id: Number.parseInt(id) },
       });
 
@@ -123,7 +122,7 @@ router.put("/:id", async (req, res) => {
          return res.json({ status: false, message: "Kategori SBM tidak ditemukan" });
       }
 
-      const newData = await prisma.tb_kategori_sbm.update({
+      const newData = await db.write.tb_kategori_sbm.update({
          where: { id: Number.parseInt(id) },
          data: {
             kode,
@@ -160,7 +159,7 @@ router.delete("/:id", async (req, res) => {
       const { id } = req.params;
       const { user_modified } = req.body;
 
-      const oldData = await prisma.tb_kategori_sbm.findUnique({
+      const oldData = await db.read.tb_kategori_sbm.findUnique({
          where: { id: Number.parseInt(id) },
       });
 
@@ -168,7 +167,7 @@ router.delete("/:id", async (req, res) => {
          return res.json({ status: false, message: "Kategori SBM tidak ditemukan" });
       }
 
-      await prisma.tb_kategori_sbm.delete({
+      await db.write.tb_kategori_sbm.delete({
          where: { id: Number.parseInt(id) },
       });
 

@@ -14,7 +14,7 @@ const validation = z.object({
 });
 
 const router = express.Router();
-const prisma = require("@/db.js");
+const db = require("@/db.js");
 
 router.get("/", async (req, res) => {
    try {
@@ -31,8 +31,8 @@ router.get("/", async (req, res) => {
       };
       const where = search ? query : {};
 
-      const total = await prisma.tb_detail_harga_sbm.count({ where });
-      const results = await prisma.tb_detail_harga_sbm.findMany({
+      const total = await db.read.tb_detail_harga_sbm.count({ where });
+      const results = await db.read.tb_detail_harga_sbm.findMany({
          where,
          orderBy: { id: "desc" },
          take: limit,
@@ -71,7 +71,7 @@ router.get("/", async (req, res) => {
 router.get("/:id", async (req, res) => {
    try {
       const { id } = req.params;
-      const results = await prisma.tb_detail_harga_sbm.findUnique({
+      const results = await db.read.tb_detail_harga_sbm.findUnique({
          where: { id: Number.parseInt(id) },
          select: {
             id: true,
@@ -126,7 +126,7 @@ router.post("/", async (req, res) => {
          return errorHandler(parsed, res);
       }
 
-      const duplicate = await prisma.tb_detail_harga_sbm.findFirst({
+      const duplicate = await db.read.tb_detail_harga_sbm.findFirst({
          where: {
             id_standar_biaya: Number.parseInt(id_standar_biaya),
             tahun_anggaran: Number.parseFloat(tahun_anggaran),
@@ -138,7 +138,7 @@ router.post("/", async (req, res) => {
          return res.json({ status: false, errors: { tahun_anggaran: "Kombinasi standar biaya, tahun anggaran, dan unit satuan sudah terdaftar" } });
       }
 
-      const newData = await prisma.tb_detail_harga_sbm.create({
+      const newData = await db.write.tb_detail_harga_sbm.create({
          data: {
             id_standar_biaya: Number.parseInt(id_standar_biaya),
             tahun_anggaran: Number.parseFloat(tahun_anggaran),
@@ -187,7 +187,7 @@ router.put("/:id", async (req, res) => {
          return errorHandler(parsed, res);
       }
 
-      const oldData = await prisma.tb_detail_harga_sbm.findUnique({
+      const oldData = await db.read.tb_detail_harga_sbm.findUnique({
          where: { id: Number.parseInt(id) },
       });
 
@@ -195,7 +195,7 @@ router.put("/:id", async (req, res) => {
          return res.json({ status: false, errors: { tahun_anggaran: "Detail harga SBM tidak ditemukan" } });
       }
 
-      const duplicate = await prisma.tb_detail_harga_sbm.findFirst({
+      const duplicate = await db.read.tb_detail_harga_sbm.findFirst({
          where: {
             id_standar_biaya: Number.parseInt(id_standar_biaya),
             tahun_anggaran: Number.parseFloat(tahun_anggaran),
@@ -208,7 +208,7 @@ router.put("/:id", async (req, res) => {
          return res.json({ status: false, errors: { tahun_anggaran: "Kombinasi standar biaya, tahun anggaran, dan unit satuan sudah terdaftar" } });
       }
 
-      const newData = await prisma.tb_detail_harga_sbm.update({
+      const newData = await db.write.tb_detail_harga_sbm.update({
          where: { id: Number.parseInt(id) },
          data: {
             id_standar_biaya: Number.parseInt(id_standar_biaya),
@@ -243,7 +243,7 @@ router.delete("/:id", async (req, res) => {
       const { id } = req.params;
       const { user_modified } = req.body;
 
-      const oldData = await prisma.tb_detail_harga_sbm.findUnique({
+      const oldData = await db.read.tb_detail_harga_sbm.findUnique({
          where: { id: Number.parseInt(id) },
       });
 
@@ -251,7 +251,7 @@ router.delete("/:id", async (req, res) => {
          return res.json({ status: false, errors: { tahun_anggaran: "Detail harga SBM tidak ditemukan" } });
       }
 
-      await prisma.tb_detail_harga_sbm.delete({
+      await db.write.tb_detail_harga_sbm.delete({
          where: { id: Number.parseInt(id) },
       });
 

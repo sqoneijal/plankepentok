@@ -60,8 +60,8 @@ const validationRAB = z
       }
    );
 
-const hitungAnggaranDisetujui = async (id_usulan_kegiatan, user_modified, ip, tx = prisma) => {
-   const verifikasi = await tx.tb_verifikasi.findMany({
+const hitungAnggaranDisetujui = async (id_usulan_kegiatan, user_modified, ip, tx = db) => {
+   const verifikasi = await tx.read.tb_verifikasi.findMany({
       where: {
          id_usulan_kegiatan: Number.parseInt(id_usulan_kegiatan),
          status: "valid",
@@ -72,7 +72,7 @@ const hitungAnggaranDisetujui = async (id_usulan_kegiatan, user_modified, ip, tx
       },
    });
 
-   const rabDetail = await tx.tb_rab_detail.findMany({
+   const rabDetail = await tx.read.tb_rab_detail.findMany({
       where: { id: { in: verifikasi.map((v) => v.id_referensi) } },
       select: {
          id: true,
@@ -80,7 +80,7 @@ const hitungAnggaranDisetujui = async (id_usulan_kegiatan, user_modified, ip, tx
       },
    });
 
-   const rabPerubahan = await tx.tb_rab_detail_perubahan.findMany({
+   const rabPerubahan = await tx.read.tb_rab_detail_perubahan.findMany({
       where: { id_rab_detail: { in: verifikasi.map((v) => v.id_referensi) } },
       select: {
          id_rab_detail: true,
@@ -105,11 +105,11 @@ const hitungAnggaranDisetujui = async (id_usulan_kegiatan, user_modified, ip, tx
       total_biaya += cleanRupiah(biaya.total_biaya);
    }
 
-   const oldData = await tx.tb_anggaran_disetujui.findUnique({
+   const oldData = await tx.read.tb_anggaran_disetujui.findUnique({
       where: { id_usulan: Number.parseInt(id_usulan_kegiatan) },
    });
 
-   const newData = await tx.tb_anggaran_disetujui.update({
+   const newData = await tx.write.tb_anggaran_disetujui.update({
       where: { id: oldData.id },
       data: { jumlah: total_biaya },
    });
@@ -124,8 +124,8 @@ const cleanRupiah = (val, fallback = 0) => {
    return Number.isNaN(num) ? fallback : num;
 };
 
-const handleStatusVerifikasi = async (data = {}, tx = prisma) => {
-   const oldData = await tx.tb_verifikasi.findFirst({
+const handleStatusVerifikasi = async (data = {}, tx = db) => {
+   const oldData = await tx.read.tb_verifikasi.findFirst({
       where: {
          id_referensi: Number.parseInt(data.id_referensi),
          table_referensi: data.table_referensi,
@@ -137,7 +137,7 @@ const handleStatusVerifikasi = async (data = {}, tx = prisma) => {
 
    const isUpdate = !!oldData;
    const newData = isUpdate
-      ? await tx.tb_verifikasi.update({
+      ? await tx.write.tb_verifikasi.update({
            where: { id: oldData.id },
            data: {
               status: data.status,
@@ -146,7 +146,7 @@ const handleStatusVerifikasi = async (data = {}, tx = prisma) => {
               catatan: data.catatan,
            },
         })
-      : await tx.tb_verifikasi.create({
+      : await tx.write.tb_verifikasi.create({
            data: {
               id_pengguna: data.id_pengguna,
               id_usulan_kegiatan: data.id_usulan_kegiatan,
@@ -169,43 +169,41 @@ const klaim = async (req, res) => {
    try {
       const { id_usulan_kegiatan, user_modified } = req.body;
 
-      let usulanKegiatan = {};
+      const usulanKegiatan = await db.read.tb_usulan_kegiatan.findUnique({
+         where: { id: Number.parseInt(id_usulan_kegiatan) },
+         select: {
+            id: true,
+            id_jenis_usulan: true,
+            tahap_verifikasi: true,
+         },
+      });
 
-      await db.$transaction(async (tx) => {
-         usulanKegiatan = await tx.tb_usulan_kegiatan.findUnique({
-            where: { id: Number.parseInt(id_usulan_kegiatan) },
-            select: {
-               id: true,
-               id_jenis_usulan: true,
-               tahap_verifikasi: true,
+      if (!usulanKegiatan) {
+         return res.json({ status: false, message: "Usulan kegiatan tidak ditemukan" });
+      }
+
+      const tahap_verifikasi = Number.parseInt(usulanKegiatan.tahap_verifikasi);
+
+      const pengguna = await db.read.tb_pengguna.findUnique({
+         where: {
+            username_id_roles: {
+               username: user_modified,
+               id_roles: 4,
             },
-         });
-
-         if (!usulanKegiatan) {
-            return res.json({ status: false, message: "Usulan kegiatan tidak ditemukan" });
-         }
-
-         const tahap_verifikasi = Number.parseInt(usulanKegiatan.tahap_verifikasi);
-
-         const pengguna = await tx.tb_pengguna.findUnique({
-            where: {
-               username_id_roles: {
-                  username: user_modified,
-                  id_roles: 4,
+         },
+         select: {
+            verikator_usulan: {
+               where: { id_jenis_usulan: usulanKegiatan.id_jenis_usulan },
+               select: {
+                  id: true,
+                  id_jenis_usulan: true,
+                  tahap: true,
                },
             },
-            select: {
-               verikator_usulan: {
-                  where: { id_jenis_usulan: usulanKegiatan.id_jenis_usulan },
-                  select: {
-                     id: true,
-                     id_jenis_usulan: true,
-                     tahap: true,
-                  },
-               },
-            },
-         });
+         },
+      });
 
+      await db.write.$transaction(async (tx) => {
          if (tahap_verifikasi === null) {
             const newDataUsulanKegiatan = await tx.tb_usulan_kegiatan.update({
                where: { id: usulanKegiatan.id },
@@ -263,7 +261,7 @@ const setujui = async (req, res) => {
    try {
       const { id_usulan, user_modified, klaim_verifikasi } = req.body;
 
-      const oldData = await db.tb_usulan_kegiatan.findUnique({
+      const oldData = await db.read.tb_usulan_kegiatan.findUnique({
          where: {
             id: Number.parseInt(id_usulan),
             status_usulan: {
@@ -285,7 +283,7 @@ const setujui = async (req, res) => {
 
       const verifikator = findVerifikator(klaim_verifikasi, user_modified);
 
-      const verikator_usulan = await db.tb_verikator_usulan.findFirst({
+      const verikator_usulan = await db.read.tb_verikator_usulan.findFirst({
          where: {
             id_jenis_usulan: Number.parseInt(verifikator.id_jenis_usulan),
             tahap: { gt: Number.parseInt(verifikator.tahap) },
@@ -296,7 +294,7 @@ const setujui = async (req, res) => {
          },
       });
 
-      const oldDataKlaim = await tx.tb_klaim_verifikasi.findUnique({
+      const oldDataKlaim = await db.read.tb_klaim_verifikasi.findUnique({
          where: { id: verifikator.id_klaim },
          select: {
             id: true,
@@ -304,7 +302,7 @@ const setujui = async (req, res) => {
          },
       });
 
-      await db.$transaction(async (tx) => {
+      await db.write.$transaction(async (tx) => {
          if (verikator_usulan) {
             const newDataKlaim = await tx.tb_klaim_verifikasi.update({
                where: { id: oldDataKlaim.id },
@@ -374,7 +372,7 @@ const verifikasiRencanaAnggaranBiaya = async (req, res) => {
          return errorHandler(parsed, res);
       }
 
-      const oldData = await db.tb_rab_detail.findUnique({
+      const oldData = await db.read.tb_rab_detail.findUnique({
          where: { id: Number.parseInt(id) },
       });
 
@@ -384,26 +382,23 @@ const verifikasiRencanaAnggaranBiaya = async (req, res) => {
 
       const verifikator = findVerifikator(klaim_verifikasi, user_modified);
 
-      await db.$transaction(async (tx) => {
-         let oldPerubahan = await tx.tb_rab_detail_perubahan.findUnique({
-            where: { id_rab_detail: Number.parseInt(id) },
-         });
+      let oldPerubahan = await db.read.tb_rab_detail_perubahan.findUnique({
+         where: { id_rab_detail: Number.parseInt(id) },
+      });
 
-         const statusVerifikasi = await handleStatusVerifikasi(
-            {
-               ip: req.ip,
-               id_pengguna: verifikator.id_pengguna,
-               id_usulan_kegiatan: oldData.id_usulan,
-               id_referensi: Number.parseInt(id),
-               table_referensi: "tb_rab_detail",
-               status: approve === "ubah" ? "valid" : approve,
-               user_modified,
-               catatan: catatan_perbaikan,
-               tahap: verifikator.tahap,
-            },
-            tx
-         );
+      const statusVerifikasi = await handleStatusVerifikasi({
+         ip: req.ip,
+         id_pengguna: verifikator.id_pengguna,
+         id_usulan_kegiatan: oldData.id_usulan,
+         id_referensi: Number.parseInt(id),
+         table_referensi: "tb_rab_detail",
+         status: approve === "ubah" ? "valid" : approve,
+         user_modified,
+         catatan: catatan_perbaikan,
+         tahap: verifikator.tahap,
+      });
 
+      await db.write.$transaction(async (tx) => {
          const previousStatus = statusVerifikasi?.status ?? null;
 
          if (previousStatus === "valid" && oldPerubahan) {
@@ -446,7 +441,7 @@ const verifikasiRencanaAnggaranBiaya = async (req, res) => {
             }
          }
 
-         await hitungAnggaranDisetujui(oldData.id_usulan, user_modified, req.ip, tx);
+         await hitungAnggaranDisetujui(oldData.id_usulan, user_modified, req.ip);
       });
 
       return res.json({

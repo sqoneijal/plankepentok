@@ -11,7 +11,7 @@ const validation = z.object({
 });
 
 const router = express.Router();
-const prisma = require("@/db.js");
+const db = require("@/db.js");
 
 router.get("/", async (req, res) => {
    try {
@@ -32,8 +32,8 @@ router.get("/", async (req, res) => {
          where.tahun_berlaku = tahun_berlaku;
       }
 
-      const total = await prisma.tb_iku_master.count({ where });
-      const results = await prisma.tb_iku_master.findMany({
+      const total = await db.read.tb_iku_master.count({ where });
+      const results = await db.read.tb_iku_master.findMany({
          where,
          orderBy: { id: "desc" },
          take: limit,
@@ -50,7 +50,7 @@ router.get("/:id", async (req, res) => {
    try {
       const { id } = req.params;
 
-      const results = await prisma.tb_iku_master.findUnique({
+      const results = await db.read.tb_iku_master.findUnique({
          where: { id: Number.parseInt(id) },
       });
 
@@ -70,7 +70,7 @@ router.post("/", async (req, res) => {
          return errorHandler(parsed, res);
       }
 
-      const duplicate = await prisma.tb_iku_master.findUnique({
+      const duplicate = await db.read.tb_iku_master.findUnique({
          where: { kode },
       });
 
@@ -78,7 +78,7 @@ router.post("/", async (req, res) => {
          return res.json({ status: false, errors: { kode: "Kode IKU sudah terdaftar" } });
       }
 
-      const newData = await prisma.tb_iku_master.create({
+      const newData = await db.write.tb_iku_master.create({
          data: {
             jenis,
             kode,
@@ -112,7 +112,7 @@ router.put("/:id", async (req, res) => {
          return errorHandler(parsed, res);
       }
 
-      const duplicate = await prisma.tb_iku_master.findFirst({
+      const duplicate = await db.read.tb_iku_master.findFirst({
          where: { kode, id: { not: Number.parseInt(id) } },
       });
 
@@ -120,7 +120,7 @@ router.put("/:id", async (req, res) => {
          return res.json({ status: false, errors: { kode: "Kode IKU sudah terdaftar" } });
       }
 
-      const oldData = await prisma.tb_iku_master.findUnique({
+      const oldData = await db.read.tb_iku_master.findUnique({
          where: { id: Number.parseInt(id) },
       });
 
@@ -128,7 +128,7 @@ router.put("/:id", async (req, res) => {
          return res.json({ status: false, message: "IKU master tidak ditemukan" });
       }
 
-      const newData = await prisma.tb_iku_master.update({
+      const newData = await db.write.tb_iku_master.update({
          where: { id: Number.parseInt(id) },
          data: {
             jenis,
@@ -160,7 +160,7 @@ router.delete("/:id", async (req, res) => {
       const { id } = req.params;
       const { user_modified } = req.body;
 
-      const oldData = await prisma.tb_iku_master.findUnique({
+      const oldData = await db.read.tb_iku_master.findUnique({
          where: { id: Number.parseInt(id) },
       });
 
@@ -168,7 +168,7 @@ router.delete("/:id", async (req, res) => {
          return res.json({ status: false, message: "IKU master tidak ditemukan" });
       }
 
-      await prisma.tb_iku_master.delete({
+      await db.write.tb_iku_master.delete({
          where: { id: Number.parseInt(id) },
       });
 

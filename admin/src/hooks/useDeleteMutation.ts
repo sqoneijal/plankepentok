@@ -32,7 +32,8 @@ export const useDeleteMutation = (url: string, params?: Record<string, string>) 
          const { status, refetchQuery } = response;
          if (status && Array.isArray(refetchQuery)) {
             for (const queryKey of refetchQuery) {
-               queryClient.invalidateQueries({ queryKey, exact: false });
+               const url = Array.isArray(queryKey) ? queryKey[0] : queryKey;
+               queryClient.invalidateQueries({ queryKey: [url], exact: false });
             }
          }
 
