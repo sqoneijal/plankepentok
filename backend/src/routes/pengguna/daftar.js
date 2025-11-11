@@ -3,6 +3,8 @@ const { z } = require("zod");
 const errorHandler = require("@/handle-error.js");
 const { logAudit } = require("@/helpers.js");
 
+const ROLE_OPERATOR = "3"; // Constant for operator role ID
+
 const validation = z
    .object({
       id_roles: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Role wajib diisi")),
@@ -11,7 +13,7 @@ const validation = z
    })
    .refine(
       (data) => {
-         if (data.id_roles === "3") {
+         if (data.id_roles === ROLE_OPERATOR) {
             return data.id_parent.length > 0;
          }
          return true;
@@ -25,16 +27,92 @@ const validation = z
 const router = express.Router();
 const db = require("@/db.js");
 
+// Helper function to parse id_parent
+const parseIdParent = (id_parent) => {
+   const split_id_parent = id_parent ? id_parent.split("-") : [];
+   const idParent = Number.parseInt(split_id_parent?.[0]) || null;
+   const levelUnit = split_id_parent?.[1] || null;
+   return { idParent, levelUnit, split_id_parent };
+};
+
+// Helper function to validate unit existence
+const validateUnitExistence = async (idParent, levelUnit) => {
+   if (!idParent || !levelUnit) return null;
+
+   let exists;
+   switch (levelUnit) {
+      case "biro":
+         exists = await db.read.tb_biro_master.findUnique({ where: { id: idParent } });
+         break;
+      case "lembaga":
+         exists = await db.read.tb_lembaga_master.findUnique({ where: { id: idParent } });
+         break;
+      case "upt":
+         exists = await db.read.tb_upt_master.findUnique({ where: { id: idParent } });
+         break;
+      case "fakultas":
+         exists = await db.read.tb_fakultas_master.findUnique({ where: { id: idParent } });
+         break;
+      case "sub_unit":
+         exists = await db.read.tb_sub_unit.findUnique({ where: { id: idParent } });
+         break;
+      default:
+         exists = false;
+   }
+
+   return exists ? idParent : null;
+};
+
+// Helper function to create unit IDs object
+const createUnitIds = (levelUnit, idParent) => {
+   const unitIds = {
+      id_biro: null,
+      id_lembaga: null,
+      id_upt: null,
+      id_fakultas: null,
+      id_sub_unit: null,
+   };
+
+   if (levelUnit && idParent) {
+      switch (levelUnit) {
+         case "biro":
+            unitIds.id_biro = idParent;
+            break;
+         case "lembaga":
+            unitIds.id_lembaga = idParent;
+            break;
+         case "upt":
+            unitIds.id_upt = idParent;
+            break;
+         case "fakultas":
+            unitIds.id_fakultas = idParent;
+            break;
+         case "sub_unit":
+            unitIds.id_sub_unit = idParent;
+            break;
+      }
+   }
+
+   return unitIds;
+};
+
 router.get("/", async (req, res) => {
    try {
       const limit = Number.parseInt(req.query.limit) || 25;
       const offset = Number.parseInt(req.query.offset) || 0;
+      const search = req.query.search || "";
 
-      const total = await db.read.tb_pengguna.count();
+      const query = {
+         OR: [{ username: { contains: search, mode: "insensitive" } }, { fullname: { contains: search, mode: "insensitive" } }],
+      };
+      const where = search ? query : {};
+
+      const total = await db.read.tb_pengguna.count({ where });
       const results = await db.read.tb_pengguna.findMany({
          orderBy: { id: "desc" },
          take: limit,
          skip: offset,
+         where,
          select: {
             id: true,
             username: true,
@@ -76,7 +154,7 @@ router.get("/roles", async (req, res) => {
 
       return res.json({ results });
    } catch (error) {
-      return res.json({ error: error.message });
+      return res.json({ status: false, message: error.message });
    }
 });
 
@@ -131,7 +209,7 @@ router.get("/unit-kerja", async (req, res) => {
 
       return res.json({ results });
    } catch (error) {
-      return res.json({ error: error.message });
+      return res.json({ status: false, message: error.message });
    }
 });
 
@@ -164,63 +242,9 @@ router.post("/", async (req, res) => {
          });
       }
 
-      const split_id_parent = id_parent ? id_parent.split("-") : [];
-      let idParent = Number.parseInt(split_id_parent?.[0]) || null;
-      const levelUnit = split_id_parent?.[1] || null;
-
-      // Validate id_parent existence based on level_unit to allow null if not exists
-      if (idParent && levelUnit) {
-         let exists;
-         switch (levelUnit) {
-            case "biro":
-               exists = await db.read.tb_biro_master.findUnique({ where: { id: idParent } });
-               break;
-            case "lembaga":
-               exists = await db.read.tb_lembaga_master.findUnique({ where: { id: idParent } });
-               break;
-            case "upt":
-               exists = await db.read.tb_upt_master.findUnique({ where: { id: idParent } });
-               break;
-            case "fakultas":
-               exists = await db.read.tb_fakultas_master.findUnique({ where: { id: idParent } });
-               break;
-            case "sub_unit":
-               exists = await db.read.tb_sub_unit.findUnique({ where: { id: idParent } });
-               break;
-            default:
-               exists = false;
-         }
-
-         if (!exists) {
-            idParent = null;
-         }
-      }
-
-      let id_biro = null;
-      let id_lembaga = null;
-      let id_upt = null;
-      let id_fakultas = null;
-      let id_sub_unit = null;
-
-      if (levelUnit && idParent) {
-         switch (levelUnit) {
-            case "biro":
-               id_biro = idParent;
-               break;
-            case "lembaga":
-               id_lembaga = idParent;
-               break;
-            case "upt":
-               id_upt = idParent;
-               break;
-            case "fakultas":
-               id_fakultas = idParent;
-               break;
-            case "sub_unit":
-               id_sub_unit = idParent;
-               break;
-         }
-      }
+      const { idParent, levelUnit, split_id_parent } = parseIdParent(id_parent);
+      const validatedIdParent = await validateUnitExistence(idParent, levelUnit);
+      const unitIds = createUnitIds(levelUnit, validatedIdParent);
 
       const newData = await db.write.tb_pengguna.create({
          data: {
@@ -233,15 +257,11 @@ router.post("/", async (req, res) => {
 
       await logAudit(user_modified, "CREATE", "tb_pengguna", req.ip, null, { ...newData });
 
-      if (Number.parseInt(id_roles) === 3) {
+      if (Number.parseInt(id_roles) === Number.parseInt(ROLE_OPERATOR)) {
          const newDataPenggunaRole = await db.write.tb_pengguna_role.create({
             data: {
                id_pengguna: newData.id,
-               id_biro,
-               id_lembaga,
-               id_upt,
-               id_fakultas,
-               id_sub_unit,
+               ...unitIds,
             },
          });
 
@@ -254,7 +274,7 @@ router.post("/", async (req, res) => {
          split_id_parent,
          length: split_id_parent.length,
          refetchQuery: [
-            ["/pengguna/daftar", { limit: "25", offset: "0" }],
+            ["/pengguna/daftar", { limit: "25", offset: "0", search: "" }],
             [`/user-validate/${user_modified}`, {}],
          ],
       });
@@ -294,7 +314,7 @@ router.delete("/:id", async (req, res) => {
          status: true,
          message: "Pengguna berhasil dihapus",
          refetchQuery: [
-            ["/pengguna/daftar", { limit: "25", offset: "0" }],
+            ["/pengguna/daftar", { limit: "25", offset: "0", search: "" }],
             [`/user-validate/${user_modified}`, {}],
          ],
       });

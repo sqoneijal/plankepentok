@@ -39,66 +39,74 @@ type MenuItem = {
    url: string;
    child?: Array<MenuItem>;
    isActive?: boolean;
+   roles?: Array<number>;
 };
 
 const data: Array<MenuItem> = [
-   { label: "Dashboard", icon: <LayoutDashboard />, url: "/" },
+   { roles: [1, 2, 3, 4], label: "Dashboard", icon: <LayoutDashboard />, url: "/" },
    {
+      roles: [1, 2],
       label: "Referensi",
       icon: <BookOpen />,
       url: "#",
       child: [
-         { label: "Jenis Usulan", url: "/referensi/jenis-usulan" },
-         { label: "Unit Satuan", url: "/referensi/unit-satuan" },
-         { label: "Kategori SBM", url: "/referensi/kategori-sbm" },
-         { label: "Standar Biaya", url: "/referensi/standar-biaya" },
-         { label: "Detail Harga SBM", url: "/referensi/detail-harga-sbm" },
+         { roles: [1, 2], label: "Jenis Usulan", url: "/referensi/jenis-usulan" },
+         { roles: [1, 2], label: "Unit Satuan", url: "/referensi/unit-satuan" },
+         { roles: [1, 2], label: "Kategori SBM", url: "/referensi/kategori-sbm" },
+         { roles: [1, 2], label: "Standar Biaya", url: "/referensi/standar-biaya" },
+         { roles: [1, 2], label: "Detail Harga SBM", url: "/referensi/detail-harga-sbm" },
       ],
    },
-   { label: "Verifikator", icon: <ShieldCheck />, url: "/verifikator" },
+   { roles: [1], label: "Verifikator", icon: <ShieldCheck />, url: "/verifikator" },
    {
+      roles: [1],
       label: "Unit Kerja",
       icon: <Building2 />,
       url: "#",
       child: [
-         { label: "Biro", url: "/unit-kerja/biro" },
-         { label: "Lembaga", url: "/unit-kerja/lembaga" },
-         { label: "UPT", url: "/unit-kerja/upt" },
-         { label: "Fakultas", url: "/unit-kerja/fakultas" },
-         { label: "Sub Unit", url: "/unit-kerja/sub-unit" },
+         { roles: [1], label: "Biro", url: "/unit-kerja/biro" },
+         { roles: [1], label: "Lembaga", url: "/unit-kerja/lembaga" },
+         { roles: [1], label: "UPT", url: "/unit-kerja/upt" },
+         { roles: [1], label: "Fakultas", url: "/unit-kerja/fakultas" },
+         { roles: [1], label: "Sub Unit", url: "/unit-kerja/sub-unit" },
       ],
    },
    {
+      roles: [1, 2],
       label: "Pagu Anggaran",
       icon: <DollarSign />,
       url: "/pagu-anggaran",
    },
-   { label: "Master IKU", icon: <BarChart3 />, url: "/master-iku" },
-   { label: "Usulan Kegiatan", icon: <FileText />, url: "/usulan-kegiatan" },
+   { roles: [1, 2], label: "Master IKU", icon: <BarChart3 />, url: "/master-iku" },
+   { roles: [1, 3], label: "Usulan Kegiatan", icon: <FileText />, url: "/usulan-kegiatan" },
    {
+      roles: [1, 2, 4],
       label: "Verifikasi Usulan",
       icon: <CheckCircle />,
       url: "#",
       child: [
-         { label: "Pengajuan", url: "/verifikasi-usulan/pengajuan" },
-         { label: "Perbaikan", url: "/verifikasi-usulan/perbaikan" },
+         { roles: [1, 2, 4], label: "Pengajuan", url: "/verifikasi-usulan/pengajuan" },
+         { roles: [1, 2, 4], label: "Perbaikan", url: "/verifikasi-usulan/perbaikan" },
       ],
    },
-   { label: "Realisasi", icon: <TrendingUp />, url: "/realisasi" },
-   { label: "Pengaturan", icon: <Settings />, url: "/pengaturan" },
+   { roles: [1, 2, 3], label: "Realisasi", icon: <TrendingUp />, url: "/realisasi" },
+   { roles: [1, 2], label: "Pengaturan", icon: <Settings />, url: "/pengaturan" },
    {
+      roles: [1],
       label: "Pengguna",
       icon: <Users />,
       url: "#",
       child: [
-         { label: "Daftar", url: "/pengguna/daftar" },
-         { label: "Logs", url: "/pengguna/logs" },
+         { roles: [1], label: "Daftar", url: "/pengguna/daftar" },
+         { roles: [1], label: "Logs", url: "/pengguna/logs" },
       ],
    },
 ];
 
 export default function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
    const location = useLocation();
+   const selectedRolesString = localStorage.getItem("selected_roles");
+   const selected_roles = selectedRolesString ? JSON.parse(selectedRolesString) : null;
 
    return (
       <Sidebar collapsible="offcanvas" {...props}>
@@ -131,9 +139,11 @@ export default function AppSidebar({ ...props }: React.ComponentProps<typeof Sid
             <SidebarGroup>
                <SidebarGroupContent>
                   <SidebarMenu>
-                     {data.map((item, index) => (
-                        <Tree key={index} item={item} location={location} />
-                     ))}
+                     {data
+                        .filter((e) => e.roles?.includes(selected_roles?.id))
+                        .map((item, index) => (
+                           <Tree key={index} item={item} location={location} />
+                        ))}
                   </SidebarMenu>
                </SidebarGroupContent>
             </SidebarGroup>

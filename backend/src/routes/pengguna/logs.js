@@ -7,9 +7,20 @@ router.get("/", async (req, res) => {
    try {
       const limit = Number.parseInt(req.query.limit) || 25;
       const offset = Number.parseInt(req.query.offset) || 0;
+      const search = req.query.search || "";
 
-      const total = await db.read.tb_audit_logs.count();
+      const query = {
+         OR: [
+            { user_modified: { contains: search, mode: "insensitive" } },
+            { action_type: { contains: search, mode: "insensitive" } },
+            { table_affected: { contains: search, mode: "insensitive" } },
+         ],
+      };
+      const where = search ? query : {};
+
+      const total = await db.read.tb_audit_logs.count({ where });
       const results = await db.read.tb_audit_logs.findMany({
+         where,
          orderBy: { id: "desc" },
          take: limit,
          skip: offset,

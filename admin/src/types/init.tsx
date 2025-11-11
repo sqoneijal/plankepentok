@@ -8,6 +8,22 @@ export type Option = {
    label: string;
 };
 
+export interface UserValidationItem {
+   id: number;
+   username: string;
+   level_unit: string;
+   roles: {
+      nama: string;
+   };
+   pengguna_role: {
+      id_biro: number | null;
+      id_lembaga: number | null;
+      id_upt: number | null;
+      id_fakultas: number | null;
+      id_sub_unit: number | null;
+   };
+}
+
 export interface ApiResponse<T = unknown> {
    message: string;
    data?: T;

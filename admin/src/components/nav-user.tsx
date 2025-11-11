@@ -1,6 +1,7 @@
 import { UseAuth } from "@/hooks/auth-context";
 import { handleLogout } from "@/hooks/keycloak";
-import { IconCreditCard, IconDotsVertical, IconLogout, IconNotification, IconUserCircle } from "@tabler/icons-react";
+import { IconDotsVertical, IconLogout, IconUserCircle } from "@tabler/icons-react";
+import { BadgeCheck } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import {
    DropdownMenu,
@@ -29,10 +30,16 @@ interface ExtendedKeycloakProfile {
    email?: string;
 }
 
+interface Role {
+   id: string;
+   nama: string;
+}
+
 export default function NavUser() {
    const { isMobile } = UseSidebar();
    const { user } = UseAuth();
    const extendedUser = user as ExtendedKeycloakProfile | null;
+   const roles: Role[] = JSON.parse(localStorage.getItem("roles") || "[]");
 
    return (
       <SidebarMenu>
@@ -72,16 +79,24 @@ export default function NavUser() {
                   <DropdownMenuGroup>
                      <DropdownMenuItem>
                         <IconUserCircle />
-                        Account
+                        Roles
                      </DropdownMenuItem>
-                     <DropdownMenuItem>
-                        <IconCreditCard />
-                        Billing
-                     </DropdownMenuItem>
-                     <DropdownMenuItem>
-                        <IconNotification />
-                        Notifications
-                     </DropdownMenuItem>
+                  </DropdownMenuGroup>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuGroup>
+                     {roles.map((row) => {
+                        return (
+                           <DropdownMenuItem
+                              key={row.id}
+                              onClick={() => {
+                                 localStorage.setItem("selected_roles", JSON.stringify(row));
+                                 location.reload();
+                              }}>
+                              <BadgeCheck />
+                              {row.nama}
+                           </DropdownMenuItem>
+                        );
+                     })}
                   </DropdownMenuGroup>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => handleLogout()}>
