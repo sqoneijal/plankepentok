@@ -13,7 +13,13 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use("/uploads", express.static("uploads"));
+
+// Keycloak validation middleware
+const validateKeycloakToken = require("./middleware/keycloak");
+
+app.use("/uploads", validateKeycloakToken, express.static("uploads"));
+
+app.use("/api", validateKeycloakToken);
 
 // Routes
 app.use("/api/user-validate", require("./routes/user-validate"));

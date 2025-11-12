@@ -4,25 +4,24 @@ FROM node:22-alpine
 # Set working directory di container
 WORKDIR /app
 
-# Copy package.json & package-lock.json untuk install dependency
+# Copy package.json & package-lock.json
 COPY package*.json ./
 
-# Install dependencies dengan verbose untuk debug
-RUN npm ci --only=production --verbose || \
-    (echo "npm ci failed, trying npm install..." && \
-     npm install --production --verbose)
+# Install SEMUA dependencies (production + dev)
+# Karena butuh prisma untuk generate
+RUN npm ci --verbose || npm install --verbose
 
-# Clean cache
-RUN npm cache clean --force
-
-# Copy seluruh project ke /app
+# Copy seluruh project KECUALI yang ada di .dockerignore
 COPY . .
 
-# Generate Prisma Client
+# Generate Prisma Client (butuh prisma dari devDependencies)
 RUN npx prisma generate
 
-# Expose port yang dipakai Node.js
+# Clean cache untuk minimize image size
+RUN npm cache clean --force
+
+# Expose port
 EXPOSE 3000
 
-# Jalankan Node.js dengan tsx untuk development
+# Start app
 CMD ["npm", "run", "start"]
