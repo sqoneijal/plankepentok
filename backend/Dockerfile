@@ -5,7 +5,7 @@ FROM node:22-alpine
 WORKDIR /app
 
 # Copy package.json & package-lock.json
-COPY package*.json ./
+COPY package.json ./
 
 # Install SEMUA dependencies (production + dev)
 # Karena butuh prisma untuk generate
