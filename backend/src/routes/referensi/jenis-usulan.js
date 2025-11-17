@@ -72,7 +72,7 @@ router.post("/", async (req, res) => {
          },
       });
 
-      logAudit(user_modified, "CREATE", "tb_jenis_usulan", req.ip, null, { ...newData });
+      await logAudit(user_modified, "CREATE", "tb_jenis_usulan", req.ip, null, { ...newData });
 
       return res.status(201).json({
          status: true,

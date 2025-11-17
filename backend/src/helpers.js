@@ -19,6 +19,14 @@ const logAudit = async (user_modified, action_type, table_affected, ip_address, 
    }
 };
 
+const cleanRupiah = (val, fallback = 0) => {
+   if (val == null) return fallback;
+   const cleaned = val.toString().replaceAll(".", "");
+   const num = Number(cleaned);
+   return Number.isNaN(num) ? fallback : num;
+};
+
 module.exports = {
    logAudit,
+   cleanRupiah,
 };

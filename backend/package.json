@@ -1,7 +1,7 @@
 {
    "devDependencies": {
       "nodemon": "^3.1.10",
-      "prisma": "^6.18.0"
+      "prisma": "^6.19.0"
    },
    "scripts": {
       "start": "npm run generate && node src/server.js",
@@ -12,7 +12,7 @@
       "reset": "npx prisma db push --force-reset"
    },
    "dependencies": {
-      "@prisma/client": "^6.18.0",
+      "@prisma/client": "^6.19.0",
       "@prisma/extension-accelerate": "^2.0.2",
       "cors": "^2.8.5",
       "dotenv": "^16.3.1",

@@ -50,6 +50,8 @@ const data: Array<MenuItem> = [
       icon: <BookOpen />,
       url: "#",
       child: [
+         { roles: [1, 2], label: "Jenis Keluaran TOR", url: "/referensi/jenis-keluaran-tor" },
+         { roles: [1, 2], label: "Volume Keluaran TOR", url: "/referensi/volume-keluaran-tor" },
          { roles: [1, 2], label: "Jenis Usulan", url: "/referensi/jenis-usulan" },
          { roles: [1, 2], label: "Unit Satuan", url: "/referensi/unit-satuan" },
          { roles: [1, 2], label: "Kategori SBM", url: "/referensi/kategori-sbm" },

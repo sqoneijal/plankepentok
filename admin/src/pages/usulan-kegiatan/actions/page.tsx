@@ -11,6 +11,7 @@ const InformasiUsulan = lazy(() => import("./form-informasi-usulan"));
 const Iku = lazy(() => import("./iku/page"));
 const RencanaAnggaranBiaya = lazy(() => import("./rencana-anggaran-biaya/page"));
 const Dokumen = lazy(() => import("./dokumen/page"));
+const Tor = lazy(() => import("./tor"));
 
 const endpoint = "/usulan-kegiatan";
 
@@ -52,6 +53,9 @@ export default function Page() {
                id_usulan_kegiatan={id}
                endpoint={endpoint}
             />
+         </Suspense>
+         <Suspense>
+            <Tor id_usulan_kegiatan={id} />
          </Suspense>
          <Suspense fallback={<IkuSkeleton />}>
             <Iku id_usulan_kegiatan={id} />

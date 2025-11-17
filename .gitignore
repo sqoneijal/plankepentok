@@ -18,3 +18,5 @@ backend/uploads
 admin/.env
 backend/prod.js
 backend/temp
+backend/src/temp
+backend/src/uploads

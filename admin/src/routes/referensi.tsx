@@ -16,6 +16,12 @@ const ReferensiDetailHargaSBMActions = lazy(() => import("@/pages/referensi/deta
 const JenisUsulan = lazy(() => import("@/pages/referensi/jenis-usulan/page"));
 const JenisUsulanActions = lazy(() => import("@/pages/referensi/jenis-usulan/actions/page"));
 
+const JenisKeluaranTOR = lazy(() => import("@/pages/referensi/jenis-keluaran-tor/page"));
+const JenisKeluaranTORActions = lazy(() => import("@/pages/referensi/jenis-keluaran-tor/actions/page"));
+
+const VolumeKeluaranTOR = lazy(() => import("@/pages/referensi/volume-keluaran-tor/page"));
+const VolumeKeluaranTORActions = lazy(() => import("@/pages/referensi/volume-keluaran-tor/actions/page"));
+
 export const route_referensi = [
    { key: v4(), path: "/referensi/unit-satuan", element: <ReferensiUnitSatuan /> },
    { key: v4(), path: "/referensi/unit-satuan/actions", element: <ReferensiUnitSatuanActions /> },
@@ -32,4 +38,10 @@ export const route_referensi = [
    { key: v4(), path: "/referensi/jenis-usulan", element: <JenisUsulan /> },
    { key: v4(), path: "/referensi/jenis-usulan/actions", element: <JenisUsulanActions /> },
    { key: v4(), path: "/referensi/jenis-usulan/actions/:id", element: <JenisUsulanActions /> },
+   { key: v4(), path: "/referensi/jenis-keluaran-tor", element: <JenisKeluaranTOR /> },
+   { key: v4(), path: "/referensi/jenis-keluaran-tor/actions", element: <JenisKeluaranTORActions /> },
+   { key: v4(), path: "/referensi/jenis-keluaran-tor/actions/:id", element: <JenisKeluaranTORActions /> },
+   { key: v4(), path: "/referensi/volume-keluaran-tor", element: <VolumeKeluaranTOR /> },
+   { key: v4(), path: "/referensi/volume-keluaran-tor/actions", element: <VolumeKeluaranTORActions /> },
+   { key: v4(), path: "/referensi/volume-keluaran-tor/actions/:id", element: <VolumeKeluaranTORActions /> },
 ];

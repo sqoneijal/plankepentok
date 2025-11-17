@@ -17,7 +17,7 @@ export default function Forms({
    const [errors, setErrors] = useState<Record<string, string | null>>({});
    const [isLoading, setIsLoading] = useState(false);
 
-   const { user } = UseAuth();
+   const { user, token } = UseAuth();
    const { detailRow, setDetailRow } = useDetailRow();
 
    useEffect(() => {
@@ -48,6 +48,9 @@ export default function Forms({
          const response = await fetch(url, {
             method,
             body: data,
+            headers: {
+               Authorization: `Bearer ${token}`,
+            },
          });
 
          const result = await response.json();
