@@ -67,4 +67,49 @@ router.get("/tahun-anggaran", async (req, res) => {
    }
 });
 
+router.get("/jenis-keluaran-tor", async (req, res) => {
+   try {
+      const results = await db.read.tb_mst_jenis_keluaran_tor.findMany({
+         select: {
+            id: true,
+            nama: true,
+            keterangan: true,
+         },
+      });
+      res.json({ results });
+   } catch (error) {
+      res.status(500).json({ error: error.message });
+   }
+});
+
+router.get("/penerima-manfaat-tor", async (req, res) => {
+   try {
+      const results = await db.read.tb_mst_penerima_manfaat_tor.findMany({
+         select: {
+            id: true,
+            nama: true,
+            keterangan: true,
+         },
+      });
+      res.json({ results });
+   } catch (error) {
+      res.status(500).json({ error: error.message });
+   }
+});
+
+router.get("/volume-keluaran-tor", async (req, res) => {
+   try {
+      const results = await db.read.tb_mst_volume_keluaran_tor.findMany({
+         select: {
+            id: true,
+            nama: true,
+            keterangan: true,
+         },
+      });
+      res.json({ results });
+   } catch (error) {
+      res.status(500).json({ error: error.message });
+   }
+});
+
 module.exports = router;

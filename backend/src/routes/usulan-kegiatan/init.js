@@ -44,8 +44,9 @@ const {
    getDaftarDokumenPendukung,
    getDaftarReferensiSBM,
    getDetailRABDetail,
+   getDetailTOR,
 } = require("./get");
-const { updateInformasiUsulanKegiatan, updateRABDetail, updateDokumen, updateUsulKegiatan } = require("./put");
+const { updateInformasiUsulanKegiatan, updateRABDetail, updateDokumen, updateUsulKegiatan, updateTOR } = require("./put");
 const { submitRelasiIKU, submitRAB, submitDokumen, submitUsulanKegiatan } = require("./post");
 const { deleteRelasiIKU, deleteRABDetail, deleteDokumen, deleteUsulanKegiatan } = require("./delete");
 
@@ -57,10 +58,12 @@ router.get("/:id/relasi-iku", getRelasiIKU);
 router.get("/:id/rab", getDaftarRabDetail);
 router.get("/:id/dokumen", getDaftarDokumenPendukung);
 router.get("/rab/:id_usulan/:id", getDetailRABDetail);
+router.get("/tor/:id_usulan_kegiatan", getDetailTOR);
 
 router.put("/usul", updateUsulKegiatan);
 router.put("/:id", updateInformasiUsulanKegiatan);
 router.put("/rab/:id_usulan/:id", updateRABDetail);
+router.put("/tor/:id_usulan_kegiatan", updateTOR);
 router.put("/:id_usulan_kegiatan/dokumen/:id", upload.single("file_dokumen"), updateDokumen);
 
 router.post("/:id_usulan_kegiatan/relasi-iku", submitRelasiIKU);

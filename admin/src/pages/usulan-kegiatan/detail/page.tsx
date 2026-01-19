@@ -1,5 +1,5 @@
 import ConfirmDialog from "@/components/confirm-submit";
-import { DetailUsulanKegiatanSkeleton, IkuSkeleton, RencanaAnggaranBiayaSkeleton } from "@/components/loading-skeleton";
+import { DetailUsulanKegiatanSkeleton, IkuSkeleton, RencanaAnggaranBiayaSkeleton, TorSkeleton } from "@/components/loading-skeleton";
 import { Button } from "@/components/ui/button";
 import { useHeaderButton } from "@/hooks/store";
 import { LinkButton } from "@/lib/helpers";
@@ -12,6 +12,7 @@ const UsulanKegiatan = lazy(() => import("./usulan-kegiatan"));
 const Iku = lazy(() => import("./iku"));
 const RencanaAnggaranBiaya = lazy(() => import("./rencana-anggaran-biaya"));
 const Dokumen = lazy(() => import("./dokumen"));
+const Tor = lazy(() => import("@/components/usulan-kegiatan/tor/detail"));
 
 export default function Page() {
    const { id } = useParams();
@@ -44,6 +45,9 @@ export default function Page() {
       <>
          <Suspense fallback={<DetailUsulanKegiatanSkeleton />}>
             <UsulanKegiatan endpoint={endpoint} id={id} setStatusUsulan={setStatusUsulan} />
+         </Suspense>
+         <Suspense fallback={<TorSkeleton />}>
+            <Tor id_usulan_kegiatan={String(id)} />
          </Suspense>
          <Suspense fallback={<IkuSkeleton />}>
             <Iku endpoint={endpoint} id={id} />

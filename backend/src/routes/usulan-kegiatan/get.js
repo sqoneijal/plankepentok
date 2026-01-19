@@ -383,6 +383,55 @@ const getDetailRABDetail = async (req, res) => {
    }
 };
 
+const getDetailTOR = async (req, res) => {
+   try {
+      const { id_usulan_kegiatan } = req.params;
+
+      const results = await db.read.tb_tor.findUnique({
+         where: { id_usulan_kegiatan: Number.parseInt(id_usulan_kegiatan) },
+         include: {
+            jenis_keluaran_tor: {
+               select: {
+                  id: true,
+                  id_mst_jenis_keluaran_tor: true,
+                  mst_jenis_keluaran_tor: {
+                     select: {
+                        nama: true,
+                     },
+                  },
+               },
+            },
+            penerima_manfaat_tor: {
+               select: {
+                  id: true,
+                  id_mst_penerima_manfaat_tor: true,
+                  mst_penerima_manfaat_tor: {
+                     select: {
+                        nama: true,
+                     },
+                  },
+               },
+            },
+            volume_keluaran_tor: {
+               select: {
+                  id: true,
+                  id_mst_volume_keluaran_tor: true,
+                  mst_volume_keluaran_tor: {
+                     select: {
+                        nama: true,
+                     },
+                  },
+               },
+            },
+         },
+      });
+
+      res.json({ results });
+   } catch (error) {
+      res.status(500).json({ error: error.message });
+   }
+};
+
 module.exports = {
    getDetailRABDetail,
    getData,
@@ -393,4 +442,5 @@ module.exports = {
    getDaftarRabDetail,
    getDaftarDokumenPendukung,
    getDaftarReferensiSBM,
+   getDetailTOR,
 };

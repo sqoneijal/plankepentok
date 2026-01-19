@@ -4,6 +4,8 @@ const { cleanRupiah, logAudit } = require("@/helpers");
 const fs = require("node:fs");
 const { validateFileUpload, handleFileStorage, validasiDokumen, getTipeDokumen } = require("./post");
 const path = require("node:path");
+const errorHandler = require("@/handle-error.js");
+const { encode } = require("html-entities");
 
 class ValidationError extends Error {
    constructor(errors) {
@@ -362,4 +364,209 @@ const updateUsulKegiatan = async (req, res) => {
    }
 };
 
-module.exports = { updateUsulKegiatan, updateInformasiUsulanKegiatan, updateRABDetail, updateDokumen };
+const validationTOR = z.object({
+   penyelenggara: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Penyelenggara wajib diisi")),
+   program: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Program wajib diisi")),
+   kegiatan: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Kegiatan wajib diisi")),
+   ikk: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Indikator kinerja kegiatan wajib diisi")),
+   jenis_keluaran: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Jenis keluaran wajib diisi")),
+   volume_keluaran: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Volume keluaran wajib diisi")),
+   satuan_ukuran_keluaran: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Satuan ukuran keluaran wajib diisi")),
+   penerima_manfaat: z.preprocess((val) => (val == null ? "" : String(val)), z.string().min(1, "Penerima manfaat wajib diisi")),
+});
+
+const updateTOR = async (req, res) => {
+   try {
+      const { id_usulan_kegiatan } = req.params;
+      const {
+         user_modified,
+         penyelenggara,
+         program,
+         kegiatan,
+         ikk,
+         satuan_ukuran_keluaran,
+         jenis_keluaran,
+         dasar_hukum,
+         gambaran_umum,
+         alasan_kegiatan,
+         uraian_kegiatan,
+         batasan_kegiatan,
+         maksud_kegiatan,
+         tujuan_kegiatan,
+         indikator_keluaran,
+         keluaran,
+         metode_pelaksanaan,
+         tahapan_kegiatan,
+         tempat_pelaksanaan,
+         pelaksana_kegiatan,
+         penanggung_jawab,
+         jadwal_kegiatan,
+         biaya,
+         volume_keluaran,
+         penerima_manfaat,
+      } = req.body;
+
+      const parsed = validationTOR.safeParse(req.body);
+
+      if (!parsed.success) {
+         return errorHandler(parsed, res);
+      }
+
+      const oldData = await db.read.tb_tor.findUnique({
+         where: {
+            id_usulan_kegiatan: Number.parseInt(id_usulan_kegiatan),
+         },
+      });
+
+      if (oldData) {
+         // Update existing TOR
+         const updatedData = await db.write.tb_tor.update({
+            where: { id: oldData.id },
+            data: {
+               penyelenggara,
+               program,
+               kegiatan,
+               ikk,
+               satuan_ukuran_keluaran,
+               dasar_hukum: encode(dasar_hukum),
+               gambaran_umum: encode(gambaran_umum),
+               alasan_kegiatan: encode(alasan_kegiatan),
+               uraian_kegiatan: encode(uraian_kegiatan),
+               batasan_kegiatan: encode(batasan_kegiatan),
+               maksud_kegiatan: encode(maksud_kegiatan),
+               tujuan_kegiatan: encode(tujuan_kegiatan),
+               indikator_keluaran: encode(indikator_keluaran),
+               keluaran: encode(keluaran),
+               metode_pelaksanaan: encode(metode_pelaksanaan),
+               tahapan_kegiatan: encode(tahapan_kegiatan),
+               tempat_pelaksanaan: encode(tempat_pelaksanaan),
+               pelaksana_kegiatan: encode(pelaksana_kegiatan),
+               penanggung_jawab: encode(penanggung_jawab),
+               jadwal_kegiatan: encode(jadwal_kegiatan),
+               biaya: encode(biaya),
+               modified: new Date(),
+               user_modified,
+            },
+         });
+
+         await logAudit(user_modified, "UPDATE", "tb_tor", req.ip, { ...oldData }, { ...updatedData });
+
+         // Delete old related data
+         await db.write.tb_jenis_keluaran_tor.deleteMany({
+            where: { id_tor: oldData.id },
+         });
+         await db.write.tb_volume_keluaran_tor.deleteMany({
+            where: { id_tor: oldData.id },
+         });
+         await db.write.tb_penerima_manfaat_tor.deleteMany({
+            where: { id_tor: oldData.id },
+         });
+
+         // Insert new related data
+         const dataJenisKeluaran = jenis_keluaran.split(",").map((id) => ({
+            id_tor: oldData.id,
+            id_mst_jenis_keluaran_tor: Number.parseInt(id.trim()),
+         }));
+
+         await db.write.tb_jenis_keluaran_tor.createMany({
+            data: dataJenisKeluaran,
+            skipDuplicates: true,
+         });
+
+         const dataVolumeKeluaran = volume_keluaran.split(",").map((id) => ({
+            id_tor: oldData.id,
+            id_mst_volume_keluaran_tor: Number.parseInt(id.trim()),
+         }));
+
+         await db.write.tb_volume_keluaran_tor.createMany({
+            data: dataVolumeKeluaran,
+            skipDuplicates: true,
+         });
+
+         const dataPenerimaManfaat = penerima_manfaat.split(",").map((id) => ({
+            id_tor: oldData.id,
+            id_mst_penerima_manfaat_tor: Number.parseInt(id.trim()),
+         }));
+
+         await db.write.tb_penerima_manfaat_tor.createMany({
+            data: dataPenerimaManfaat,
+            skipDuplicates: true,
+         });
+
+         res.json({
+            status: true,
+            message: "TOR berhasil diperbarui.",
+         });
+      } else {
+         const newData = await db.write.tb_tor.create({
+            data: {
+               id_usulan_kegiatan: Number.parseInt(id_usulan_kegiatan),
+               penyelenggara,
+               program,
+               kegiatan,
+               ikk,
+               satuan_ukuran_keluaran,
+               dasar_hukum: encode(dasar_hukum),
+               gambaran_umum: encode(gambaran_umum),
+               alasan_kegiatan: encode(alasan_kegiatan),
+               uraian_kegiatan: encode(uraian_kegiatan),
+               batasan_kegiatan: encode(batasan_kegiatan),
+               maksud_kegiatan: encode(maksud_kegiatan),
+               tujuan_kegiatan: encode(tujuan_kegiatan),
+               indikator_keluaran: encode(indikator_keluaran),
+               keluaran: encode(keluaran),
+               metode_pelaksanaan: encode(metode_pelaksanaan),
+               tahapan_kegiatan: encode(tahapan_kegiatan),
+               tempat_pelaksanaan: encode(tempat_pelaksanaan),
+               pelaksana_kegiatan: encode(pelaksana_kegiatan),
+               penanggung_jawab: encode(penanggung_jawab),
+               jadwal_kegiatan: encode(jadwal_kegiatan),
+               biaya: encode(biaya),
+               uploaded: new Date(),
+               user_modified,
+            },
+         });
+
+         await logAudit(user_modified, "CREATE", "tb_tor", req.ip, null, { ...newData });
+
+         const dataJenisKeluaran = jenis_keluaran.split(",").map((id) => ({
+            id_tor: newData.id,
+            id_mst_jenis_keluaran_tor: Number.parseInt(id.trim()),
+         }));
+
+         await db.write.tb_jenis_keluaran_tor.createMany({
+            data: dataJenisKeluaran,
+            skipDuplicates: true,
+         });
+
+         const dataVolumeKeluaran = volume_keluaran.split(",").map((id) => ({
+            id_tor: newData.id,
+            id_mst_volume_keluaran_tor: Number.parseInt(id.trim()),
+         }));
+
+         await db.write.tb_volume_keluaran_tor.createMany({
+            data: dataVolumeKeluaran,
+            skipDuplicates: true,
+         });
+
+         const dataPenerimaManfaat = penerima_manfaat.split(",").map((id) => ({
+            id_tor: newData.id,
+            id_mst_penerima_manfaat_tor: Number.parseInt(id.trim()),
+         }));
+
+         await db.write.tb_penerima_manfaat_tor.createMany({
+            data: dataPenerimaManfaat,
+            skipDuplicates: true,
+         });
+
+         res.json({
+            status: true,
+            message: "TOR berhasil dibuat.",
+         });
+      }
+   } catch (error) {
+      res.status(500).json({ status: false, error: error.message });
+   }
+};
+
+module.exports = { updateUsulKegiatan, updateInformasiUsulanKegiatan, updateRABDetail, updateDokumen, updateTOR };

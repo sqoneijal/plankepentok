@@ -17,6 +17,7 @@ const UsulanKegiatan = lazy(() => import("./usulan-kegiatan"));
 const Iku = lazy(() => import("./iku"));
 const RencanaAnggaranBiaya = lazy(() => import("./rencana-anggaran-biaya"));
 const Dokumen = lazy(() => import("./dokumen"));
+const Tor = lazy(() => import("@/components/usulan-kegiatan/tor/detail"));
 
 const getTitleHistori = (jenis: string) => {
    switch (jenis) {
@@ -114,6 +115,7 @@ export default function Page() {
             </DialogContent>
          </Dialog>
          <UsulanKegiatan results={results} endpoint={endpoint} id_usulan={id as string} klaim_verifikasi={results?.klaim_verifikasi} />
+         <Tor id_usulan_kegiatan={String(id)} />
          <Iku
             results={results?.relasi_usulan_iku}
             isLoading={isLoading}

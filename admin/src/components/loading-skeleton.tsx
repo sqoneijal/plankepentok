@@ -571,6 +571,73 @@ function DokumenSkeleton() {
    );
 }
 
+function TorSkeleton() {
+   return (
+      <Card className="mt-4">
+         <CardHeader>
+            <Skeleton className="h-6 w-48" />
+            <CardAction>
+               <Skeleton className="h-10 w-24" />
+            </CardAction>
+         </CardHeader>
+         <CardContent>
+            <div className="row">
+               <div className="col-12 col-md-6">
+                  <Skeleton className="h-4 w-24 mb-2" />
+                  <Skeleton className="h-10 w-full" />
+               </div>
+               <div className="col-12 col-md-6">
+                  <Skeleton className="h-4 w-24 mb-2" />
+                  <Skeleton className="h-10 w-full" />
+               </div>
+            </div>
+            <div className="row">
+               <div className="col-12 col-md-6">
+                  <Skeleton className="h-4 w-24 mb-2" />
+                  <Skeleton className="h-10 w-full" />
+               </div>
+               <div className="col-12 col-md-6">
+                  <Skeleton className="h-4 w-32 mb-2" />
+                  <Skeleton className="h-10 w-full" />
+               </div>
+            </div>
+            <div className="row">
+               <div className="col-12 col-md-4">
+                  <Skeleton className="h-4 w-28 mb-2" />
+                  <Skeleton className="h-10 w-full" />
+               </div>
+               <div className="col-12 col-md-4">
+                  <Skeleton className="h-4 w-28 mb-2" />
+                  <Skeleton className="h-10 w-full" />
+               </div>
+               <div className="col-12 col-md-4">
+                  <Skeleton className="h-4 w-20 mb-2" />
+                  <Skeleton className="h-10 w-full" />
+               </div>
+            </div>
+            <div className="row">
+               <div className="col-12">
+                  <Skeleton className="h-4 w-32 mb-2" />
+                  <Skeleton className="h-10 w-full" />
+               </div>
+            </div>
+            {Array.from({ length: 7 }).map((_, i) => (
+               <div key={i} className="row">
+                  <div className="col-12 col-md-6">
+                     <Skeleton className="h-4 w-24 mb-2" />
+                     <Skeleton className="h-20 w-full" />
+                  </div>
+                  <div className="col-12 col-md-6">
+                     <Skeleton className="h-4 w-24 mb-2" />
+                     <Skeleton className="h-20 w-full" />
+                  </div>
+               </div>
+            ))}
+         </CardContent>
+      </Card>
+   );
+}
+
 function DialogValidasiSkeleton() {
    return (
       <Dialog open={true}>
@@ -706,4 +773,5 @@ export {
    LoadingSkeletonEditContent,
    PaguTableSkeleton,
    RencanaAnggaranBiayaSkeleton,
+   TorSkeleton,
 };

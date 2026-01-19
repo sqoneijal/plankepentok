@@ -329,6 +329,105 @@ export function FormSelect({
    );
 }
 
+export function FormMultiSelect({
+   divClassName,
+   label,
+   name,
+   onChange,
+   value = [],
+   errors,
+   options,
+   withLabel = true,
+   disabled = false,
+}: Readonly<{
+   onChange?: (value: string[]) => void;
+   divClassName?: string;
+   label?: string;
+   name?: string;
+   value?: string[];
+   errors?: Record<string, string | null>;
+   options: Array<Option>;
+   withLabel?: boolean;
+   disabled?: boolean;
+}>) {
+   const id = v4();
+   const errorMessage = name ? errors?.[name] : undefined;
+   const [open, setOpen] = useState(false);
+
+   const selectedLabels = value
+      .map((v) => findOptionByValue(options, v)?.label)
+      .filter(Boolean)
+      .join(", ");
+
+   return (
+      <div className={cn(divClassName)}>
+         {withLabel && (
+            <Label htmlFor={id} className="mb-2">
+               {label}
+            </Label>
+         )}
+         <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+               <Button
+                  disabled={disabled}
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={open}
+                  className={cn("w-full justify-between", errorMessage && "border-red-500")}>
+                  {selectedLabels || `Pilih ${label?.toLowerCase() || "opsi"}...`}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+               </Button>
+            </PopoverTrigger>
+            <PopoverContent className="p-0" style={{ width: "var(--radix-popover-trigger-width)" }}>
+               <Command>
+                  <CommandInput placeholder={`Cari ${label?.toLowerCase() || "opsi"}...`} />
+                  <CommandList>
+                     <CommandEmpty>Tidak ada opsi ditemukan.</CommandEmpty>
+                     <CommandGroup>
+                        {options?.map((row, i: number) =>
+                           row?.hasChild ? (
+                              <>
+                                 <CommandGroup key={`${row.value}-group`} heading={row.label} className="ml-0">
+                                    {row.child?.map((sub: Option, index: number) => (
+                                       <CommandItem
+                                          className="ml-4"
+                                          key={`${sub.value}-${index}-sub-item`}
+                                          value={sub.label}
+                                          onSelect={() => {
+                                             const newValue = value.includes(sub.value)
+                                                ? value.filter((v) => v !== sub.value)
+                                                : [...value, sub.value];
+                                             onChange?.(newValue);
+                                          }}>
+                                          {sub.label}
+                                          <Check className={cn("ml-auto h-4 w-4", value.includes(sub.value) ? "opacity-100" : "opacity-0")} />
+                                       </CommandItem>
+                                    ))}
+                                 </CommandGroup>
+                              </>
+                           ) : (
+                              <CommandItem
+                                 key={`${row.value}-${i}-item`}
+                                 value={row.label}
+                                 onSelect={() => {
+                                    const newValue = value.includes(row.value) ? value.filter((v) => v !== row.value) : [...value, row.value];
+                                    onChange?.(newValue);
+                                 }}>
+                                 {row.label}
+                                 <Check className={cn("ml-auto h-4 w-4", value.includes(row.value) ? "opacity-100" : "opacity-0")} />
+                              </CommandItem>
+                           )
+                        )}
+                     </CommandGroup>
+                  </CommandList>
+               </Command>
+            </PopoverContent>
+         </Popover>
+         {errorMessage && <p className="text-red-500 text-sm mt-1">{errorMessage}</p>}
+      </div>
+   );
+}
+
 export function FormTextarea({
    label,
    divClassName,

@@ -10,6 +10,7 @@ const Iku = lazy(() => import("./iku"));
 const RencanaAnggaranBiaya = lazy(() => import("./rencana-anggaran-biaya"));
 const RencanaAnggaranBiayaRealisasi = lazy(() => import("./rencana-anggaran-biaya-realisasi"));
 const Dokumen = lazy(() => import("./dokumen"));
+const Tor = lazy(() => import("@/components/usulan-kegiatan/tor/detail"));
 
 export interface VerifikasiItem {
    id_referensi: number;
@@ -29,6 +30,7 @@ export default function Page() {
    return (
       <Suspense fallback={<DetailUsulanKegiatanSkeleton />}>
          <UsulanKegiatan results={results} />
+         <Tor id_usulan_kegiatan={String(id)} />
          <Iku results={results.relasi_usulan_iku} isLoading={isLoading} />
          <RencanaAnggaranBiaya results={results.rab_detail} isLoading={isLoading} />
          <RencanaAnggaranBiayaRealisasi results={results.realisasi} isLoading={isLoading} endpoint={endpoint} id={id} />

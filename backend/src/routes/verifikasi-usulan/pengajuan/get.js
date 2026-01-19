@@ -303,4 +303,38 @@ const getDetail = async (req, res) => {
    }
 };
 
-module.exports = { getData, getDetail };
+const getReferensiSBM = async (req, res) => {
+   try {
+      const results = await db.read.tb_detail_harga_sbm.findMany({
+         where: { status_validasi: "valid" },
+         select: {
+            id: true,
+            standar_biaya_master: {
+               select: {
+                  id: true,
+                  kode: true,
+                  nama: true,
+                  deskripsi: true,
+               },
+            },
+            tahun_anggaran: true,
+            harga_satuan: true,
+            unit_satuan: {
+               select: {
+                  id: true,
+                  nama: true,
+                  deskripsi: true,
+               },
+            },
+            tanggal_mulai_efektif: true,
+            tanggal_akhir_efektif: true,
+         },
+      });
+
+      res.json({ results });
+   } catch (error) {
+      res.status(500).json({ error: error.message });
+   }
+};
+
+module.exports = { getData, getDetail, getReferensiSBM };

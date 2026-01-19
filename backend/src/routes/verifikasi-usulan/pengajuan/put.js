@@ -217,18 +217,46 @@ const klaim = async (req, res) => {
 
          const tahapanVerifikator = pengguna.verikator_usulan.find((e) => Number.parseInt(e.tahap) === tahap_verifikasi);
 
-         const newDataKlaimVerifikasi = await tx.tb_klaim_verifikasi.create({
-            data: {
-               id_usulan_kegiatan: usulanKegiatan.id,
-               id_verikator_usulan: Number.parseInt(
-                  tahapanVerifikator ? tahapanVerifikator.id : pengguna.verikator_usulan.find((e) => Number.parseInt(e.tahap) === 1)?.id
-               ),
-               waktu_klaim: new Date(),
-               status_klaim: "aktif",
+         const idVerikatorUsulan = Number.parseInt(
+            tahapanVerifikator ? tahapanVerifikator.id : pengguna.verikator_usulan.find((e) => Number.parseInt(e.tahap) === 1)?.id
+         );
+
+         const existingKlaim = await tx.tb_klaim_verifikasi.findUnique({
+            where: {
+               id_usulan_kegiatan_id_verikator_usulan: {
+                  id_usulan_kegiatan: usulanKegiatan.id,
+                  id_verikator_usulan: idVerikatorUsulan,
+               },
             },
          });
 
-         await logAudit(user_modified, "CREATE", "tb_klaim_verifikasi", req.ip, null, { ...newDataKlaimVerifikasi });
+         let newDataKlaimVerifikasi;
+         let auditAction;
+         let oldDataAudit = null;
+
+         if (existingKlaim) {
+            oldDataAudit = { ...existingKlaim };
+            newDataKlaimVerifikasi = await tx.tb_klaim_verifikasi.update({
+               where: { id: existingKlaim.id },
+               data: {
+                  waktu_klaim: new Date(),
+                  status_klaim: "aktif",
+               },
+            });
+            auditAction = "UPDATE";
+         } else {
+            newDataKlaimVerifikasi = await tx.tb_klaim_verifikasi.create({
+               data: {
+                  id_usulan_kegiatan: usulanKegiatan.id,
+                  id_verikator_usulan: idVerikatorUsulan,
+                  waktu_klaim: new Date(),
+                  status_klaim: "aktif",
+               },
+            });
+            auditAction = "CREATE";
+         }
+
+         await logAudit(user_modified, auditAction, "tb_klaim_verifikasi", req.ip, oldDataAudit, { ...newDataKlaimVerifikasi });
       });
 
       res.json({

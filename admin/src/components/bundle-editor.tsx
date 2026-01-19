@@ -6,7 +6,7 @@ export default function BundledEditor(props: Readonly<React.ComponentProps<typeo
          tinymceScriptSrc="/tinymce/tinymce.min.js"
          licenseKey="gpl"
          init={{
-            height: 500,
+            height: 250,
             menubar: false,
             plugins: [
                "advlist",

@@ -125,7 +125,7 @@ router.post("/:id_usulan", async (req, res) => {
          ],
       });
    } catch (error) {
-      return res.json({ error: error.message });
+      return res.json({ status: false, message: error.message });
    }
 });
 

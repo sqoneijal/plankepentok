@@ -30,7 +30,7 @@ export default function UsulanKegiatan({ results }: Readonly<{ results: FormData
                <div className="col-12 col-md-2">
                   {detailLabel({
                      label: "Total Anggaran Disetujui",
-                     value: toRupiah(results.anggaran_disetujui.jumlah),
+                     value: toRupiah(results.anggaran_disetujui.jumlah || 0),
                   })}
                </div>
             </div>

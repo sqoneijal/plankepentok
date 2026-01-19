@@ -22,6 +22,9 @@ const JenisKeluaranTORActions = lazy(() => import("@/pages/referensi/jenis-kelua
 const VolumeKeluaranTOR = lazy(() => import("@/pages/referensi/volume-keluaran-tor/page"));
 const VolumeKeluaranTORActions = lazy(() => import("@/pages/referensi/volume-keluaran-tor/actions/page"));
 
+const PenerimaManfaatTOR = lazy(() => import("@/pages/referensi/penerima-manfaat-tor/page"));
+const PenerimaManfaatTORActions = lazy(() => import("@/pages/referensi/penerima-manfaat-tor/actions/page"));
+
 export const route_referensi = [
    { key: v4(), path: "/referensi/unit-satuan", element: <ReferensiUnitSatuan /> },
    { key: v4(), path: "/referensi/unit-satuan/actions", element: <ReferensiUnitSatuanActions /> },
@@ -44,4 +47,7 @@ export const route_referensi = [
    { key: v4(), path: "/referensi/volume-keluaran-tor", element: <VolumeKeluaranTOR /> },
    { key: v4(), path: "/referensi/volume-keluaran-tor/actions", element: <VolumeKeluaranTORActions /> },
    { key: v4(), path: "/referensi/volume-keluaran-tor/actions/:id", element: <VolumeKeluaranTORActions /> },
+   { key: v4(), path: "/referensi/penerima-manfaat-tor", element: <PenerimaManfaatTOR /> },
+   { key: v4(), path: "/referensi/penerima-manfaat-tor/actions", element: <PenerimaManfaatTORActions /> },
+   { key: v4(), path: "/referensi/penerima-manfaat-tor/actions/:id", element: <PenerimaManfaatTORActions /> },
 ];

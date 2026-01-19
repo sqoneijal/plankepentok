@@ -1,11 +1,12 @@
 {
+   "types": "commonjs",
    "devDependencies": {
       "nodemon": "^3.1.10",
       "prisma": "^6.19.0"
    },
    "scripts": {
       "start": "npm run generate && node src/server.js",
-      "dev": "npm run generate && nodemon src/server.js",
+      "dev": "npm run generate && robocopy D:\\2025\\perencanaan\\backend\\node_modules\\.prisma D:\\2025\\perencanaan\\admin\\src\\types /E & nodemon src/server.js",
       "pull": "npx prisma db pull",
       "generate": "npx prisma generate",
       "build": "node prod.js",
@@ -17,6 +18,7 @@
       "cors": "^2.8.5",
       "dotenv": "^16.3.1",
       "express": "^4.18.2",
+      "html-entities": "^2.6.0",
       "jsonwebtoken": "^9.0.2",
       "jwks-rsa": "^3.2.0",
       "module-alias": "^2.2.3",

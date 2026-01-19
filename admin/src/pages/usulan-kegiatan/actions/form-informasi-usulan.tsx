@@ -50,7 +50,7 @@ export default function FormInformasiUsulan({
             {["", "draft", "perbaiki", "ditolak"].includes(formData?.status_usulan as string) && (
                <CardAction>
                   <Button variant="outline" disabled={isPending} onClick={onSubmit} className="-mt-1">
-                     {isPending && <Spinner />}Simpan
+                     {isPending && <Spinner />}Simpan Informasi Usulan
                   </Button>
                </CardAction>
             )}

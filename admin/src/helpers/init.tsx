@@ -143,7 +143,7 @@ export const detailLabel = ({ label, value }: { label?: string; value?: React.Re
    return (
       <>
          <div className="block text-sm font-medium text-gray-600">{label}</div>
-         <p className="mt-1 text-gray-900">{value}</p>
+         <div className="mt-1 text-gray-900">{value}</div>
       </>
    );
 };
