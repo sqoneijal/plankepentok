@@ -1,0 +1,749 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model tb_anggaran_disetujui {
+  id                 Int                 @id(map: "tb_anggaran_disetujui_pk") @default(autoincrement())
+  id_usulan          Int?                @unique(map: "tb_anggaran_disetujui_unique")
+  jumlah             Decimal?            @db.Decimal
+  tb_usulan_kegiatan tb_usulan_kegiatan? @relation(fields: [id_usulan], references: [id], onDelete: Restrict, onUpdate: SetNull, map: "tb_anggaran_disetujui_tb_usulan_kegiatan_fk")
+
+  @@index([id_usulan])
+}
+
+model tb_audit_logs {
+  user_modified  String?   @db.VarChar
+  action_type    String?   @db.VarChar
+  table_affected String?   @db.VarChar
+  old_value      String?   @db.VarChar
+  new_value      String?   @db.VarChar
+  ip_address     String?   @db.VarChar
+  timestamp      DateTime? @db.Timestamp(6)
+  id             Int       @id(map: "tb_audit_logs_pk") @default(autoincrement())
+}
+
+model tb_biro_master {
+  id                    Int                     @id(map: "tb_biro_master_pk") @default(autoincrement())
+  nama                  String?                 @db.VarChar
+  uploaded              DateTime?               @db.Timestamp(6)
+  modified              DateTime?               @db.Timestamp(6)
+  user_modified         String?                 @db.VarChar
+  pagu_anggaran_biro    tb_pagu_anggaran_biro[]
+  pengguna_role         tb_pengguna_role[]
+  sub_unit              tb_sub_unit[]
+  unit_pengusul         tb_unit_pengusul[]
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tb_detail_harga_sbm {
+  id                      Int                      @id(map: "tb_detail_harga_sbm_pk") @default(autoincrement())
+  id_standar_biaya        Int?
+  tahun_anggaran          Decimal?                 @db.Decimal(4, 0)
+  harga_satuan            Decimal?                 @db.Decimal
+  id_satuan               Int?
+  tanggal_mulai_efektif   DateTime?                @db.Date
+  tanggal_akhir_efektif   DateTime?                @db.Date
+  status_validasi         String?                  @db.VarChar
+  uploaded                DateTime?                @db.Timestamptz(6)
+  modified                DateTime?                @db.Timestamptz(6)
+  user_modified           String?                  @db.VarChar
+  tb_standar_biaya_master tb_standar_biaya_master? @relation(fields: [id_standar_biaya], references: [id], onUpdate: SetNull, map: "tb_detail_harga_sbm_tb_standar_biaya_master_fk")
+  tb_unit_satuan          tb_unit_satuan?          @relation(fields: [id_satuan], references: [id], onUpdate: SetNull, map: "tb_detail_harga_sbm_tb_unit_satuan_fk")
+
+  @@unique([id_standar_biaya, tahun_anggaran, id_satuan], map: "tb_detail_harga_sbm_unique")
+  @@index([id_satuan])
+  @@index([id_standar_biaya])
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tb_dokumen_pendukung {
+  id                 Int                 @id(map: "tb_dokumen_pendukung_pk") @default(autoincrement())
+  id_usulan          Int?
+  nama_dokumen       String?             @db.VarChar
+  tipe_dokumen       String?             @db.VarChar
+  path_file          String?             @db.VarChar
+  uploaded           DateTime?           @db.Timestamptz(6)
+  modified           DateTime?           @db.Timestamptz(6)
+  user_modified      String?             @db.VarChar
+  file_dokumen       String?             @db.VarChar
+  tb_usulan_kegiatan tb_usulan_kegiatan? @relation(fields: [id_usulan], references: [id], onDelete: Cascade, onUpdate: SetNull, map: "tb_dokumen_pendukung_tb_usulan_kegiatan_fk")
+
+  @@index([id_usulan])
+}
+
+model tb_fakultas_master {
+  id                        Int                         @id(map: "tb_fakultas_master_pk") @default(autoincrement())
+  nama                      String?                     @db.VarChar
+  uploaded                  DateTime?                   @db.Timestamptz(6)
+  modified                  DateTime?                   @db.Timestamptz(6)
+  user_modified             String?                     @db.VarChar
+  pagu_anggaran_fakultas tb_pagu_anggaran_fakultas[]
+  pengguna_role          tb_pengguna_role[]
+  prodi_master           tb_prodi_master[]
+  sub_unit               tb_sub_unit[]
+  unit_pengusul          tb_unit_pengusul[]
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tb_iku_master {
+  id                   Int                    @id(map: "tb_iku_master_pk") @default(autoincrement())
+  jenis                String?                @db.VarChar
+  kode                 String?                @unique(map: "tb_iku_master_unique") @db.VarChar
+  deskripsi            String?
+  tahun_berlaku        Decimal?               @db.Decimal
+  uploaded             DateTime?              @db.Timestamptz(6)
+  modified             DateTime?              @db.Timestamptz(6)
+  user_modified        String?                @db.VarChar
+  tb_relasi_usulan_iku tb_relasi_usulan_iku[]
+}
+
+model tb_jenis_keluaran_tor {
+  id                        Int                        @id(map: "tb_jenis_keluaran_pk") @default(autoincrement())
+  id_tor                    Int?
+  id_mst_jenis_keluaran_tor Int?
+  tb_tor                    tb_tor?                    @relation(fields: [id_tor], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tb_jenis_keluaran_tor_tb_anggaran_disetujui_fk")
+  tb_mst_jenis_keluaran_tor tb_mst_jenis_keluaran_tor? @relation(fields: [id_mst_jenis_keluaran_tor], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tb_jenis_keluaran_tor_tb_mst_jenis_keluaran_tor_fk")
+
+  @@unique([id_tor, id_mst_jenis_keluaran_tor], map: "tb_jenis_keluaran_tor_unique")
+  @@index([id_mst_jenis_keluaran_tor])
+  @@index([id_tor])
+}
+
+model tb_jenis_usulan {
+  id                  Int                   @id(map: "tb_jenis_usulan_pk") @default(autoincrement())
+  nama                String?               @db.VarChar
+  is_aktif            Boolean?              @default(true)
+  uploaded            DateTime?             @db.Timestamp(6)
+  modified            DateTime?             @db.Timestamp(6)
+  user_modified       String?               @db.VarChar
+  tb_usulan_kegiatan  tb_usulan_kegiatan[]
+  tb_verikator_usulan tb_verikator_usulan[]
+}
+
+model tb_kategori_sbm {
+  id                      Int                       @id(map: "tb_kategori_sbm_pk") @default(autoincrement())
+  kode                    String?                   @unique(map: "tb_kategori_sbm_unique") @db.VarChar
+  nama                    String?                   @db.VarChar
+  uploaded                DateTime?                 @db.Timestamptz(6)
+  modified                DateTime?                 @db.Timestamptz(6)
+  user_modified           String?                   @db.VarChar
+  deskripsi               String?                   @db.VarChar
+  tb_standar_biaya_master tb_standar_biaya_master[]
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tb_klaim_verifikasi {
+  id                  Int                  @id(map: "tb_klaim_verifikasi_pk") @default(autoincrement())
+  id_usulan_kegiatan  Int?
+  id_verikator_usulan Int?
+  waktu_klaim         DateTime?            @db.Timestamp(6)
+  status_klaim        String?              @db.VarChar
+  tb_usulan_kegiatan  tb_usulan_kegiatan?  @relation(fields: [id_usulan_kegiatan], references: [id], onDelete: Cascade, onUpdate: SetNull, map: "tb_klaim_verifikasi_tb_usulan_kegiatan_fk")
+  tb_verikator_usulan tb_verikator_usulan? @relation(fields: [id_verikator_usulan], references: [id], onDelete: Cascade, onUpdate: SetNull, map: "tb_klaim_verifikasi_tb_verikator_usulan_fk")
+
+  @@unique([id_usulan_kegiatan, id_verikator_usulan], map: "tb_klaim_verifikasi_unique")
+  @@index([id_usulan_kegiatan])
+  @@index([id_verikator_usulan])
+}
+
+model tb_lembaga_master {
+  id                       Int                        @id(map: "tb_lembaga_master_pk") @default(autoincrement())
+  nama                     String?                    @db.VarChar
+  uploaded                 DateTime?                  @db.Timestamptz(6)
+  modified                 DateTime?                  @db.Timestamptz(6)
+  user_modified            String?                    @db.VarChar
+  pagu_anggaran_lembaga tb_pagu_anggaran_lembaga[]
+  pengguna_role         tb_pengguna_role[]
+  sub_unit              tb_sub_unit[]
+  unit_pengusul         tb_unit_pengusul[]
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tb_log_verifikasi {
+  id                 Int                 @id(map: "tb_log_verifikasi_pk") @default(autoincrement())
+  id_usulan_kegiatan Int?
+  tahap              Decimal?            @db.Decimal
+  verifikator_id     Int?
+  aksi               String?             @db.VarChar
+  catatan            String?             @db.VarChar
+  waktu              DateTime?           @db.Timestamp(6)
+  tb_pengguna        tb_pengguna?        @relation(fields: [verifikator_id], references: [id], onUpdate: SetNull, map: "tb_log_verifikasi_tb_pengguna_fk")
+  tb_usulan_kegiatan tb_usulan_kegiatan? @relation(fields: [id_usulan_kegiatan], references: [id], onDelete: Cascade, onUpdate: SetNull, map: "tb_log_verifikasi_tb_usulan_kegiatan_fk")
+
+  @@index([id_usulan_kegiatan])
+  @@index([verifikator_id])
+}
+
+model tb_mst_jenis_keluaran_tor {
+  id                    Int                     @id(map: "tb_mst_jenis_keluaran_tor_pk") @default(autoincrement())
+  nama                  String?                 @db.VarChar
+  keterangan            String?                 @db.VarChar
+  uploaded              DateTime?               @db.Timestamp(6)
+  modified              DateTime?               @db.Timestamp(6)
+  user_modified         String?                 @db.VarChar
+  tb_jenis_keluaran_tor tb_jenis_keluaran_tor[]
+}
+
+model tb_mst_penerima_manfaat_tor {
+  id                      Int                       @id(map: "tb_mst_penerima_mafaat_tor_pk") @default(autoincrement())
+  nama                    String?                   @db.VarChar
+  keterangan              String?                   @db.VarChar
+  uploaded                DateTime?                 @db.Timestamp(6)
+  modified                DateTime?                 @db.Timestamp(6)
+  user_modified           String?                   @db.VarChar
+  tb_penerima_manfaat_tor tb_penerima_manfaat_tor[]
+}
+
+model tb_mst_volume_keluaran_tor {
+  id                     Int                      @id(map: "tb_mst_volume_keluaran_tor_pk") @default(autoincrement())
+  nama                   String?                  @db.VarChar
+  keterangan             String?                  @db.VarChar
+  uploaded               DateTime?                @db.Timestamp(6)
+  modified               DateTime?                @db.Timestamp(6)
+  user_modified          String?                  @db.VarChar
+  tb_volume_keluaran_tor tb_volume_keluaran_tor[]
+}
+
+model tb_pagu_anggaran_biro {
+  id             Int             @id(map: "tb_pagu_anggaran_biro_pk") @default(autoincrement())
+  tahun_anggaran Decimal?        @db.Decimal(4, 0)
+  total_pagu     Decimal?        @db.Decimal
+  realisasi      Decimal?        @db.Decimal
+  uploaded       DateTime?       @db.Timestamptz(6)
+  modified       DateTime?       @db.Timestamptz(6)
+  user_modified  String?         @db.VarChar
+  id_biro        Int?
+  tb_biro_master tb_biro_master? @relation(fields: [id_biro], references: [id], onDelete: Cascade, onUpdate: SetNull, map: "tb_pagu_anggaran_biro_tb_biro_master_fk")
+
+  @@unique([tahun_anggaran, id_biro], map: "tb_pagu_anggaran_biro_unique")
+  @@index([id_biro])
+}
+
+model tb_pagu_anggaran_fakultas {
+  id                 Int                 @id(map: "tb_pagu_anggaran_fakultas_pk") @default(autoincrement())
+  id_fakultas        Int?
+  tahun_anggaran     Decimal?            @db.Decimal(4, 0)
+  total_pagu         Decimal?            @db.Decimal
+  realisasi          Decimal?            @db.Decimal
+  uploaded           DateTime?           @db.Timestamptz(6)
+  modified           DateTime?           @db.Timestamptz(6)
+  user_modified      String?             @db.VarChar
+  tb_fakultas_master tb_fakultas_master? @relation(fields: [id_fakultas], references: [id], onDelete: Cascade, onUpdate: SetNull, map: "tb_pagu_anggaran_fakultas_tb_fakultas_master_fk")
+
+  @@unique([id_fakultas, tahun_anggaran], map: "tb_pagu_anggaran_fakultas_unique")
+  @@index([id_fakultas])
+}
+
+model tb_pagu_anggaran_lembaga {
+  id                Int                @id(map: "tb_pagu_anggaran_lembaga_pk") @default(autoincrement())
+  tahun_anggaran    Decimal?           @db.Decimal(4, 0)
+  total_pagu        Decimal?           @db.Decimal
+  realisasi         Decimal?           @db.Decimal
+  uploaded          DateTime?          @db.Timestamptz(6)
+  modified          DateTime?          @db.Timestamptz(6)
+  user_modified     String?            @db.VarChar
+  id_lembaga        Int?
+  tb_lembaga_master tb_lembaga_master? @relation(fields: [id_lembaga], references: [id], onDelete: Cascade, onUpdate: SetNull, map: "tb_pagu_anggaran_lembaga_tb_lembaga_master_fk")
+
+  @@unique([tahun_anggaran, id_lembaga], map: "tb_pagu_anggaran_lembaga_unique")
+  @@index([id_lembaga])
+}
+
+model tb_pagu_anggaran_prodi {
+  id              Int              @id(map: "tb_pagu_anggaran_prodi_pk") @default(autoincrement())
+  id_prodi        Int?
+  tahun_anggaran  Decimal?         @db.Decimal(4, 0)
+  total_pagu      Decimal?         @db.Decimal
+  realisasi       Decimal?         @db.Decimal
+  uploaded        DateTime?        @db.Timestamptz(6)
+  modified        DateTime?        @db.Timestamptz(6)
+  user_modified   String?          @db.VarChar
+  tb_prodi_master tb_prodi_master? @relation(fields: [id_prodi], references: [id], onDelete: Cascade, onUpdate: SetNull, map: "tb_pagu_anggaran_prodi_tb_prodi_master_fk")
+
+  @@index([id_prodi])
+}
+
+model tb_pagu_anggaran_upt {
+  id             Int            @id(map: "tb_pagu_anggaran_upt_pk") @default(autoincrement())
+  id_upt         Int?
+  tahun_anggaran Decimal?       @db.Decimal(4, 0)
+  total_pagu     Decimal?       @db.Decimal
+  realisasi      Decimal?       @db.Decimal
+  uploaded       DateTime?      @db.Timestamptz(6)
+  modified       DateTime?      @db.Timestamptz(6)
+  user_modified  String?        @db.VarChar
+  tb_upt_master  tb_upt_master? @relation(fields: [id_upt], references: [id], onDelete: Cascade, onUpdate: SetNull, map: "tb_pagu_anggaran_upt_tb_upt_master_fk")
+
+  @@unique([id_upt, tahun_anggaran], map: "tb_pagu_anggaran_upt_unique")
+  @@index([id_upt])
+}
+
+model tb_pagu_sub_unit {
+  id             Int          @id(map: "tb_pagu_sub_unit_pk") @default(autoincrement())
+  id_sub_unit    Int?
+  tahun_anggaran Decimal?     @db.Decimal(4, 0)
+  total_pagu     Decimal?     @db.Decimal
+  realisasi      Decimal?     @db.Decimal
+  uploaded       DateTime?    @db.Timestamptz(6)
+  modified       DateTime?    @db.Timestamptz(6)
+  user_modified  String?      @db.VarChar
+  tb_sub_unit    tb_sub_unit? @relation(fields: [id_sub_unit], references: [id], onDelete: Cascade, onUpdate: SetNull, map: "tb_pagu_sub_unit_tb_sub_unit_fk")
+
+  @@unique([id_sub_unit, tahun_anggaran], map: "tb_pagu_sub_unit_unique")
+  @@index([id_sub_unit])
+}
+
+model tb_penerima_manfaat_tor {
+  id                          Int                          @id(map: "tb_penerima_manfaat_tor_pk") @default(autoincrement())
+  id_tor                      Int?
+  id_mst_penerima_manfaat_tor Int?
+  tb_mst_penerima_manfaat_tor tb_mst_penerima_manfaat_tor? @relation(fields: [id_mst_penerima_manfaat_tor], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tb_penerima_manfaat_tor_tb_mst_penerima_manfaat_tor_fk")
+  tb_tor                      tb_tor?                      @relation(fields: [id_tor], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tb_penerima_manfaat_tor_tb_tor_fk")
+
+  @@unique([id_tor, id_mst_penerima_manfaat_tor], map: "tb_penerima_manfaat_tor_unique")
+  @@index([id_mst_penerima_manfaat_tor])
+  @@index([id_tor])
+}
+
+model tb_pengaturan {
+  id                 Int                  @id(map: "tb_pengaturan_pk") @default(autoincrement())
+  tahun_anggaran     Decimal?             @unique(map: "tb_pengaturan_unique") @db.Decimal(4, 0)
+  total_pagu         Decimal?             @default(0) @db.Decimal
+  realisasi          Decimal?             @default(0) @db.Decimal
+  is_aktif           Boolean              @default(true)
+  uploaded           DateTime?            @db.Timestamp(6)
+  modified           DateTime?            @db.Timestamp(6)
+  user_modified      String?              @db.VarChar
+  usulan_kegiatan tb_usulan_kegiatan[]
+}
+
+model tb_pengguna {
+  id                  Int                   @id(map: "tb_pengguna_pk") @default(autoincrement())
+  username            String?               @db.VarChar
+  level_unit          String?               @db.VarChar
+  id_roles            Int?
+  fullname            String?               @db.VarChar
+  log_verifikasi   tb_log_verifikasi[]
+  roles            tb_roles?             @relation(fields: [id_roles], references: [id], onUpdate: SetNull, map: "tb_pengguna_tb_roles_fk")
+  pengguna_role    tb_pengguna_role?
+  usulan_kegiatan  tb_usulan_kegiatan[]
+  verifikasi       tb_verifikasi[]
+  verikator_usulan tb_verikator_usulan[]
+
+  @@unique([username, id_roles], map: "tb_pengguna_unique")
+  @@index([id_roles])
+}
+
+model tb_pengguna_role {
+  id                 Int                 @id(map: "tb_pengguna_role_pk") @default(autoincrement())
+  id_pengguna        Int?                @unique(map: "tb_pengguna_role_unique")
+  id_biro            Int?
+  id_lembaga         Int?
+  id_upt             Int?
+  id_fakultas        Int?
+  id_sub_unit        Int?
+  biro_master        tb_biro_master?     @relation(fields: [id_biro], references: [id], onUpdate: SetNull, map: "tb_pengguna_role_tb_biro_master_fk")
+  fakultas_master    tb_fakultas_master? @relation(fields: [id_fakultas], references: [id], onUpdate: SetNull, map: "tb_pengguna_role_tb_fakultas_master_fk")
+  lembaga_master     tb_lembaga_master?  @relation(fields: [id_lembaga], references: [id], onUpdate: SetNull, map: "tb_pengguna_role_tb_lembaga_master_fk")
+  pengguna           tb_pengguna?        @relation(fields: [id_pengguna], references: [id], onDelete: Cascade, onUpdate: SetNull, map: "tb_pengguna_role_tb_pengguna_fk")
+  sub_unit           tb_sub_unit?        @relation(fields: [id_sub_unit], references: [id], onUpdate: SetNull, map: "tb_pengguna_role_tb_sub_unit_fk")
+  upt_master         tb_upt_master?      @relation(fields: [id_upt], references: [id], onUpdate: SetNull, map: "tb_pengguna_role_tb_upt_master_fk")
+
+  @@index([id_biro])
+  @@index([id_fakultas])
+  @@index([id_lembaga])
+  @@index([id_pengguna])
+  @@index([id_upt])
+}
+
+model tb_penolakan_usulan {
+  id                 Int                 @id(map: "tb_penolakan_pk") @default(autoincrement())
+  id_usulan_kegiatan Int?
+  catatan            String?
+  uploaded           DateTime?           @db.Timestamptz(6)
+  user_modified      String?             @db.VarChar
+  tb_usulan_kegiatan tb_usulan_kegiatan? @relation(fields: [id_usulan_kegiatan], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "tb_penolakan_tb_usulan_kegiatan_fk")
+
+  @@index([id_usulan_kegiatan], map: "tb_penolakan_id_usulan_kegiatan_idx")
+}
+
+model tb_perbaikan_usulan {
+  id                 Int                 @id(map: "tb_perbaikan_usulan_pk") @default(autoincrement())
+  id_usulan_kegiatan Int?
+  catatan            String?
+  uploaded           DateTime?           @db.Timestamptz(6)
+  user_modified      String?             @db.VarChar
+  tb_usulan_kegiatan tb_usulan_kegiatan? @relation(fields: [id_usulan_kegiatan], references: [id], onDelete: Cascade, onUpdate: SetNull, map: "tb_perbaikan_usulan_tb_usulan_kegiatan_fk")
+
+  @@index([id_usulan_kegiatan])
+}
+
+model tb_prodi_master {
+  id                     Int                      @id(map: "tb_prodi_master_pk") @default(autoincrement())
+  id_fakultas            Int?
+  nama                   String?                  @db.VarChar
+  uploaded               DateTime?                @db.Timestamptz(6)
+  modified               DateTime?                @db.Timestamptz(6)
+  user_modified          String?                  @db.VarChar
+  tb_pagu_anggaran_prodi tb_pagu_anggaran_prodi[]
+  tb_fakultas_master     tb_fakultas_master?      @relation(fields: [id_fakultas], references: [id], onUpdate: SetNull, map: "tb_prodi_master_tb_fakultas_master_fk")
+
+  @@index([id_fakultas])
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tb_rab_detail {
+  id                      Int                      @id(map: "tb_rab_detail_pk") @default(autoincrement())
+  id_usulan               Int?
+  uraian_biaya            String?                  @db.VarChar
+  qty                     Decimal?                 @db.Decimal
+  id_satuan               Int?
+  harga_satuan            Decimal?                 @db.Decimal
+  total_biaya             Decimal?                 @db.Decimal
+  catatan                 String?
+  uploaded                DateTime?                @db.Timestamptz(6)
+  modified                DateTime?                @db.Timestamptz(6)
+  user_modified           String?                  @db.VarChar
+  tb_unit_satuan          tb_unit_satuan?          @relation(fields: [id_satuan], references: [id], onUpdate: SetNull, map: "tb_rab_detail_tb_unit_satuan_fk")
+  tb_usulan_kegiatan      tb_usulan_kegiatan?      @relation(fields: [id_usulan], references: [id], onDelete: Cascade, onUpdate: SetNull, map: "tb_rab_detail_tb_usulan_kegiatan_fk")
+  tb_rab_detail_perubahan tb_rab_detail_perubahan?
+  tb_realisasi            tb_realisasi[]
+
+  @@index([id_satuan])
+  @@index([id_usulan])
+}
+
+model tb_rab_detail_perubahan {
+  id               Int            @id(map: "tb_rab_detail_perubahan_pk") @default(autoincrement())
+  id_rab_detail    Int?           @unique(map: "tb_rab_detail_perubahan_unique")
+  qty              Decimal?       @db.Decimal
+  harga_satuan     Decimal?       @db.Decimal
+  total_biaya      Decimal?       @db.Decimal
+  uploaded         DateTime?      @db.Timestamptz(6)
+  user_modified    String?        @db.VarChar
+  modified         DateTime?      @db.Timestamptz(6)
+  tahap_verifikasi Decimal?       @default(1) @db.Decimal
+  tb_rab_detail    tb_rab_detail? @relation(fields: [id_rab_detail], references: [id], onDelete: Cascade, onUpdate: SetNull, map: "tb_rab_detail_perubahan_tb_rab_detail_fk")
+
+  @@index([id_rab_detail])
+}
+
+model tb_realisasi {
+  id                 Int                 @id(map: "tb_realisasi_pk") @default(autoincrement())
+  id_usulan          Int?
+  id_rab             Int?
+  tanggal_mulai      DateTime?           @db.Date
+  tanggal_selesai    DateTime?           @db.Date
+  deskripsi          String?
+  anggaran_digunakan Decimal?            @db.Decimal(30, 0)
+  uploaded           DateTime?           @db.Timestamptz(6)
+  modified           DateTime?           @db.Timestamptz(6)
+  user_modified      String?             @db.VarChar
+  tb_rab_detail      tb_rab_detail?      @relation(fields: [id_rab], references: [id], onDelete: Cascade, onUpdate: SetNull, map: "tb_realisasi_tb_rab_detail_fk")
+  tb_usulan_kegiatan tb_usulan_kegiatan? @relation(fields: [id_usulan], references: [id], onDelete: Cascade, onUpdate: SetNull, map: "tb_realisasi_tb_usulan_kegiatan_fk")
+}
+
+model tb_relasi_usulan_iku {
+  id                 Int                 @id(map: "tb_relasi_usulan_iku_pk") @default(autoincrement())
+  id_usulan          Int?
+  id_iku             Int?
+  uploaded           DateTime?           @db.Timestamp(6)
+  user_modified      String?             @db.VarChar
+  modified           DateTime?           @db.Timestamp(6)
+  tb_iku_master      tb_iku_master?      @relation(fields: [id_iku], references: [id], onUpdate: SetNull, map: "tb_relasi_usulan_iku_tb_iku_master_fk")
+  tb_usulan_kegiatan tb_usulan_kegiatan? @relation(fields: [id_usulan], references: [id], onDelete: Cascade, onUpdate: SetNull, map: "tb_relasi_usulan_iku_tb_usulan_kegiatan_fk")
+
+  @@unique([id_usulan, id_iku], map: "tb_relasi_usulan_iku_unique")
+  @@index([id_iku])
+  @@index([id_usulan])
+}
+
+model tb_relasi_usulan_renstra {
+  id                 Int       @id(map: "tb_relasi_usulan_renstra_pk") @default(autoincrement())
+  id_usulan          Int?
+  id_indikator       Int?
+  is_sesuai          Boolean?
+  catatan_verifikasi String?
+  verified_by        String?   @db.VarChar
+  verified_at        DateTime? @db.Timestamptz(6)
+  uploaded           DateTime? @db.Timestamptz(6)
+  user_modified      String?   @db.VarChar
+
+  @@index([id_indikator])
+  @@index([id_usulan])
+}
+
+model tb_renstra_indikator {
+  id            Int       @id(map: "tb_renstra_indikator_pk") @default(autoincrement())
+  id_program    Int?
+  kode          String?   @unique(map: "tb_renstra_indikator_unique") @db.VarChar
+  nama          String?   @db.VarChar
+  id_iku        Int?
+  target        Decimal?  @db.Decimal
+  satuan        String?   @db.VarChar
+  keterangan    String?
+  uploaded      DateTime? @db.Timestamptz(6)
+  modified      DateTime? @db.Timestamptz(6)
+  user_modified String?   @db.VarChar
+
+  @@index([id_iku])
+  @@index([id_program])
+}
+
+model tb_renstra_master {
+  id            Int       @id(map: "tb_renstra_master_pk") @default(autoincrement())
+  kode          String?   @unique(map: "tb_renstra_master_unique") @db.VarChar
+  nama          String?   @db.VarChar
+  periode_awal  Decimal?  @db.Decimal(4, 0)
+  periode_akhir Decimal?  @db.Decimal(4, 0)
+  visi          String?
+  misi          String?
+  tujuan        String?
+  sasaran       String?
+  status_aktif  Boolean?  @default(true)
+  uploaded      DateTime? @db.Timestamptz(6)
+  modified      DateTime? @db.Timestamptz(6)
+  user_modified String?   @db.VarChar
+}
+
+model tb_renstra_program {
+  id            Int       @id(map: "tb_renstra_program_pk") @default(autoincrement())
+  id_renstra    Int?
+  kode          String?   @unique(map: "tb_renstra_program_unique") @db.VarChar
+  nama          String?   @db.VarChar
+  deskripsi     String?
+  uploaded      DateTime? @db.Timestamptz(6)
+  modified      DateTime? @db.Timestamptz(6)
+  user_modified String?   @db.VarChar
+
+  @@index([id_renstra])
+}
+
+model tb_roles {
+  id          Int           @id(map: "tb_roles_pk") @default(autoincrement())
+  nama        String?       @db.VarChar
+  tb_pengguna tb_pengguna[]
+}
+
+model tb_standar_biaya_master {
+  id                  Int                   @id(map: "tb_standar_biaya_master_pk") @default(autoincrement())
+  kode                String?               @unique(map: "tb_standar_biaya_master_unique") @db.VarChar
+  nama                String?               @db.VarChar
+  deskripsi           String?               @db.VarChar
+  id_kategori         Int?
+  id_unit_satuan      Int?
+  uploaded            DateTime?             @db.Timestamptz(6)
+  modified            DateTime?             @db.Timestamptz(6)
+  user_modified       String?               @db.VarChar
+  tb_detail_harga_sbm tb_detail_harga_sbm[]
+  tb_kategori_sbm     tb_kategori_sbm?      @relation(fields: [id_kategori], references: [id], onUpdate: SetNull, map: "tb_standar_biaya_master_tb_kategori_sbm_fk")
+  tb_unit_satuan      tb_unit_satuan?       @relation(fields: [id_unit_satuan], references: [id], onUpdate: SetNull, map: "tb_standar_biaya_master_tb_unit_satuan_fk")
+
+  @@index([id_kategori])
+  @@index([id_unit_satuan])
+}
+
+model tb_sub_unit {
+  id                 Int                 @id(map: "tb_sub_unit_pk") @default(autoincrement())
+  level              String?             @db.VarChar
+  nama               String?             @db.VarChar
+  uploaded           DateTime?           @db.Timestamptz(6)
+  modified           DateTime?           @db.Timestamptz(6)
+  user_modified      String?             @db.VarChar
+  id_biro            Int?
+  id_lembaga         Int?
+  id_upt             Int?
+  id_fakultas        Int?
+  tb_pagu_sub_unit   tb_pagu_sub_unit[]
+  tb_pengguna_role   tb_pengguna_role[]
+  tb_biro_master     tb_biro_master?     @relation(fields: [id_biro], references: [id], onUpdate: SetNull, map: "tb_sub_unit_tb_biro_master_fk")
+  tb_fakultas_master tb_fakultas_master? @relation(fields: [id_fakultas], references: [id], onUpdate: SetNull, map: "tb_sub_unit_tb_fakultas_master_fk")
+  tb_lembaga_master  tb_lembaga_master?  @relation(fields: [id_lembaga], references: [id], onUpdate: SetNull, map: "tb_sub_unit_tb_lembaga_master_fk")
+  tb_upt_master      tb_upt_master?      @relation(fields: [id_upt], references: [id], onUpdate: SetNull, map: "tb_sub_unit_tb_upt_master_fk")
+  tb_unit_pengusul   tb_unit_pengusul[]
+
+  @@index([id_biro])
+  @@index([id_fakultas])
+  @@index([id_lembaga])
+  @@index([id_upt])
+}
+
+model tb_tor {
+  id                      Int                       @id(map: "tb_tor_pk") @default(autoincrement())
+  id_usulan_kegiatan      Int?                      @unique(map: "tb_tor_unique")
+  penyelenggara           String?                   @db.VarChar
+  program                 String?                   @db.VarChar
+  kegiatan                String?                   @db.VarChar
+  ikk                     String?                   @db.VarChar
+  satuan_ukuran_keluaran  String?                   @db.VarChar
+  dasar_hukum             String?
+  gambaran_umum           String?
+  alasan_kegiatan         String?
+  uraian_kegiatan         String?
+  batasan_kegiatan        String?
+  maksud_kegiatan         String?
+  tujuan_kegiatan         String?
+  indikator_keluaran      String?
+  keluaran                String?
+  metode_pelaksanaan      String?
+  tahapan_kegiatan        String?
+  tempat_pelaksanaan      String?
+  pelaksana_kegiatan      String?
+  penanggung_jawab        String?
+  jadwal_kegiatan         String?
+  biaya                   String?
+  uploaded                DateTime?                 @db.Timestamp(6)
+  modified                DateTime?                 @db.Timestamp(6)
+  user_modified           String?                   @db.VarChar
+  tb_jenis_keluaran_tor   tb_jenis_keluaran_tor[]
+  tb_penerima_manfaat_tor tb_penerima_manfaat_tor[]
+  tb_usulan_kegiatan      tb_usulan_kegiatan?       @relation(fields: [id_usulan_kegiatan], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tb_tor_tb_usulan_kegiatan_fk")
+  tb_volume_keluaran_tor  tb_volume_keluaran_tor[]
+
+  @@index([id_usulan_kegiatan])
+}
+
+model tb_unit_pengusul {
+  id                 Int                 @id(map: "tb_unit_pengusul_pk") @default(autoincrement())
+  id_usulan_kegiatan Int?                @unique(map: "tb_unit_pengusul_unique")
+  id_biro            Int?
+  id_lembaga         Int?
+  id_upt             Int?
+  id_fakultas        Int?
+  id_sub_unit        Int?
+  tb_biro_master     tb_biro_master?     @relation(fields: [id_biro], references: [id], onUpdate: SetNull, map: "tb_unit_pengusul_tb_biro_master_fk")
+  tb_fakultas_master tb_fakultas_master? @relation(fields: [id_fakultas], references: [id], onUpdate: SetNull, map: "tb_unit_pengusul_tb_fakultas_master_fk")
+  tb_lembaga_master  tb_lembaga_master?  @relation(fields: [id_lembaga], references: [id], onUpdate: SetNull, map: "tb_unit_pengusul_tb_lembaga_master_fk")
+  tb_sub_unit        tb_sub_unit?        @relation(fields: [id_sub_unit], references: [id], onUpdate: SetNull, map: "tb_unit_pengusul_tb_sub_unit_fk")
+  tb_upt_master      tb_upt_master?      @relation(fields: [id_upt], references: [id], onUpdate: SetNull, map: "tb_unit_pengusul_tb_upt_master_fk")
+  tb_usulan_kegiatan tb_usulan_kegiatan? @relation(fields: [id_usulan_kegiatan], references: [id], onDelete: Cascade, onUpdate: SetNull, map: "tb_unit_pengusul_tb_usulan_kegiatan_fk")
+
+  @@index([id_biro])
+  @@index([id_fakultas])
+  @@index([id_lembaga])
+  @@index([id_sub_unit])
+  @@index([id_upt])
+  @@index([id_usulan_kegiatan])
+}
+
+model tb_unit_satuan {
+  id                      Int                       @id(map: "tb_unit_satuan_pk") @default(autoincrement())
+  nama                    String?                   @db.VarChar
+  deskripsi               String?                   @db.VarChar
+  aktif                   Boolean?                  @default(true)
+  uploaded                DateTime?                 @db.Timestamptz(6)
+  modified                DateTime?                 @db.Timestamptz(6)
+  user_modified           String?                   @db.VarChar
+  tb_detail_harga_sbm     tb_detail_harga_sbm[]
+  tb_rab_detail           tb_rab_detail[]
+  tb_standar_biaya_master tb_standar_biaya_master[]
+}
+
+model tb_upt_master {
+  id                   Int                    @id(map: "tb_upt_master_pk") @default(autoincrement())
+  nama                 String?                @db.VarChar
+  uploaded             DateTime?              @db.Timestamptz(6)
+  modified             DateTime?              @db.Timestamptz(6)
+  user_modified        String?                @db.VarChar
+  pagu_anggaran_upt tb_pagu_anggaran_upt[]
+  pengguna_role     tb_pengguna_role[]
+  sub_unit          tb_sub_unit[]
+  unit_pengusul     tb_unit_pengusul[]
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tb_usulan_kegiatan {
+  id                     Int                    @id(map: "tb_usulan_kegiatan_pk") @default(autoincrement())
+  kode                   String                 @unique(map: "tb_usulan_kegiatan_unique") @db.VarChar
+  latar_belakang         String?
+  tujuan                 String?
+  sasaran                String?                @db.VarChar
+  waktu_mulai            DateTime?              @db.Date
+  waktu_selesai          DateTime?              @db.Date
+  tempat_pelaksanaan     String?                @db.VarChar
+  operator_input         Int?
+  total_anggaran         Decimal?               @db.Decimal(20, 0)
+  status_usulan          String?                @default("draft") @db.VarChar
+  tanggal_submit         DateTime?              @db.Timestamp(6)
+  uploaded               DateTime?              @db.Timestamp(6)
+  modified               DateTime?              @db.Timestamp(6)
+  user_modified          String?                @db.VarChar
+  rencana_total_anggaran Decimal?               @db.Decimal
+  catatan_perbaikan      String?
+  id_jenis_usulan        Int?
+  id_pengaturan          Int?
+  tahap_verifikasi       Decimal?               @db.Decimal
+  tb_anggaran_disetujui  tb_anggaran_disetujui?
+  tb_dokumen_pendukung   tb_dokumen_pendukung[]
+  tb_klaim_verifikasi    tb_klaim_verifikasi[]
+  tb_log_verifikasi      tb_log_verifikasi[]
+  tb_penolakan_usulan    tb_penolakan_usulan[]
+  tb_perbaikan_usulan    tb_perbaikan_usulan[]
+  tb_rab_detail          tb_rab_detail[]
+  tb_realisasi           tb_realisasi[]
+  tb_relasi_usulan_iku   tb_relasi_usulan_iku[]
+  tb_tor                 tb_tor?
+  tb_unit_pengusul       tb_unit_pengusul?
+  tb_jenis_usulan        tb_jenis_usulan?       @relation(fields: [id_jenis_usulan], references: [id], onUpdate: SetNull, map: "tb_usulan_kegiatan_tb_jenis_usulan_fk")
+  tb_pengaturan          tb_pengaturan?         @relation(fields: [id_pengaturan], references: [id], onUpdate: SetNull, map: "tb_usulan_kegiatan_tb_pengaturan_fk")
+  tb_pengguna            tb_pengguna?           @relation(fields: [operator_input], references: [id], onUpdate: SetNull, map: "tb_usulan_kegiatan_tb_pengguna_fk")
+  tb_verifikasi          tb_verifikasi[]
+
+  @@index([id_jenis_usulan])
+  @@index([id_pengaturan])
+  @@index([operator_input])
+  @@index([status_usulan])
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tb_verifikasi {
+  id                 Int                 @id(map: "tb_verifikasi_pk") @default(autoincrement())
+  id_pengguna        Int?
+  id_usulan_kegiatan Int?
+  id_referensi       Int?
+  table_referensi    String?             @db.VarChar
+  status             String?             @db.VarChar
+  uploaded           DateTime?           @db.Timestamp(6)
+  modified           DateTime?           @db.Timestamp(6)
+  user_modified      String?             @db.VarChar
+  catatan            String?             @db.VarChar
+  tahap              Decimal?            @default(1) @db.Decimal
+  tb_pengguna        tb_pengguna?        @relation(fields: [id_pengguna], references: [id], onUpdate: NoAction, map: "tb_verifikasi_tb_pengguna_fk")
+  tb_usulan_kegiatan tb_usulan_kegiatan? @relation(fields: [id_usulan_kegiatan], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tb_verifikasi_tb_usulan_kegiatan_fk")
+
+  @@index([id_pengguna])
+  @@index([id_usulan_kegiatan])
+}
+
+model tb_verikator_usulan {
+  id                  Int                   @id(map: "tb_verikator_usulan_pk") @default(autoincrement())
+  id_jenis_usulan     Int?
+  id_pengguna         Int?
+  uploaded            DateTime?             @db.Timestamp(6)
+  user_modified       String?               @db.VarChar
+  tahap               Decimal?              @db.Decimal
+  tb_klaim_verifikasi tb_klaim_verifikasi[]
+  tb_jenis_usulan     tb_jenis_usulan?      @relation(fields: [id_jenis_usulan], references: [id], onDelete: Cascade, onUpdate: SetNull, map: "tb_verikator_usulan_tb_jenis_usulan_fk")
+  tb_pengguna         tb_pengguna?          @relation(fields: [id_pengguna], references: [id], onDelete: Cascade, onUpdate: SetNull, map: "tb_verikator_usulan_tb_pengguna_fk")
+
+  @@unique([id_jenis_usulan, id_pengguna, tahap], map: "tb_verikator_usulan_unique")
+  @@index([id_jenis_usulan])
+  @@index([id_pengguna])
+}
+
+model tb_volume_keluaran_tor {
+  id                         Int                         @id(map: "tb_volume_keluaran_tor_pk") @default(autoincrement())
+  id_tor                     Int?
+  id_mst_volume_keluaran_tor Int?
+  tb_mst_volume_keluaran_tor tb_mst_volume_keluaran_tor? @relation(fields: [id_mst_volume_keluaran_tor], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tb_volume_keluaran_tor_tb_mst_volume_keluaran_tor_fk")
+  tb_tor                     tb_tor?                     @relation(fields: [id_tor], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tb_volume_keluaran_tor_tb_tor_fk")
+
+  @@unique([id_tor, id_mst_volume_keluaran_tor], map: "tb_volume_keluaran_tor_unique")
+  @@index([id_mst_volume_keluaran_tor])
+  @@index([id_tor])
+}

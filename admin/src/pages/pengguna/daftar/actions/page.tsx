@@ -49,8 +49,8 @@ export default function Page() {
    const [errors, setErrors] = useState<FormData>({});
    const [searchQuery, setSearchQuery] = useState<string>("");
 
-   const { results: daftarRoles, isLoading: isLoadingRoles } = useGetQuery(`${endpoint}/roles`);
-   const { results, isLoading } = useGetQuery(`${endpoint}/unit-kerja`) as { results: Array<UnitKerja>; isLoading: boolean };
+   const { results: daftarRoles, isLoading: isLoadingRoles } = useGetQuery(`${endpoint}/roles`, {}, false);
+   const { results, isLoading } = useGetQuery(`${endpoint}/unit-kerja`, {}, false) as { results: Array<UnitKerja>; isLoading: boolean };
    const { data: pegawaiList } = useCariPegawai(searchQuery);
    const { onSubmit, isPending } = useSubmitData({ id, formData, setErrors, endpoint });
 

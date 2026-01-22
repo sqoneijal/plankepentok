@@ -21,3 +21,4 @@ backend/temp
 backend/src/temp
 backend/src/uploads
 admin/src/types/client
+api/dist
