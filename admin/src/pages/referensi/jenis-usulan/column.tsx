@@ -16,8 +16,8 @@ type ColumnConfig = {
 
 const status = (text: string) => {
    const config: Record<string, string> = {
-      true: "Aktif",
-      false: "Tidak Aktif",
+      AKTIF: "Aktif",
+      TIDAK_AKTIF: "Tidak Aktif",
    };
    return config[text];
 };
@@ -50,6 +50,6 @@ export const getColumns = (endpoint: string): Array<ColumnDef<RowData, unknown>>
       columnHelper.accessor(config.key, {
          header: config.header,
          cell: config.cell ?? ((info) => info.getValue()),
-      })
+      }),
    ),
 ];

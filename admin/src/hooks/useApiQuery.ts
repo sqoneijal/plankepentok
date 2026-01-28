@@ -1,6 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { toast } from "sonner";
 import { UseAuth } from "./auth-context";
+
+interface ApiError extends Error {
+   status: number;
+   errors?: unknown;
+}
 
 export function useApiQuery({
    queryKey,
@@ -26,11 +30,17 @@ export function useApiQuery({
             },
          });
 
-         if (!response.ok) {
-            toast.error(response?.statusText || "Failed to fetch data");
+         const data = await response.json();
+
+         if (response.ok) {
+            return data;
          }
 
-         return response.json();
+         const error = Object.assign(new Error(data.message || "Unauthorized"), {
+            status: response.status,
+            errors: data.errors,
+         }) as ApiError;
+         throw error;
       },
       ...options,
    });

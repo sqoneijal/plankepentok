@@ -16,11 +16,11 @@ const AppHeader = lazy(() => import("@/components/app-header"));
 function App() {
    const { user, logout } = UseAuth();
 
-   const { results, isLoading } = useGetQueryDetail("/user-validate", user?.preferred_username);
+   const { results, isLoading } = useGetQueryDetail("/user/validate", user?.preferred_username);
 
    useEffect(() => {
       if (!isLoading && !objectLength(results)) {
-         // logout();
+         logout();
       }
       return () => {};
    }, [isLoading, results, logout]);

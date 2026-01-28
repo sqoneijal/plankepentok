@@ -12,7 +12,7 @@ export function useGetQueryDetail(enpoint: string, id: string | undefined, param
       toast.error(error?.message);
    }
 
-   const results = data?.results ?? [];
+   const results = data?.data ?? [];
 
    return { results, isLoading };
 }

@@ -28,15 +28,15 @@ model tb_audit_logs {
 }
 
 model tb_biro_master {
-  id                    Int                     @id(map: "tb_biro_master_pk") @default(autoincrement())
-  nama                  String?                 @db.VarChar
-  uploaded              DateTime?               @db.Timestamp(6)
-  modified              DateTime?               @db.Timestamp(6)
-  user_modified         String?                 @db.VarChar
-  pagu_anggaran_biro    tb_pagu_anggaran_biro[]
-  pengguna_role         tb_pengguna_role[]
-  sub_unit              tb_sub_unit[]
-  unit_pengusul         tb_unit_pengusul[]
+  id                 Int                     @id(map: "tb_biro_master_pk") @default(autoincrement())
+  nama               String?                 @db.VarChar
+  uploaded           DateTime?               @db.Timestamp(6)
+  modified           DateTime?               @db.Timestamp(6)
+  user_modified      String?                 @db.VarChar
+  pagu_anggaran_biro tb_pagu_anggaran_biro[]
+  pengguna_role      tb_pengguna_role[]
+  sub_unit           tb_sub_unit[]
+  unit_pengusul      tb_unit_pengusul[]
 }
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
@@ -77,11 +77,11 @@ model tb_dokumen_pendukung {
 }
 
 model tb_fakultas_master {
-  id                        Int                         @id(map: "tb_fakultas_master_pk") @default(autoincrement())
-  nama                      String?                     @db.VarChar
-  uploaded                  DateTime?                   @db.Timestamptz(6)
-  modified                  DateTime?                   @db.Timestamptz(6)
-  user_modified             String?                     @db.VarChar
+  id                     Int                         @id(map: "tb_fakultas_master_pk") @default(autoincrement())
+  nama                   String?                     @db.VarChar
+  uploaded               DateTime?                   @db.Timestamptz(6)
+  modified               DateTime?                   @db.Timestamptz(6)
+  user_modified          String?                     @db.VarChar
   pagu_anggaran_fakultas tb_pagu_anggaran_fakultas[]
   pengguna_role          tb_pengguna_role[]
   prodi_master           tb_prodi_master[]
@@ -117,7 +117,7 @@ model tb_jenis_keluaran_tor {
 model tb_jenis_usulan {
   id                  Int                   @id(map: "tb_jenis_usulan_pk") @default(autoincrement())
   nama                String?               @db.VarChar
-  is_aktif            Boolean?              @default(true)
+  is_aktif            jenis_usulan_status?
   uploaded            DateTime?             @db.Timestamp(6)
   modified            DateTime?             @db.Timestamp(6)
   user_modified       String?               @db.VarChar
@@ -152,11 +152,11 @@ model tb_klaim_verifikasi {
 }
 
 model tb_lembaga_master {
-  id                       Int                        @id(map: "tb_lembaga_master_pk") @default(autoincrement())
-  nama                     String?                    @db.VarChar
-  uploaded                 DateTime?                  @db.Timestamptz(6)
-  modified                 DateTime?                  @db.Timestamptz(6)
-  user_modified            String?                    @db.VarChar
+  id                    Int                        @id(map: "tb_lembaga_master_pk") @default(autoincrement())
+  nama                  String?                    @db.VarChar
+  uploaded              DateTime?                  @db.Timestamptz(6)
+  modified              DateTime?                  @db.Timestamptz(6)
+  user_modified         String?                    @db.VarChar
   pagu_anggaran_lembaga tb_pagu_anggaran_lembaga[]
   pengguna_role         tb_pengguna_role[]
   sub_unit              tb_sub_unit[]
@@ -311,23 +311,23 @@ model tb_penerima_manfaat_tor {
 }
 
 model tb_pengaturan {
-  id                 Int                  @id(map: "tb_pengaturan_pk") @default(autoincrement())
-  tahun_anggaran     Decimal?             @unique(map: "tb_pengaturan_unique") @db.Decimal(4, 0)
-  total_pagu         Decimal?             @default(0) @db.Decimal
-  realisasi          Decimal?             @default(0) @db.Decimal
-  is_aktif           Boolean              @default(true)
-  uploaded           DateTime?            @db.Timestamp(6)
-  modified           DateTime?            @db.Timestamp(6)
-  user_modified      String?              @db.VarChar
+  id              Int                  @id(map: "tb_pengaturan_pk") @default(autoincrement())
+  tahun_anggaran  Decimal?             @unique(map: "tb_pengaturan_unique") @db.Decimal(4, 0)
+  total_pagu      Decimal?             @default(0) @db.Decimal
+  realisasi       Decimal?             @default(0) @db.Decimal
+  is_aktif        Boolean              @default(true)
+  uploaded        DateTime?            @db.Timestamp(6)
+  modified        DateTime?            @db.Timestamp(6)
+  user_modified   String?              @db.VarChar
   usulan_kegiatan tb_usulan_kegiatan[]
 }
 
 model tb_pengguna {
-  id                  Int                   @id(map: "tb_pengguna_pk") @default(autoincrement())
-  username            String?               @db.VarChar
-  level_unit          String?               @db.VarChar
-  id_roles            Int?
-  fullname            String?               @db.VarChar
+  id               Int                   @id(map: "tb_pengguna_pk") @default(autoincrement())
+  username         String?               @db.VarChar
+  level_unit       String?               @db.VarChar
+  id_roles         Int?
+  fullname         String?               @db.VarChar
   log_verifikasi   tb_log_verifikasi[]
   roles            tb_roles?             @relation(fields: [id_roles], references: [id], onUpdate: SetNull, map: "tb_pengguna_tb_roles_fk")
   pengguna_role    tb_pengguna_role?
@@ -340,19 +340,19 @@ model tb_pengguna {
 }
 
 model tb_pengguna_role {
-  id                 Int                 @id(map: "tb_pengguna_role_pk") @default(autoincrement())
-  id_pengguna        Int?                @unique(map: "tb_pengguna_role_unique")
-  id_biro            Int?
-  id_lembaga         Int?
-  id_upt             Int?
-  id_fakultas        Int?
-  id_sub_unit        Int?
-  biro_master        tb_biro_master?     @relation(fields: [id_biro], references: [id], onUpdate: SetNull, map: "tb_pengguna_role_tb_biro_master_fk")
-  fakultas_master    tb_fakultas_master? @relation(fields: [id_fakultas], references: [id], onUpdate: SetNull, map: "tb_pengguna_role_tb_fakultas_master_fk")
-  lembaga_master     tb_lembaga_master?  @relation(fields: [id_lembaga], references: [id], onUpdate: SetNull, map: "tb_pengguna_role_tb_lembaga_master_fk")
-  pengguna           tb_pengguna?        @relation(fields: [id_pengguna], references: [id], onDelete: Cascade, onUpdate: SetNull, map: "tb_pengguna_role_tb_pengguna_fk")
-  sub_unit           tb_sub_unit?        @relation(fields: [id_sub_unit], references: [id], onUpdate: SetNull, map: "tb_pengguna_role_tb_sub_unit_fk")
-  upt_master         tb_upt_master?      @relation(fields: [id_upt], references: [id], onUpdate: SetNull, map: "tb_pengguna_role_tb_upt_master_fk")
+  id              Int                 @id(map: "tb_pengguna_role_pk") @default(autoincrement())
+  id_pengguna     Int?                @unique(map: "tb_pengguna_role_unique")
+  id_biro         Int?
+  id_lembaga      Int?
+  id_upt          Int?
+  id_fakultas     Int?
+  id_sub_unit     Int?
+  biro_master     tb_biro_master?     @relation(fields: [id_biro], references: [id], onUpdate: SetNull, map: "tb_pengguna_role_tb_biro_master_fk")
+  fakultas_master tb_fakultas_master? @relation(fields: [id_fakultas], references: [id], onUpdate: SetNull, map: "tb_pengguna_role_tb_fakultas_master_fk")
+  lembaga_master  tb_lembaga_master?  @relation(fields: [id_lembaga], references: [id], onUpdate: SetNull, map: "tb_pengguna_role_tb_lembaga_master_fk")
+  pengguna        tb_pengguna?        @relation(fields: [id_pengguna], references: [id], onDelete: Cascade, onUpdate: SetNull, map: "tb_pengguna_role_tb_pengguna_fk")
+  sub_unit        tb_sub_unit?        @relation(fields: [id_sub_unit], references: [id], onUpdate: SetNull, map: "tb_pengguna_role_tb_sub_unit_fk")
+  upt_master      tb_upt_master?      @relation(fields: [id_upt], references: [id], onUpdate: SetNull, map: "tb_pengguna_role_tb_upt_master_fk")
 
   @@index([id_biro])
   @@index([id_fakultas])
@@ -635,7 +635,7 @@ model tb_unit_satuan {
   id                      Int                       @id(map: "tb_unit_satuan_pk") @default(autoincrement())
   nama                    String?                   @db.VarChar
   deskripsi               String?                   @db.VarChar
-  aktif                   Boolean?                  @default(true)
+  aktif                   status_unit_satuan?
   uploaded                DateTime?                 @db.Timestamptz(6)
   modified                DateTime?                 @db.Timestamptz(6)
   user_modified           String?                   @db.VarChar
@@ -645,11 +645,11 @@ model tb_unit_satuan {
 }
 
 model tb_upt_master {
-  id                   Int                    @id(map: "tb_upt_master_pk") @default(autoincrement())
-  nama                 String?                @db.VarChar
-  uploaded             DateTime?              @db.Timestamptz(6)
-  modified             DateTime?              @db.Timestamptz(6)
-  user_modified        String?                @db.VarChar
+  id                Int                    @id(map: "tb_upt_master_pk") @default(autoincrement())
+  nama              String?                @db.VarChar
+  uploaded          DateTime?              @db.Timestamptz(6)
+  modified          DateTime?              @db.Timestamptz(6)
+  user_modified     String?                @db.VarChar
   pagu_anggaran_upt tb_pagu_anggaran_upt[]
   pengguna_role     tb_pengguna_role[]
   sub_unit          tb_sub_unit[]
@@ -746,4 +746,14 @@ model tb_volume_keluaran_tor {
   @@unique([id_tor, id_mst_volume_keluaran_tor], map: "tb_volume_keluaran_tor_unique")
   @@index([id_mst_volume_keluaran_tor])
   @@index([id_tor])
+}
+
+enum jenis_usulan_status {
+  AKTIF
+  TIDAK_AKTIF
+}
+
+enum status_unit_satuan {
+  AKTIF
+  TIDAK_AKTIF
 }

@@ -4,24 +4,30 @@ import { usePostMutation } from "./usePostMutation";
 import { usePutMutation } from "./usePutMutation";
 
 type ResponseType = {
-   status?: boolean;
+   success?: boolean;
    message?: string;
    errors?: FormData;
 };
 
 type FormData = Record<string, string>;
 
+type MutationError = {
+   message?: string;
+   errors?: FormData;
+};
+
 export const handleMutationSuccess = (response: ResponseType, setErrors?: (errors: FormData) => void) => {
    if (setErrors) setErrors(response?.errors || {});
-   if (response?.status) {
+   if (response?.success) {
       toast.success(response?.message);
       return;
    }
    toast.error(response?.message);
 };
 
-export const handleMutationError = (error: Error) => {
-   toast.error(`Gagal: ${error?.message}`);
+export const handleMutationError = (error: MutationError, setErrors?: (errors: FormData) => void) => {
+   if (setErrors) setErrors(error.errors || {});
+   toast.error(error?.message);
 };
 
 export function useSubmitData({
@@ -48,12 +54,12 @@ export function useSubmitData({
          {
             onSuccess: (response) => {
                handleMutationSuccess(response, setErrors);
-               if (response.status) {
+               if (response.success) {
                   navigate(endpoint);
                }
             },
-            onError: handleMutationError,
-         }
+            onError: (error) => handleMutationError(error, setErrors),
+         },
       );
    };
 

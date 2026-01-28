@@ -26,7 +26,7 @@ const columnConfigs: Array<ColumnConfig> = [
    {
       key: "aktif",
       header: "Status",
-      cell: (value: unknown) => <Badge variant="outline">{value ? "Aktif" : "Tidak Aktif"}</Badge>,
+      cell: (value: unknown) => <Badge variant="outline">{value === "AKTIF" ? "Aktif" : "Tidak Aktif"}</Badge>,
    },
 ];
 
@@ -46,6 +46,6 @@ export const getColumns = (endpoint: string): Array<ColumnDef<RowData, unknown>>
       columnHelper.accessor(config.key, {
          header: config.header,
          cell: config.cell ? (info) => config.cell!(info.getValue()) : (info) => info.getValue(),
-      })
+      }),
    ),
 ];

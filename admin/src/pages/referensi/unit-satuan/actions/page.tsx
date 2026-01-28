@@ -2,8 +2,8 @@ import { FormUnitSatuanSkeleton } from "@/components/loading-skeleton";
 import { covertToSTring, objectLength } from "@/helpers/init";
 import { useHeaderButton } from "@/hooks/store";
 import { useGetQueryDetail } from "@/hooks/useGetQueryDetail";
+import { useSubmitData } from "@/hooks/useSubmitData";
 import { FormInput, FormSelect, FormTextarea, LinkButton, SubmitButton } from "@/lib/helpers";
-import { useSubmitData } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 

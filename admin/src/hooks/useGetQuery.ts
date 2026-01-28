@@ -10,7 +10,7 @@ export function useGetQuery(enpoint: string, params?: FormData, usePagination: b
    const limit = pagination?.pageSize;
    const offset = pagination?.pageIndex * pagination.pageSize;
 
-   const paginationParams = params ? { limit: String(limit), offset: String(offset), ...params } : { limit: String(limit), offset: String(offset) };
+   const paginationParams = params ? { limit: String(limit), page: String(offset), ...params } : { limit: String(limit), page: String(offset) };
 
    const { data, isLoading, error } = useApiQuery({
       url: enpoint,
@@ -21,8 +21,8 @@ export function useGetQuery(enpoint: string, params?: FormData, usePagination: b
       toast.error(error?.message);
    }
 
-   const results = Array.isArray(data?.results) ? data?.results : [];
-   const total = data?.total || 0;
+   const results = Array.isArray(data?.data) ? data?.data : [];
+   const total = data?.meta?.total || 0;
 
    return { results, total, isLoading };
 }

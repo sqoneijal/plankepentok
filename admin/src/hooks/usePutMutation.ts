@@ -1,5 +1,4 @@
 import { useMutation } from "@tanstack/react-query";
-import { toast } from "sonner";
 import { UseAuth } from "./auth-context";
 import { queryClient } from "./queryClient";
 
@@ -18,18 +17,20 @@ export const usePutMutation = <TData, TTransformed = TData>(url: string, transfo
             body: JSON.stringify({ ...transformed, user_modified: user?.preferred_username }),
          });
 
-         if (!response.ok) {
-            const errorData = await response.json();
-            toast.error(errorData.message || "Failed to update data");
+         const errorData = await response.json();
+
+         if (response.ok) {
+            return errorData;
          }
 
-         return response.json();
+         throw errorData;
       },
       onSuccess: (response) => {
-         const { status, refetchQuery } = response;
-         if (status && Array.isArray(refetchQuery)) {
+         const { success, refetchQuery } = response;
+         if (success && Array.isArray(refetchQuery)) {
             for (const queryKey of refetchQuery) {
-               queryClient.invalidateQueries({ queryKey, exact: false });
+               const url = Array.isArray(queryKey) ? queryKey[0] : queryKey;
+               queryClient.invalidateQueries({ queryKey: [url], exact: false });
             }
          }
       },

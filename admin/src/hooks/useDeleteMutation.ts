@@ -21,23 +21,24 @@ export const useDeleteMutation = (url: string, params?: Record<string, string>) 
             body: JSON.stringify({ user_modified: user?.preferred_username }),
          });
 
-         if (!response.ok) {
-            const errorData = await response.json();
-            toast.error(errorData.message || "Gagal menghapus data.");
+         const errorData = await response.json();
+
+         if (response.ok) {
+            return errorData;
          }
 
-         return response.json();
+         toast.error(errorData.message || "Gagal menghapus data.");
       },
       onSuccess: (response) => {
-         const { status, refetchQuery } = response;
-         if (status && Array.isArray(refetchQuery)) {
+         const { success, refetchQuery } = response;
+         if (success && Array.isArray(refetchQuery)) {
             for (const queryKey of refetchQuery) {
                const url = Array.isArray(queryKey) ? queryKey[0] : queryKey;
                queryClient.invalidateQueries({ queryKey: [url], exact: false });
             }
          }
 
-         if (response?.status) {
+         if (response?.success) {
             toast.success("Data berhasil dihapus.");
          } else {
             toast.error(response?.message);

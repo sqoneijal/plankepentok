@@ -66,8 +66,8 @@ export default function Page() {
                      onChange={(value) => setFormData((prev) => ({ ...prev, is_aktif: value }))}
                      errors={errors}
                      options={[
-                        { value: "true", label: "Aktif" },
-                        { value: "false", label: "Tidak Aktif" },
+                        { value: "AKTIF", label: "Aktif" },
+                        { value: "TIDAK_AKTIF", label: "Tidak Aktif" },
                      ]}
                   />
                </div>
