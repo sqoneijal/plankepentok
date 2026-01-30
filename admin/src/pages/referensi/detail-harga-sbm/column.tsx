@@ -19,9 +19,9 @@ type ColumnConfig = {
 
 const status = (text: string) => {
    const config: Record<string, string> = {
-      valid: "Valid",
-      draft: "Draft",
-      kadaluarsa: "Kadaluarsa",
+      VALID: "Valid",
+      DRAFT: "Draft",
+      KADALUARSA: "Kadaluarsa",
    };
    return config[text];
 };
@@ -88,6 +88,6 @@ export const getColumns = (endpoint: string): Array<ColumnDef<RowData, unknown>>
       columnHelper.accessor(config.key, {
          header: config.header,
          cell: config.cell ?? ((info) => info.getValue()),
-      })
+      }),
    ),
 ];

@@ -10,7 +10,7 @@ export function useOptionsTahunAnggaran() {
       toast.error(error?.message);
    }
 
-   const tahunAnggaran = data?.results ?? [];
+   const tahunAnggaran = data?.data ?? [];
 
    return { tahunAnggaran, isLoadingTahunAnggaran: isLoading };
 }
@@ -24,7 +24,7 @@ export function useOptionsStandarBiaya() {
       toast.error(error?.message);
    }
 
-   const standarBiaya = data?.results ?? [];
+   const standarBiaya = data?.data ?? [];
 
    return { standarBiaya, isLoadingStandarBiaya: isLoading };
 }
@@ -38,7 +38,7 @@ export function useOptionsUnitSatuan() {
       toast.error(error?.message);
    }
 
-   const unitSatuan = data?.results ?? [];
+   const unitSatuan = data?.data ?? [];
 
    return { unitSatuan, isLoadingUnitSatuan: isLoading };
 }

@@ -1,14 +1,20 @@
 import { FastifyPluginAsync } from "fastify";
-import createGetOneResponse from "../../helpers/create.getOne.response";
-import createListResponse from "../../helpers/create.list.response";
-import { errorResponseSchema, idParamsSchema, listResponseSchema, paginationQuerySchema, successResponseSchema } from "../../schemas/common.schema";
-import { createUnitSatuanSchema } from "../../schemas/referensi/unit-satua.schema";
+import createGetOneResponse from "../../../helpers/create.getOne.response";
+import createListResponse from "../../../helpers/create.list.response";
+import {
+   errorResponseSchema,
+   idParamsSchema,
+   listResponseSchema,
+   paginationQuerySchema,
+   successResponseSchema,
+} from "../../../schemas/common.schema";
+import { create, update } from "./schema";
 
-const unitSatuanRoutes: FastifyPluginAsync = async (fastify) => {
+const jenisUsulanRoutes: FastifyPluginAsync = async (fastify) => {
    const { prisma } = fastify;
 
    fastify.get(
-      "/unit-satuan",
+      "/jenis-usulan",
       {
          preHandler: [fastify.authenticate],
          schema: {
@@ -24,17 +30,16 @@ const unitSatuanRoutes: FastifyPluginAsync = async (fastify) => {
          const { page = 0, limit = 25 } = request.query as any;
 
          const [data, total] = await Promise.all([
-            prisma.tb_unit_satuan.findMany({
+            prisma.tb_jenis_usulan.findMany({
                take: limit,
                skip: page,
                select: {
                   id: true,
                   nama: true,
-                  aktif: true,
-                  deskripsi: true,
+                  is_aktif: true,
                },
             }),
-            prisma.tb_unit_satuan.count(),
+            prisma.tb_jenis_usulan.count(),
          ]);
 
          reply.send(createListResponse(data, page, limit, total));
@@ -42,7 +47,7 @@ const unitSatuanRoutes: FastifyPluginAsync = async (fastify) => {
    );
 
    fastify.get(
-      "/unit-satuan/:id",
+      "/jenis-usulan/:id",
       {
          preHandler: [fastify.authenticate],
          schema: {
@@ -57,12 +62,12 @@ const unitSatuanRoutes: FastifyPluginAsync = async (fastify) => {
       async (request, reply) => {
          const { id } = request.params as { id: number };
 
-         const data = await prisma.tb_unit_satuan.findUnique({
+         const data = await prisma.tb_jenis_usulan.findUnique({
             where: { id },
             select: {
                id: true,
                nama: true,
-               aktif: true,
+               is_aktif: true,
             },
          });
 
@@ -71,12 +76,12 @@ const unitSatuanRoutes: FastifyPluginAsync = async (fastify) => {
    );
 
    fastify.post(
-      "/unit-satuan",
+      "/jenis-usulan",
       {
          preHandler: [fastify.authenticate],
          schema: {
             tags: ["Referensi"],
-            body: createUnitSatuanSchema,
+            body: create,
             response: {
                200: successResponseSchema,
                400: errorResponseSchema,
@@ -84,34 +89,33 @@ const unitSatuanRoutes: FastifyPluginAsync = async (fastify) => {
          },
       },
       async (request, reply) => {
-         const { nama, aktif, user_modified, deskripsi } = request.body as any;
+         const { nama, is_aktif, user_modified } = request.body as any;
 
-         await prisma.tb_unit_satuan.create({
+         await prisma.tb_jenis_usulan.create({
             data: {
                nama,
-               aktif,
+               is_aktif,
                user_modified,
-               deskripsi,
                uploaded: new Date(),
             },
          });
 
          reply.send({
             success: true,
-            message: "Unit satuan berhasil dibuat",
-            refetchQuery: [["/referensi/unit-satuan", { limit: "25", offset: "0" }]],
+            message: "Jenis keluaran TOR berhasil dibuat",
+            refetchQuery: [["/referensi/jenis-usulan", { limit: "25", offset: "0" }]],
          });
       },
    );
 
    fastify.put(
-      "/unit-satuan/:id",
+      "/jenis-usulan/:id",
       {
          preHandler: [fastify.authenticate],
          schema: {
             tags: ["Referensi"],
             params: idParamsSchema,
-            body: createUnitSatuanSchema,
+            body: update,
             response: {
                200: successResponseSchema,
                400: errorResponseSchema,
@@ -120,29 +124,28 @@ const unitSatuanRoutes: FastifyPluginAsync = async (fastify) => {
       },
       async (request, reply) => {
          const { id } = request.params as { id: number };
-         const { nama, aktif, deskripsi, user_modified } = request.body as any;
+         const { nama, is_aktif, user_modified } = request.body as any;
 
-         await prisma.tb_unit_satuan.update({
+         await prisma.tb_jenis_usulan.update({
             where: { id },
             data: {
                nama,
-               aktif,
+               is_aktif,
                user_modified,
-               deskripsi,
                modified: new Date(),
             },
          });
 
          reply.send({
             success: true,
-            message: "Unit satuan berhasil diperbaharui",
-            refetchQuery: [["/referensi/unit-satuan", { limit: "25", offset: "0" }]],
+            message: "Jenis keluaran TOR berhasil diperbaharui",
+            refetchQuery: [["/referensi/jenis-usulan", { limit: "25", offset: "0" }]],
          });
       },
    );
 
    fastify.delete(
-      "/unit-satuan/:id",
+      "/jenis-usulan/:id",
       {
          preHandler: [fastify.authenticate],
          schema: {
@@ -157,17 +160,17 @@ const unitSatuanRoutes: FastifyPluginAsync = async (fastify) => {
       async (request, reply) => {
          const { id } = request.params as { id: number };
 
-         await prisma.tb_unit_satuan.delete({
+         await prisma.tb_jenis_usulan.delete({
             where: { id },
          });
 
          reply.send({
             success: true,
-            message: "Unit satuan berhasil dihapus",
-            refetchQuery: [["/referensi/unit-satuan", { limit: "25", offset: "0" }]],
+            message: "Jenis keluaran TOR berhasil dihapus",
+            refetchQuery: [["/referensi/jenis-usulan", { limit: "25", offset: "0" }]],
          });
       },
    );
 };
 
-export default unitSatuanRoutes;
+export default jenisUsulanRoutes;

@@ -1,14 +1,21 @@
 import { FastifyPluginAsync } from "fastify";
-import createGetOneResponse from "../../helpers/create.getOne.response";
-import createListResponse from "../../helpers/create.list.response";
-import { errorResponseSchema, idParamsSchema, listResponseSchema, paginationQuerySchema, successResponseSchema } from "../../schemas/common.schema";
-import { createJenisKeluaranTorSchema } from "../../schemas/referensi/jenis-keluaran-tor.schema";
+import createGetOneResponse from "../../../helpers/create.getOne.response";
+import createListResponse from "../../../helpers/create.list.response";
+import createSubmitResponse from "../../../helpers/create.submit.response";
+import {
+   errorResponseSchema,
+   idParamsSchema,
+   listResponseSchema,
+   paginationQuerySchema,
+   successResponseSchema,
+} from "../../../schemas/common.schema";
+import { create, update } from "./schema";
 
-const jenisKeluaranTorRoutes: FastifyPluginAsync = async (fastify) => {
+const kategoriSBMRoutes: FastifyPluginAsync = async (fastify) => {
    const { prisma } = fastify;
 
    fastify.get(
-      "/jenis-keluaran-tor",
+      "/kategori-sbm",
       {
          preHandler: [fastify.authenticate],
          schema: {
@@ -24,16 +31,17 @@ const jenisKeluaranTorRoutes: FastifyPluginAsync = async (fastify) => {
          const { page = 0, limit = 25 } = request.query as any;
 
          const [data, total] = await Promise.all([
-            prisma.tb_mst_jenis_keluaran_tor.findMany({
+            prisma.tb_kategori_sbm.findMany({
                take: limit,
                skip: page,
                select: {
                   id: true,
                   nama: true,
-                  keterangan: true,
+                  deskripsi: true,
+                  kode: true,
                },
             }),
-            prisma.tb_mst_jenis_keluaran_tor.count(),
+            prisma.tb_kategori_sbm.count(),
          ]);
 
          reply.send(createListResponse(data, page, limit, total));
@@ -41,7 +49,7 @@ const jenisKeluaranTorRoutes: FastifyPluginAsync = async (fastify) => {
    );
 
    fastify.get(
-      "/jenis-keluaran-tor/:id",
+      "/kategori-sbm/:id",
       {
          preHandler: [fastify.authenticate],
          schema: {
@@ -56,12 +64,13 @@ const jenisKeluaranTorRoutes: FastifyPluginAsync = async (fastify) => {
       async (request, reply) => {
          const { id } = request.params as { id: number };
 
-         const data = await prisma.tb_mst_jenis_keluaran_tor.findUnique({
+         const data = await prisma.tb_kategori_sbm.findUnique({
             where: { id },
             select: {
                id: true,
                nama: true,
-               keterangan: true,
+               kode: true,
+               deskripsi: true,
             },
          });
 
@@ -70,12 +79,12 @@ const jenisKeluaranTorRoutes: FastifyPluginAsync = async (fastify) => {
    );
 
    fastify.post(
-      "/jenis-keluaran-tor",
+      "/kategori-sbm",
       {
          preHandler: [fastify.authenticate],
          schema: {
             tags: ["Referensi"],
-            body: createJenisKeluaranTorSchema,
+            body: create,
             response: {
                200: successResponseSchema,
                400: errorResponseSchema,
@@ -83,33 +92,34 @@ const jenisKeluaranTorRoutes: FastifyPluginAsync = async (fastify) => {
          },
       },
       async (request, reply) => {
-         const { nama, keterangan, user_modified } = request.body as any;
+         const { nama, kode, user_modified, deskripsi } = request.body as any;
 
-         await prisma.tb_mst_jenis_keluaran_tor.create({
+         await prisma.tb_kategori_sbm.create({
             data: {
                nama,
-               keterangan,
+               kode,
                user_modified,
+               deskripsi,
                uploaded: new Date(),
             },
          });
 
          reply.send({
             success: true,
-            message: "Jenis keluaran TOR berhasil dibuat",
-            refetchQuery: [["/referensi/jenis-keluaran-tor", { limit: "25", offset: "0" }]],
+            message: "Kategori SBM berhasil dibuat",
+            refetchQuery: [["/referensi/kategori-sbm", { limit: "25", offset: "0" }]],
          });
       },
    );
 
    fastify.put(
-      "/jenis-keluaran-tor/:id",
+      "/kategori-sbm/:id",
       {
          preHandler: [fastify.authenticate],
          schema: {
             tags: ["Referensi"],
             params: idParamsSchema,
-            body: createJenisKeluaranTorSchema,
+            body: update,
             response: {
                200: successResponseSchema,
                400: errorResponseSchema,
@@ -118,28 +128,41 @@ const jenisKeluaranTorRoutes: FastifyPluginAsync = async (fastify) => {
       },
       async (request, reply) => {
          const { id } = request.params as { id: number };
-         const { nama, keterangan, user_modified } = request.body as any;
+         const { nama, kode, deskripsi, user_modified } = request.body as any;
 
-         await prisma.tb_mst_jenis_keluaran_tor.update({
-            where: { id },
-            data: {
-               nama,
-               keterangan,
-               user_modified,
-               modified: new Date(),
-            },
-         });
+         try {
+            await prisma.tb_kategori_sbm.update({
+               where: { id },
+               data: {
+                  nama,
+                  kode,
+                  user_modified,
+                  deskripsi,
+                  modified: new Date(),
+               },
+            });
 
-         reply.send({
-            success: true,
-            message: "Jenis keluaran TOR berhasil diperbaharui",
-            refetchQuery: [["/referensi/jenis-keluaran-tor", { limit: "25", offset: "0" }]],
-         });
+            reply.send({
+               success: true,
+               message: "Kategori SBM berhasil diperbaharui",
+               refetchQuery: [["/referensi/kategori-sbm", { limit: "25", offset: "0" }]],
+            });
+         } catch (err: any) {
+            if (err.code === "P2002") {
+               return reply.status(400).send(
+                  createSubmitResponse(false, "Validasi Gagal", {
+                     kode: "Kode kategori sudah digunakan",
+                  }),
+               );
+            }
+
+            throw err;
+         }
       },
    );
 
    fastify.delete(
-      "/jenis-keluaran-tor/:id",
+      "/kategori-sbm/:id",
       {
          preHandler: [fastify.authenticate],
          schema: {
@@ -154,17 +177,17 @@ const jenisKeluaranTorRoutes: FastifyPluginAsync = async (fastify) => {
       async (request, reply) => {
          const { id } = request.params as { id: number };
 
-         await prisma.tb_mst_jenis_keluaran_tor.delete({
+         await prisma.tb_kategori_sbm.delete({
             where: { id },
          });
 
          reply.send({
             success: true,
-            message: "Jenis keluaran TOR berhasil dihapus",
-            refetchQuery: [["/referensi/jenis-keluaran-tor", { limit: "25", offset: "0" }]],
+            message: "Kategori SBM berhasil dihapus",
+            refetchQuery: [["/referensi/kategori-sbm", { limit: "25", offset: "0" }]],
          });
       },
    );
 };
 
-export default jenisKeluaranTorRoutes;
+export default kategoriSBMRoutes;

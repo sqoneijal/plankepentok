@@ -1,14 +1,20 @@
 import { FastifyPluginAsync } from "fastify";
-import createGetOneResponse from "../../helpers/create.getOne.response";
-import createListResponse from "../../helpers/create.list.response";
-import { errorResponseSchema, idParamsSchema, listResponseSchema, paginationQuerySchema, successResponseSchema } from "../../schemas/common.schema";
-import { createJenisUsulanSchema } from "../../schemas/referensi/jenis-usulan.schema";
+import createGetOneResponse from "../../../helpers/create.getOne.response";
+import createListResponse from "../../../helpers/create.list.response";
+import {
+   errorResponseSchema,
+   idParamsSchema,
+   listResponseSchema,
+   paginationQuerySchema,
+   successResponseSchema,
+} from "../../../schemas/common.schema";
+import { create, update } from "./schema";
 
-const jenisUsulanRoutes: FastifyPluginAsync = async (fastify) => {
+const standarBiayaRoutes: FastifyPluginAsync = async (fastify) => {
    const { prisma } = fastify;
 
    fastify.get(
-      "/jenis-usulan",
+      "/standar-biaya",
       {
          preHandler: [fastify.authenticate],
          schema: {
@@ -24,16 +30,33 @@ const jenisUsulanRoutes: FastifyPluginAsync = async (fastify) => {
          const { page = 0, limit = 25 } = request.query as any;
 
          const [data, total] = await Promise.all([
-            prisma.tb_jenis_usulan.findMany({
+            prisma.tb_standar_biaya_master.findMany({
                take: limit,
                skip: page,
                select: {
                   id: true,
+                  kode: true,
                   nama: true,
-                  is_aktif: true,
+                  deskripsi: true,
+                  kategori_sbm: {
+                     select: {
+                        id: true,
+                        kode: true,
+                        nama: true,
+                        deskripsi: true,
+                     },
+                  },
+                  unit_satuan: {
+                     select: {
+                        id: true,
+                        nama: true,
+                        deskripsi: true,
+                        aktif: true,
+                     },
+                  },
                },
             }),
-            prisma.tb_jenis_usulan.count(),
+            prisma.tb_standar_biaya_master.count(),
          ]);
 
          reply.send(createListResponse(data, page, limit, total));
@@ -41,7 +64,7 @@ const jenisUsulanRoutes: FastifyPluginAsync = async (fastify) => {
    );
 
    fastify.get(
-      "/jenis-usulan/:id",
+      "/standar-biaya/:id",
       {
          preHandler: [fastify.authenticate],
          schema: {
@@ -56,12 +79,15 @@ const jenisUsulanRoutes: FastifyPluginAsync = async (fastify) => {
       async (request, reply) => {
          const { id } = request.params as { id: number };
 
-         const data = await prisma.tb_jenis_usulan.findUnique({
+         const data = await prisma.tb_standar_biaya_master.findUnique({
             where: { id },
             select: {
                id: true,
+               kode: true,
                nama: true,
-               is_aktif: true,
+               deskripsi: true,
+               id_kategori: true,
+               id_unit_satuan: true,
             },
          });
 
@@ -70,12 +96,12 @@ const jenisUsulanRoutes: FastifyPluginAsync = async (fastify) => {
    );
 
    fastify.post(
-      "/jenis-usulan",
+      "/standar-biaya",
       {
          preHandler: [fastify.authenticate],
          schema: {
             tags: ["Referensi"],
-            body: createJenisUsulanSchema,
+            body: create,
             response: {
                200: successResponseSchema,
                400: errorResponseSchema,
@@ -83,12 +109,15 @@ const jenisUsulanRoutes: FastifyPluginAsync = async (fastify) => {
          },
       },
       async (request, reply) => {
-         const { nama, is_aktif, user_modified } = request.body as any;
+         const { nama, kode, deskripsi, id_kategori, id_unit_satuan, user_modified } = request.body as any;
 
-         await prisma.tb_jenis_usulan.create({
+         await prisma.tb_standar_biaya_master.create({
             data: {
+               kode,
                nama,
-               is_aktif,
+               deskripsi,
+               id_kategori,
+               id_unit_satuan,
                user_modified,
                uploaded: new Date(),
             },
@@ -96,20 +125,20 @@ const jenisUsulanRoutes: FastifyPluginAsync = async (fastify) => {
 
          reply.send({
             success: true,
-            message: "Jenis keluaran TOR berhasil dibuat",
-            refetchQuery: [["/referensi/jenis-usulan", { limit: "25", offset: "0" }]],
+            message: "Standar biaya berhasil dibuat",
+            refetchQuery: [["/referensi/standar-biaya", { limit: "25", offset: "0" }]],
          });
       },
    );
 
    fastify.put(
-      "/jenis-usulan/:id",
+      "/standar-biaya/:id",
       {
          preHandler: [fastify.authenticate],
          schema: {
             tags: ["Referensi"],
             params: idParamsSchema,
-            body: createJenisUsulanSchema,
+            body: update,
             response: {
                200: successResponseSchema,
                400: errorResponseSchema,
@@ -118,13 +147,16 @@ const jenisUsulanRoutes: FastifyPluginAsync = async (fastify) => {
       },
       async (request, reply) => {
          const { id } = request.params as { id: number };
-         const { nama, is_aktif, user_modified } = request.body as any;
+         const { nama, kode, user_modified, deskripsi, id_kategori, id_unit_satuan } = request.body as any;
 
-         await prisma.tb_jenis_usulan.update({
+         await prisma.tb_standar_biaya_master.update({
             where: { id },
             data: {
+               kode,
                nama,
-               is_aktif,
+               deskripsi,
+               id_kategori,
+               id_unit_satuan,
                user_modified,
                modified: new Date(),
             },
@@ -132,14 +164,14 @@ const jenisUsulanRoutes: FastifyPluginAsync = async (fastify) => {
 
          reply.send({
             success: true,
-            message: "Jenis keluaran TOR berhasil diperbaharui",
-            refetchQuery: [["/referensi/jenis-usulan", { limit: "25", offset: "0" }]],
+            message: "Standar biaya berhasil diperbaharui",
+            refetchQuery: [["/referensi/standar-biaya", { limit: "25", offset: "0" }]],
          });
       },
    );
 
    fastify.delete(
-      "/jenis-usulan/:id",
+      "/standar-biaya/:id",
       {
          preHandler: [fastify.authenticate],
          schema: {
@@ -154,17 +186,17 @@ const jenisUsulanRoutes: FastifyPluginAsync = async (fastify) => {
       async (request, reply) => {
          const { id } = request.params as { id: number };
 
-         await prisma.tb_jenis_usulan.delete({
+         await prisma.tb_standar_biaya_master.delete({
             where: { id },
          });
 
          reply.send({
             success: true,
-            message: "Jenis keluaran TOR berhasil dihapus",
-            refetchQuery: [["/referensi/jenis-usulan", { limit: "25", offset: "0" }]],
+            message: "Standar biaya berhasil dihapus",
+            refetchQuery: [["/referensi/standar-biaya", { limit: "25", offset: "0" }]],
          });
       },
    );
 };
 
-export default jenisUsulanRoutes;
+export default standarBiayaRoutes;

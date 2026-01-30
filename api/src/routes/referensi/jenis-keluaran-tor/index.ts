@@ -1,14 +1,20 @@
 import { FastifyPluginAsync } from "fastify";
-import createGetOneResponse from "../../helpers/create.getOne.response";
-import createListResponse from "../../helpers/create.list.response";
-import { errorResponseSchema, idParamsSchema, listResponseSchema, paginationQuerySchema, successResponseSchema } from "../../schemas/common.schema";
-import { createVolumeKeluaranTorSchema } from "../../schemas/referensi/volume-keluaran-tor.schema";
+import createGetOneResponse from "../../../helpers/create.getOne.response";
+import createListResponse from "../../../helpers/create.list.response";
+import {
+   errorResponseSchema,
+   idParamsSchema,
+   listResponseSchema,
+   paginationQuerySchema,
+   successResponseSchema,
+} from "../../../schemas/common.schema";
+import { create, update } from "./schema";
 
-const volumeKeluaranTorRoutes: FastifyPluginAsync = async (fastify) => {
+const jenisKeluaranTorRoutes: FastifyPluginAsync = async (fastify) => {
    const { prisma } = fastify;
 
    fastify.get(
-      "/volume-keluaran-tor",
+      "/jenis-keluaran-tor",
       {
          preHandler: [fastify.authenticate],
          schema: {
@@ -24,7 +30,7 @@ const volumeKeluaranTorRoutes: FastifyPluginAsync = async (fastify) => {
          const { page = 0, limit = 25 } = request.query as any;
 
          const [data, total] = await Promise.all([
-            prisma.tb_mst_volume_keluaran_tor.findMany({
+            prisma.tb_mst_jenis_keluaran_tor.findMany({
                take: limit,
                skip: page,
                select: {
@@ -33,7 +39,7 @@ const volumeKeluaranTorRoutes: FastifyPluginAsync = async (fastify) => {
                   keterangan: true,
                },
             }),
-            prisma.tb_mst_volume_keluaran_tor.count(),
+            prisma.tb_mst_jenis_keluaran_tor.count(),
          ]);
 
          reply.send(createListResponse(data, page, limit, total));
@@ -41,7 +47,7 @@ const volumeKeluaranTorRoutes: FastifyPluginAsync = async (fastify) => {
    );
 
    fastify.get(
-      "/volume-keluaran-tor/:id",
+      "/jenis-keluaran-tor/:id",
       {
          preHandler: [fastify.authenticate],
          schema: {
@@ -56,7 +62,7 @@ const volumeKeluaranTorRoutes: FastifyPluginAsync = async (fastify) => {
       async (request, reply) => {
          const { id } = request.params as { id: number };
 
-         const data = await prisma.tb_mst_volume_keluaran_tor.findUnique({
+         const data = await prisma.tb_mst_jenis_keluaran_tor.findUnique({
             where: { id },
             select: {
                id: true,
@@ -70,12 +76,12 @@ const volumeKeluaranTorRoutes: FastifyPluginAsync = async (fastify) => {
    );
 
    fastify.post(
-      "/volume-keluaran-tor",
+      "/jenis-keluaran-tor",
       {
          preHandler: [fastify.authenticate],
          schema: {
             tags: ["Referensi"],
-            body: createVolumeKeluaranTorSchema,
+            body: create,
             response: {
                200: successResponseSchema,
                400: errorResponseSchema,
@@ -85,7 +91,7 @@ const volumeKeluaranTorRoutes: FastifyPluginAsync = async (fastify) => {
       async (request, reply) => {
          const { nama, keterangan, user_modified } = request.body as any;
 
-         await prisma.tb_mst_volume_keluaran_tor.create({
+         await prisma.tb_mst_jenis_keluaran_tor.create({
             data: {
                nama,
                keterangan,
@@ -96,20 +102,20 @@ const volumeKeluaranTorRoutes: FastifyPluginAsync = async (fastify) => {
 
          reply.send({
             success: true,
-            message: "Volume keluaran TOR berhasil dibuat",
-            refetchQuery: [["/referensi/volume-keluaran-tor", { limit: "25", offset: "0" }]],
+            message: "Jenis keluaran TOR berhasil dibuat",
+            refetchQuery: [["/referensi/jenis-keluaran-tor", { limit: "25", offset: "0" }]],
          });
       },
    );
 
    fastify.put(
-      "/volume-keluaran-tor/:id",
+      "/jenis-keluaran-tor/:id",
       {
          preHandler: [fastify.authenticate],
          schema: {
             tags: ["Referensi"],
             params: idParamsSchema,
-            body: createVolumeKeluaranTorSchema,
+            body: update,
             response: {
                200: successResponseSchema,
                400: errorResponseSchema,
@@ -120,7 +126,7 @@ const volumeKeluaranTorRoutes: FastifyPluginAsync = async (fastify) => {
          const { id } = request.params as { id: number };
          const { nama, keterangan, user_modified } = request.body as any;
 
-         await prisma.tb_mst_volume_keluaran_tor.update({
+         await prisma.tb_mst_jenis_keluaran_tor.update({
             where: { id },
             data: {
                nama,
@@ -132,14 +138,14 @@ const volumeKeluaranTorRoutes: FastifyPluginAsync = async (fastify) => {
 
          reply.send({
             success: true,
-            message: "Volume keluaran TOR berhasil diperbaharui",
-            refetchQuery: [["/referensi/volume-keluaran-tor", { limit: "25", offset: "0" }]],
+            message: "Jenis keluaran TOR berhasil diperbaharui",
+            refetchQuery: [["/referensi/jenis-keluaran-tor", { limit: "25", offset: "0" }]],
          });
       },
    );
 
    fastify.delete(
-      "/volume-keluaran-tor/:id",
+      "/jenis-keluaran-tor/:id",
       {
          preHandler: [fastify.authenticate],
          schema: {
@@ -154,17 +160,17 @@ const volumeKeluaranTorRoutes: FastifyPluginAsync = async (fastify) => {
       async (request, reply) => {
          const { id } = request.params as { id: number };
 
-         await prisma.tb_mst_volume_keluaran_tor.delete({
+         await prisma.tb_mst_jenis_keluaran_tor.delete({
             where: { id },
          });
 
          reply.send({
             success: true,
-            message: "Volume keluaran TOR berhasil dihapus",
-            refetchQuery: [["/referensi/volume-keluaran-tor", { limit: "25", offset: "0" }]],
+            message: "Jenis keluaran TOR berhasil dihapus",
+            refetchQuery: [["/referensi/jenis-keluaran-tor", { limit: "25", offset: "0" }]],
          });
       },
    );
 };
 
-export default volumeKeluaranTorRoutes;
+export default jenisKeluaranTorRoutes;

@@ -35,11 +35,11 @@ const columnConfigs: Array<ColumnConfig> = [
          <Tooltip>
             <TooltipTrigger className="text-start">
                <Badge variant="outline" className="mr-2">
-                  {(value as { kode: string }).kode}
+                  {(value as { kode: string })?.kode}
                </Badge>
-               {(value as { nama: string }).nama}
+               {(value as { nama: string })?.nama}
             </TooltipTrigger>
-            <TooltipContent>{(value as { deskripsi: string }).deskripsi}</TooltipContent>
+            <TooltipContent>{(value as { deskripsi: string })?.deskripsi}</TooltipContent>
          </Tooltip>
       ),
    },
@@ -71,6 +71,6 @@ export const getColumns = (endpoint: string): Array<ColumnDef<RowData, unknown>>
       columnHelper.accessor(config.key, {
          header: config.header,
          cell: config.cell ? (info) => config.cell!(info.getValue()) : (info) => info.getValue(),
-      })
+      }),
    ),
 ];

@@ -2,8 +2,8 @@ import { FormStandarBiayaSkeleton } from "@/components/loading-skeleton";
 import { covertToSTring, getValue, objectLength } from "@/helpers/init";
 import { useHeaderButton } from "@/hooks/store";
 import { useGetQueryDetail } from "@/hooks/useGetQueryDetail";
+import { useSubmitData } from "@/hooks/useSubmitData";
 import { FormInput, FormSelect, FormTextarea, LinkButton, SubmitButton } from "@/lib/helpers";
-import { useSubmitData } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import { useOptionsKategoriSBM, useOptionsUnitSatuan } from "./options";
@@ -76,7 +76,7 @@ export default function Page() {
                      label="Kategori SBM"
                      name="id_kategori"
                      options={kategoriSBM.map((row: Record<string, string>) => ({
-                        value: row.id.toString(),
+                        value: String(row.id),
                         label: row.nama,
                         tooltipContent: row.deskripsi,
                      }))}

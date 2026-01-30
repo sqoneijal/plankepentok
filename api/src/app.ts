@@ -11,11 +11,17 @@ import keycloakAuthPlugin from "./plugins/keycloak-auth";
 import prismaPlugin from "./plugins/prisma";
 
 // Routes
-import referensiJenisKeluaranTor from "./routes/referensi/jenis-keluaran-tor.routes";
-import referensiJenisUsulanRoutes from "./routes/referensi/jenis-usulan.routes";
-import referensiPenerimaManfaatTor from "./routes/referensi/penerima-manfaat-tor.routes";
-import unitSatuanRoutes from "./routes/referensi/unit-satuan.routes";
-import referensiVolumeKeluaranTor from "./routes/referensi/volume-keluaran-tor.routes";
+import optionsKategoriSBM from "./routes/options/kategori-sbm";
+import standarBiayaOptions from "./routes/options/standar-biaya";
+import optionsTahunAnggaran from "./routes/options/tahun-anggaran";
+import referensiDetailHargaSBM from "./routes/referensi/detail-harga-sbm";
+import referensiJenisKeluaranTor from "./routes/referensi/jenis-keluaran-tor";
+import referensiJenisUsulanRoutes from "./routes/referensi/jenis-usulan";
+import referensiKategoriSBM from "./routes/referensi/kategori-sbm";
+import referensiPenerimaManfaatTor from "./routes/referensi/penerima-manfaat-tor";
+import referensiStandarBiaya from "./routes/referensi/standar-biaya";
+import referensiUnitSatuanRoutes from "./routes/referensi/unit-satuan";
+import referensiVolumeKeluaranTor from "./routes/referensi/volume-keluaran-tor";
 import usersRoutes from "./routes/users.routes";
 
 const fastify = Fastify({
@@ -88,7 +94,13 @@ async function main() {
    await fastify.register(referensiVolumeKeluaranTor, { prefix: "/api/v1/referensi" });
    await fastify.register(referensiPenerimaManfaatTor, { prefix: "/api/v1/referensi" });
    await fastify.register(referensiJenisUsulanRoutes, { prefix: "/api/v1/referensi" });
-   await fastify.register(unitSatuanRoutes, { prefix: "/api/v1/referensi" });
+   await fastify.register(referensiUnitSatuanRoutes, { prefix: "/api/v1/referensi" });
+   await fastify.register(referensiKategoriSBM, { prefix: "/api/v1/referensi" });
+   await fastify.register(referensiStandarBiaya, { prefix: "/api/v1/referensi" });
+   await fastify.register(referensiDetailHargaSBM, { prefix: "/api/v1/referensi" });
+   await fastify.register(optionsKategoriSBM, { prefix: "/api/v1/options" });
+   await fastify.register(optionsTahunAnggaran, { prefix: "/api/v1/options" });
+   await fastify.register(standarBiayaOptions, { prefix: "/api/v1/options" });
    // await fastify.register(usulanKegiatanRoutes, { prefix: "/api/v1/usulan-kegiatan" });
    // await fastify.register(rabDetailRoutes, { prefix: "/api/v1/rab-detail" });
    // await fastify.register(verifikasiRoutes, { prefix: "/api/v1/verifikasi" });

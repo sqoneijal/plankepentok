@@ -1,15 +1,20 @@
 import { FastifyPluginAsync } from "fastify";
-import createGetOneResponse from "../../helpers/create.getOne.response";
-import createListResponse from "../../helpers/create.list.response";
-import { errorResponseSchema, idParamsSchema, listResponseSchema, paginationQuerySchema, successResponseSchema } from "../../schemas/common.schema";
-import { createJenisKeluaranTorSchema } from "../../schemas/referensi/jenis-keluaran-tor.schema";
-import { createPenerimaManfaatTorSchema } from "../../schemas/referensi/penerima-manfaat-tor.schema";
+import createGetOneResponse from "../../../helpers/create.getOne.response";
+import createListResponse from "../../../helpers/create.list.response";
+import {
+   errorResponseSchema,
+   idParamsSchema,
+   listResponseSchema,
+   paginationQuerySchema,
+   successResponseSchema,
+} from "../../../schemas/common.schema";
+import { create, update } from "./schema";
 
-const penerimaManfaatTorRoutes: FastifyPluginAsync = async (fastify) => {
+const unitSatuanRoutes: FastifyPluginAsync = async (fastify) => {
    const { prisma } = fastify;
 
    fastify.get(
-      "/penerima-manfaat-tor",
+      "/unit-satuan",
       {
          preHandler: [fastify.authenticate],
          schema: {
@@ -25,16 +30,17 @@ const penerimaManfaatTorRoutes: FastifyPluginAsync = async (fastify) => {
          const { page = 0, limit = 25 } = request.query as any;
 
          const [data, total] = await Promise.all([
-            prisma.tb_mst_penerima_manfaat_tor.findMany({
+            prisma.tb_unit_satuan.findMany({
                take: limit,
                skip: page,
                select: {
                   id: true,
                   nama: true,
-                  keterangan: true,
+                  aktif: true,
+                  deskripsi: true,
                },
             }),
-            prisma.tb_mst_penerima_manfaat_tor.count(),
+            prisma.tb_unit_satuan.count(),
          ]);
 
          reply.send(createListResponse(data, page, limit, total));
@@ -42,7 +48,7 @@ const penerimaManfaatTorRoutes: FastifyPluginAsync = async (fastify) => {
    );
 
    fastify.get(
-      "/penerima-manfaat-tor/:id",
+      "/unit-satuan/:id",
       {
          preHandler: [fastify.authenticate],
          schema: {
@@ -57,12 +63,12 @@ const penerimaManfaatTorRoutes: FastifyPluginAsync = async (fastify) => {
       async (request, reply) => {
          const { id } = request.params as { id: number };
 
-         const data = await prisma.tb_mst_penerima_manfaat_tor.findUnique({
+         const data = await prisma.tb_unit_satuan.findUnique({
             where: { id },
             select: {
                id: true,
                nama: true,
-               keterangan: true,
+               aktif: true,
             },
          });
 
@@ -71,12 +77,12 @@ const penerimaManfaatTorRoutes: FastifyPluginAsync = async (fastify) => {
    );
 
    fastify.post(
-      "/penerima-manfaat-tor",
+      "/unit-satuan",
       {
          preHandler: [fastify.authenticate],
          schema: {
             tags: ["Referensi"],
-            body: createPenerimaManfaatTorSchema,
+            body: create,
             response: {
                200: successResponseSchema,
                400: errorResponseSchema,
@@ -84,33 +90,34 @@ const penerimaManfaatTorRoutes: FastifyPluginAsync = async (fastify) => {
          },
       },
       async (request, reply) => {
-         const { nama, keterangan, user_modified } = request.body as any;
+         const { nama, aktif, user_modified, deskripsi } = request.body as any;
 
-         await prisma.tb_mst_penerima_manfaat_tor.create({
+         await prisma.tb_unit_satuan.create({
             data: {
                nama,
-               keterangan,
+               aktif,
                user_modified,
+               deskripsi,
                uploaded: new Date(),
             },
          });
 
          reply.send({
             success: true,
-            message: "Penerima manfaat TOR berhasil dibuat",
-            refetchQuery: [["/referensi/penerima-manfaat-tor", { limit: "25", offset: "0" }]],
+            message: "Unit satuan berhasil dibuat",
+            refetchQuery: [["/referensi/unit-satuan", { limit: "25", offset: "0" }]],
          });
       },
    );
 
    fastify.put(
-      "/penerima-manfaat-tor/:id",
+      "/unit-satuan/:id",
       {
          preHandler: [fastify.authenticate],
          schema: {
             tags: ["Referensi"],
             params: idParamsSchema,
-            body: createJenisKeluaranTorSchema,
+            body: update,
             response: {
                200: successResponseSchema,
                400: errorResponseSchema,
@@ -119,28 +126,29 @@ const penerimaManfaatTorRoutes: FastifyPluginAsync = async (fastify) => {
       },
       async (request, reply) => {
          const { id } = request.params as { id: number };
-         const { nama, keterangan, user_modified } = request.body as any;
+         const { nama, aktif, deskripsi, user_modified } = request.body as any;
 
-         await prisma.tb_mst_penerima_manfaat_tor.update({
+         await prisma.tb_unit_satuan.update({
             where: { id },
             data: {
                nama,
-               keterangan,
+               aktif,
                user_modified,
+               deskripsi,
                modified: new Date(),
             },
          });
 
          reply.send({
             success: true,
-            message: "Penerima manfaat TOR berhasil diperbaharui",
-            refetchQuery: [["/referensi/penerima-manfaat-tor", { limit: "25", offset: "0" }]],
+            message: "Unit satuan berhasil diperbaharui",
+            refetchQuery: [["/referensi/unit-satuan", { limit: "25", offset: "0" }]],
          });
       },
    );
 
    fastify.delete(
-      "/penerima-manfaat-tor/:id",
+      "/unit-satuan/:id",
       {
          preHandler: [fastify.authenticate],
          schema: {
@@ -155,17 +163,17 @@ const penerimaManfaatTorRoutes: FastifyPluginAsync = async (fastify) => {
       async (request, reply) => {
          const { id } = request.params as { id: number };
 
-         await prisma.tb_mst_penerima_manfaat_tor.delete({
+         await prisma.tb_unit_satuan.delete({
             where: { id },
          });
 
          reply.send({
             success: true,
-            message: "Penerima manfaat TOR berhasil dihapus",
-            refetchQuery: [["/referensi/penerima-manfaat-tor", { limit: "25", offset: "0" }]],
+            message: "Unit satuan berhasil dihapus",
+            refetchQuery: [["/referensi/unit-satuan", { limit: "25", offset: "0" }]],
          });
       },
    );
 };
 
-export default penerimaManfaatTorRoutes;
+export default unitSatuanRoutes;

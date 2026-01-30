@@ -1,12 +1,7 @@
-export default function createListResponse(data?: Array<Record<string, any>>, page?: null, limit?: number, total?: number) {
+export default function createSubmitResponse(success: boolean, message: string, errors: Record<string, any> | {}) {
    return {
-      success: true,
-      data,
-      meta: {
-         page,
-         limit,
-         total,
-         totalPages: total && limit && Math.ceil(total / limit),
-      },
+      success,
+      message,
+      errors: { ...errors },
    };
 }

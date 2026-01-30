@@ -39,21 +39,20 @@ model tb_biro_master {
   unit_pengusul      tb_unit_pengusul[]
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model tb_detail_harga_sbm {
-  id                      Int                      @id(map: "tb_detail_harga_sbm_pk") @default(autoincrement())
-  id_standar_biaya        Int?
-  tahun_anggaran          Decimal?                 @db.Decimal(4, 0)
-  harga_satuan            Decimal?                 @db.Decimal
-  id_satuan               Int?
-  tanggal_mulai_efektif   DateTime?                @db.Date
-  tanggal_akhir_efektif   DateTime?                @db.Date
-  status_validasi         String?                  @db.VarChar
-  uploaded                DateTime?                @db.Timestamptz(6)
-  modified                DateTime?                @db.Timestamptz(6)
-  user_modified           String?                  @db.VarChar
-  tb_standar_biaya_master tb_standar_biaya_master? @relation(fields: [id_standar_biaya], references: [id], onUpdate: SetNull, map: "tb_detail_harga_sbm_tb_standar_biaya_master_fk")
-  tb_unit_satuan          tb_unit_satuan?          @relation(fields: [id_satuan], references: [id], onUpdate: SetNull, map: "tb_detail_harga_sbm_tb_unit_satuan_fk")
+  id                    Int                        @id(map: "tb_detail_harga_sbm_pk") @default(autoincrement())
+  id_standar_biaya      Int?
+  tahun_anggaran        Decimal?                   @db.Decimal(4, 0)
+  harga_satuan          Decimal?                   @db.Decimal
+  id_satuan             Int?
+  tanggal_mulai_efektif DateTime?                  @db.Date
+  tanggal_akhir_efektif DateTime?                  @db.Date
+  status_validasi       status_validasi_harga_sbm?
+  uploaded              DateTime?                  @db.Timestamptz(6)
+  modified              DateTime?                  @db.Timestamptz(6)
+  user_modified         String?                    @db.VarChar
+  standar_biaya_master  tb_standar_biaya_master?   @relation(fields: [id_standar_biaya], references: [id], onUpdate: SetNull, map: "tb_detail_harga_sbm_tb_standar_biaya_master_fk")
+  unit_satuan           tb_unit_satuan?            @relation(fields: [id_satuan], references: [id], onUpdate: SetNull, map: "tb_detail_harga_sbm_tb_unit_satuan_fk")
 
   @@unique([id_standar_biaya, tahun_anggaran, id_satuan], map: "tb_detail_harga_sbm_unique")
   @@index([id_satuan])
@@ -531,18 +530,18 @@ model tb_roles {
 }
 
 model tb_standar_biaya_master {
-  id                  Int                   @id(map: "tb_standar_biaya_master_pk") @default(autoincrement())
-  kode                String?               @unique(map: "tb_standar_biaya_master_unique") @db.VarChar
-  nama                String?               @db.VarChar
-  deskripsi           String?               @db.VarChar
-  id_kategori         Int?
-  id_unit_satuan      Int?
-  uploaded            DateTime?             @db.Timestamptz(6)
-  modified            DateTime?             @db.Timestamptz(6)
-  user_modified       String?               @db.VarChar
-  tb_detail_harga_sbm tb_detail_harga_sbm[]
-  tb_kategori_sbm     tb_kategori_sbm?      @relation(fields: [id_kategori], references: [id], onUpdate: SetNull, map: "tb_standar_biaya_master_tb_kategori_sbm_fk")
-  tb_unit_satuan      tb_unit_satuan?       @relation(fields: [id_unit_satuan], references: [id], onUpdate: SetNull, map: "tb_standar_biaya_master_tb_unit_satuan_fk")
+  id               Int                   @id(map: "tb_standar_biaya_master_pk") @default(autoincrement())
+  kode             String                @unique(map: "tb_standar_biaya_master_unique") @db.VarChar
+  nama             String?               @db.VarChar
+  deskripsi        String?               @db.VarChar
+  id_kategori      Int?
+  id_unit_satuan   Int?
+  uploaded         DateTime?             @db.Timestamptz(6)
+  modified         DateTime?             @db.Timestamptz(6)
+  user_modified    String?               @db.VarChar
+  detail_harga_sbm tb_detail_harga_sbm[]
+  kategori_sbm     tb_kategori_sbm?      @relation(fields: [id_kategori], references: [id], onUpdate: SetNull, map: "tb_standar_biaya_master_tb_kategori_sbm_fk")
+  unit_satuan      tb_unit_satuan?       @relation(fields: [id_unit_satuan], references: [id], onUpdate: SetNull, map: "tb_standar_biaya_master_tb_unit_satuan_fk")
 
   @@index([id_kategori])
   @@index([id_unit_satuan])
@@ -756,4 +755,10 @@ enum jenis_usulan_status {
 enum status_unit_satuan {
   AKTIF
   TIDAK_AKTIF
+}
+
+enum status_validasi_harga_sbm {
+  DRAFT
+  VALID
+  KADALUARSA
 }

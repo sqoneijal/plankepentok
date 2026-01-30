@@ -2,8 +2,8 @@ import { FormDetailHargaSBMSkeleton } from "@/components/loading-skeleton";
 import { covertToSTring, getValue, objectLength } from "@/helpers/init";
 import { useHeaderButton } from "@/hooks/store";
 import { useGetQueryDetail } from "@/hooks/useGetQueryDetail";
+import { useSubmitData } from "@/hooks/useSubmitData";
 import { FormDatePicker, FormInput, FormSelect, LinkButton, SubmitButton } from "@/lib/helpers";
-import { useSubmitData } from "@/lib/utils";
 import moment from "moment";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
@@ -86,7 +86,6 @@ export default function Page() {
                      name="harga_satuan"
                      onChange={(value) => setFormData((prev) => ({ ...prev, harga_satuan: value }))}
                      errors={errors}
-                     apakahFormatRupiah={true}
                   />
                   <FormSelect
                      divClassName="col-12 col-md-2"
@@ -127,9 +126,9 @@ export default function Page() {
                      onChange={(value) => setFormData((prev) => ({ ...prev, status_validasi: value }))}
                      errors={errors}
                      options={[
-                        { value: "draft", label: "Draft" },
-                        { value: "valid", label: "Valid" },
-                        { value: "kadaluarsa", label: "Kadaluarsa" },
+                        { value: "DRAFT", label: "Draft" },
+                        { value: "VALID", label: "Valid" },
+                        { value: "KADALUARSA", label: "Kadaluarsa" },
                      ]}
                   />
                </div>

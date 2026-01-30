@@ -10,7 +10,7 @@ export function useOptionsKategoriSBM() {
       toast.error(error?.message);
    }
 
-   const kategoriSBM = data?.results ?? [];
+   const kategoriSBM = data?.data ?? [];
 
    return { kategoriSBM, isLoadingKategoriSBM: isLoading };
 }
@@ -24,7 +24,7 @@ export function useOptionsUnitSatuan() {
       toast.error(error?.message);
    }
 
-   const unitSatuan = data?.results ?? [];
+   const unitSatuan = data?.data ?? [];
 
    return { unitSatuan, isLoadingUnitSatuan: isLoading };
 }
